@@ -291,10 +291,18 @@ body.dark-mode {
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="snakeBest">0</div></div>
     </div>
     <canvas id="snakeCanvas" width="320" height="320"></canvas>
-    <div class="dpad">
-      <div></div><button onclick="snakeDir(0,-1)">▲</button><div></div>
-      <button onclick="snakeDir(-1,0)">◀</button><button onclick="startSnake()">▶ ابدأ</button><button onclick="snakeDir(1,0)">▶</button>
-      <div></div><button onclick="snakeDir(0,1)">▼</button><div></div>
+  <div class="dpad" dir="ltr">
+      <div></div>
+      <button onclick="snakeDir(0,-1)">▲</button>
+      <div></div>
+      
+      <button onclick="snakeDir(-1,0)">◀</button>
+      <button onclick="startSnake()" style="font-size: 18px; font-weight: bold;">ابدأ</button>
+      <button onclick="snakeDir(1,0)">▶</button>
+      
+      <div></div>
+      <button onclick="snakeDir(0,1)">▼</button>
+      <div></div>
     </div>
     <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:8px">استخدم الأسهم أو WASD للتحكم</p>
   </div>
