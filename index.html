@@ -16,17 +16,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* Ad Banner - مساحة الإعلانات */
+/* تحويل مساحة الإعلانات لتصبح ثابتة في الأسفل */
 .ad-banner {
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 16px;
-  margin: 0 auto 32px;
-  max-width: 728px; /* حجم البنر القياسي */
+  border-top: 1px solid var(--border-color);
+  padding: 10px;
+  position: fixed; /* جعلها ثابتة */
+  bottom: 0;       /* في أسفل الشاشة */
+  left: 0;
+  width: 100%;
+  z-index: 2000;   /* لضمان ظهورها فوق الألعاب */
   text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.05);
+}
+
+/* إضافة مساحة في أسفل الجسم حتى لا يغطي الإعلان محتوى الألعاب */
+body {
+  padding-bottom: 120px; 
 }
 .ad-label {
   position: absolute;
@@ -97,7 +103,7 @@ header {
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 .stat-pill span { color: var(--accent-blue); font-weight: 700; }
-
+<script type='text/javascript' src='//your-social-bar-link.js'></script>
 /* Date banner */
 .date-banner {
   text-align: center;
@@ -273,12 +279,9 @@ body.dark-mode {
 
  <div class="date-banner" id="dateBanner"></div>
 
-  <div class="ad-banner">
-    <div class="ad-label">إعلان</div>
-    <div class="ad-content">
-      <span>مساحة إعلانية (مثال: 728x90)</span>
-      
-      </div>
+  <div class="date-banner">
+  ✨ استمتع بأفضل ألعاب الذكاء لليوم
+</div>
   </div>
 
   <div class="games-grid" id="gamesGrid"></div>
