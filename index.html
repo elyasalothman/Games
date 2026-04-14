@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="icon.png">
 <title>ألعاب اليوم</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -215,10 +216,40 @@ header {
   animation: toast-in 0.3s ease;
 }
 @keyframes toast-in { from{opacity:0;transform:translate(-50%, 10px)} to{opacity:1;transform:translate(-50%, 0)} }
+  /* الوضع الليلي (Dark Mode) */
+body.dark-mode {
+  --bg-color: #000000;
+  --card-bg: #1c1c1e;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-main: #f5f5f7;
+  --text-muted: #98989d;
+}
+
+/* أزرار التحكم باللغة والمظهر */
+.top-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 0 0;
+}
+.icon-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 50%;
+  width: 42px; height: 42px;
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: 0.2s; font-family: 'Tajawal', sans-serif; font-weight: bold;
+}
+.icon-btn:hover { transform: scale(1.05); }
 </style>
 </head>
 <body>
-
+<div class="top-controls">
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <button class="icon-btn" id="langBtn" onclick="toggleLang()">EN</button>
+  </div>
 <div class="container">
   <header>
     <div class="logo-icon">🎮</div>
@@ -438,16 +469,15 @@ function playSound(type) {
 
 // ─── DATA (تمت إضافة اللعبتين الجديدتين) ───
 const GAMES = [
-  {id:'snake',   name:'الثعبان',       icon:'🐍', desc:'كُل الطعام دون أن تصطدم! (سرعة معدلة)'},
-  {id:'memory',  name:'تطابق الذاكرة',  icon:'🧠', desc:'اقلب البطاقات واكتشف الأزواج المتطابقة!'},
-  {id:'math',    name:'تحدي الأرقام',   icon:'🔢', desc:'أجب على الأسئلة الرياضية (وقت أطول).'},
-  {id:'word',    name:'فك الكلمة',      icon:'📝', desc:'رتّب الحروف لتكوّن كلمة صحيحة!'},
-  {id:'reaction',name:'رد الفعل',       icon:'⚡', desc:'اضغط بمجرد تغيّر اللون وقيس سرعتك!'},
-  {id:'color',   name:'مطابقة الألوان',icon:'🎨', desc:'اختر لون النص وليس معنى الكلمة!'},
-  {id:'guesser', name:'خمن الرقم',      icon:'🤔', desc:'هل يمكنك تخمين الرقم السري بأقل محاولات؟'},
-  {id:'sequence',name:'تتبع النمط',     icon:'🧩', desc:'تذكر تسلسل الألوان وأعد تكراره!'}
+  {id:'snake',   name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
+  {id:'memory',  name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
+  {id:'math',    name:{ar:'تحدي الأرقام', en:'Math Challenge'}, icon:'🔢', desc:{ar:'أجب على الأسئلة الرياضية بسرعة.', en:'Answer math questions quickly.'}},
+  {id:'word',    name:{ar:'فك الكلمة', en:'Word Scramble'}, icon:'📝', desc:{ar:'رتّب الحروف لتكوّن كلمة صحيحة!', en:'Rearrange letters to form a word!'}},
+  {id:'reaction',name:{ar:'رد الفعل', en:'Reaction Time'}, icon:'⚡', desc:{ar:'اضغط بمجرد تغيّر اللون!', en:'Click as soon as the color changes!'}},
+  {id:'color',   name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
+  {id:'guesser', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
+  {id:'sequence',name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}}
 ];
-
 // ─── STORAGE & CORE ───
 function getStore(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def;}catch{return def;}}
 function setStore(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
@@ -466,24 +496,87 @@ function checkStreak(){
   return streak;
 }
 
-function init(){
-  document.getElementById('streakCount').textContent=checkStreak();
-  document.getElementById('totalScore').textContent=getStore('totalScore',0);
-  document.getElementById('todayGames').textContent=getStore('todayGamesCount',0);
-  
-  const d=new Date();
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('dateBanner').textContent = d.toLocaleDateString('ar-SA', options);
+// ─── THEME & LANGUAGE SYSTEM ───
+let currentTheme = getStore('theme', 'light');
+let currentLang = getStore('lang', 'ar');
 
-  const grid=document.getElementById('gamesGrid');
-  grid.innerHTML='';
-  GAMES.forEach(g=>{
-    const best=getStore(`best_${g.id}`,'---');
-    grid.innerHTML+=`<div class="game-card" onclick="openGame('${g.id}')">
+const DICT = {
+  ar: {
+    subtitle: "ألعاب سريعة لتنشيط ذهنك",
+    streak: "سلسلة الأيام:",
+    totalScore: "إجمالي النقاط:",
+    todayGames: "ألعاب اليوم:",
+    best: "🏆 أفضل:",
+    adLabel: "إعلان",
+    adSpace: "مساحة إعلانية (مثال: 728x90)"
+  },
+  en: {
+    subtitle: "Quick games to boost your mind",
+    streak: "Day Streak:",
+    totalScore: "Total Score:",
+    todayGames: "Today's Games:",
+    best: "🏆 Best:",
+    adLabel: "Ad",
+    adSpace: "Ad Space (e.g., 728x90)"
+  }
+};
+
+function applyTheme() {
+  if (currentTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    document.getElementById('themeBtn').textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.getElementById('themeBtn').textContent = '🌙';
+  }
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+  setStore('theme', currentTheme); applyTheme();
+}
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'EN' : 'عربي';
+  
+  const d = DICT[currentLang];
+  document.querySelector('.sub-logo').textContent = d.subtitle;
+  document.querySelectorAll('.stat-pill')[0].childNodes[0].nodeValue = d.streak + ' ';
+  document.querySelectorAll('.stat-pill')[1].childNodes[0].nodeValue = d.totalScore + ' ';
+  document.querySelectorAll('.stat-pill')[2].childNodes[0].nodeValue = d.todayGames + ' ';
+  document.querySelector('.ad-label').textContent = d.adLabel;
+  document.querySelector('.ad-content span').textContent = d.adSpace;
+  
+  init(); // إعادة رسم البطاقات باللغة الجديدة
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  setStore('lang', currentLang); applyLang();
+}
+
+// تحديث دالة init لتدعم اللغة
+function init() {
+  document.getElementById('streakCount').textContent = checkStreak();
+  document.getElementById('totalScore').textContent = getStore('totalScore', 0);
+  document.getElementById('todayGames').textContent = getStore('todayGamesCount', 0);
+  
+  const d = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+  document.getElementById('dateBanner').textContent = d.toLocaleDateString(locale, options);
+
+  const grid = document.getElementById('gamesGrid');
+  grid.innerHTML = '';
+  GAMES.forEach(g => {
+    const best = getStore(`best_${g.id}`, '---');
+    grid.innerHTML += `<div class="game-card" onclick="openGame('${g.id}')">
       <span class="game-icon">${g.icon}</span>
-      <div class="game-name">${g.name}</div>
-      <div class="game-desc">${g.desc}</div>
-      <div class="game-best">🏆 أفضل: ${best}</div>
+      <div class="game-name">${g.name[currentLang]}</div>
+      <div class="game-desc">${g.desc[currentLang]}</div>
+      <div class="game-best">${DICT[currentLang].best} ${best}</div>
     </div>`;
   });
 }
@@ -1033,6 +1126,8 @@ function handleSeqClick(id){
 
 // ─── START ───
 init();
+  applyTheme();
+applyLang();
 </script>
 </body>
 </html>
