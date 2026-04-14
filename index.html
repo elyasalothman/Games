@@ -219,7 +219,7 @@ header {
 </head>
 <body>
 
-<<div class="container">
+<div class="container">
   <header>
     <div class="logo-icon">🎮</div>
     <div class="sub-logo">ألعاب سريعة لتنشيط ذهنك</div>
@@ -404,9 +404,11 @@ header {
 
 <script>
 // ─── AUDIO SYSTEM (مؤثرات صوتية بسيطة برمجياً) ───
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx;
 function playSound(type) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain); gain.connect(audioCtx.destination);
@@ -489,7 +491,6 @@ function init(){
 function openGame(id){
   document.getElementById(id+'Overlay').classList.add('active');
   document.body.style.overflow='hidden';
-  if(audioCtx.state === 'suspended') audioCtx.resume();
   
   if(id==='memory') initMemory();
   if(id==='word') initWord();
