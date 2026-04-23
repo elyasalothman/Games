@@ -85,6 +85,7 @@ module.exports = function(io) {
 
             const player = r.players[socket.id];
             const card = player.cards[cardIndex];
+            if (!card) return;
             const topCard = r.discardPile[r.discardPile.length - 1];
 
             if (isValidPlay(card, topCard, r.currentColor)) {

@@ -15,13 +15,123 @@
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <!-- أيقونة الشاشة الرئيسية لأجهزة آبل (iOS) - يُفضل PNG بجودة عالية -->
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ألعاب اليوم">
 <title>ألعاب اليوم | ألعاب ذكاء وتنشيط ذاكرة مجانية عبر المتصفح</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
+<style id="aesthetic-touches">
+  /* 1. تأثير الدخول السلس للمحتوى (Fade-In Up) */
+  .container {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 2. تأثير الزجاج (Glassmorphism) للشريط العلوي والإحصائيات */
+  .top-controls, .stats-bar {
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  /* 3. تأثير التمويه والخلفية للنوافذ المنبثقة (Modals Backdrop Blur) */
+  .overlay {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.5) !important;
+    transition: all 0.3s ease;
+  }
+  .game-modal {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+  }
+
+  /* 4. حركة طفو لطيفة لشعار الموقع (Floating Logo) */
+  header h1.logo-icon {
+    display: inline-block;
+    animation: floatLogo 4s ease-in-out infinite;
+    /* 5. توهج نيون جذاب للشعار */
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+  }
+  @keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* 6. توهج وتأثير صعود للأزرار الرئيسية عند التمرير */
+  .btn.primary {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  .btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  }
+
+  /* 7. حركة تكبير لأزرار التبويبات (Category Tabs) */
+  .tab-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .tab-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    background-color: rgba(128, 128, 128, 0.1);
+  }
+
+  /* 8. دوران وتكبير للأيقونات العلوية عند التمرير */
+  .icon-btn {
+    transition: all 0.3s ease;
+  }
+  .icon-btn:hover {
+    transform: rotate(15deg) scale(1.15);
+  }
+
+  /* 9. تأثير النبض لشريط البحث عند التركيز */
+  .search-input {
+    transition: all 0.3s ease;
+  }
+  .search-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    transform: scale(1.02);
+  }
+
+  /* 10. شريط تمرير (Scrollbar) حديث وأنيق */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+  /* 11. تفاعل مربعات النقاط (Score Boxes Lift) */
+  .score-box { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+  .score-box:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+  /* 13. توهج الشاشة الافتتاحية ونبض النص (Loader Enhancements) */
+  .loader-spinner { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)); }
+  .loader-text { animation: pulseText 1.5s infinite alternate; }
+  @keyframes pulseText { from { opacity: 0.6; transform: scale(0.98); } to { opacity: 1; transform: scale(1.02); } }
+
+  /* 14. نقطة حمراء نابضة للألعاب المباشرة (Live Badge) */
+  .live-badge { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+  .live-badge::before {
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    background-color: #ef4444; border-radius: 50%;
+    animation: liveBlink 1s infinite alternate;
+  }
+  @keyframes liveBlink { from { opacity: 1; box-shadow: 0 0 8px #ef4444; } to { opacity: 0.4; box-shadow: none; } }
+
+  /* 15. تمييز إضافي لشريط الإعلانات عند التمرير (Date Banner Interactive) */
+  .date-banner { transition: all 0.3s ease; border-radius: 12px; }
+  .date-banner:hover { background-color: rgba(128, 128, 128, 0.1); transform: scale(1.01); }
+</style>
 </head>
 <body>
 
@@ -32,11 +142,14 @@
   </div>
 
   <div class="top-controls">
+    <button type="button" class="icon-btn" onclick="toggleFullscreen()" title="ملء الشاشة">🔲</button>
+    <button type="button" class="icon-btn" onclick="openQuests()" title="المهام اليومية">📋</button>
     <button type="button" class="icon-btn" id="radioBtn" onclick="nextRadioStation()" title="تغيير المحطة (الراديو)">📻</button>
     <button type="button" class="icon-btn" id="soundBtn" onclick="toggleSound()" title="تشغيل/إيقاف الصوت">🔊</button>
     <button type="button" class="icon-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
     <button type="button" class="icon-btn" id="langBtn" onclick="toggleLang()">EN</button>
     <button type="button" class="icon-btn leaderboard-btn" onclick="openLeaderboard()">🏆 الأوائل</button>
+    <button type="button" class="icon-btn" id="profileBtn" onclick="openProfile()" title="الملف الشخصي">👤</button>
   </div>
 
   <div class="container">
@@ -55,14 +168,21 @@
     <div class="date-banner" id="dateBanner"></div>
     <div class="date-banner mt-minus-15 text-blue">✨ استمتع بأفضل ألعاب الذكاء لليوم</div>
 
-    <div class="games-grid" id="gamesGrid"></div>
+    <!-- شريط البحث (Search Bar) -->
+    <div class="search-container text-center mb-16">
+      <input type="text" id="gameSearchInput" class="search-input" placeholder="🔍 ابحث عن لعبة..." oninput="filterGames()">
+    </div>
 
-    <!-- قسم ألعاب الورق -->
-    <header class="pt-40 pb-0">
-      <h2 class="logo-icon font-bold text-28">🃏 ألعاب الورق</h2>
-      <div class="sub-logo">تحديات استراتيجية وجماعية</div>
-    </header>
-    <div class="games-grid" id="cardGamesGrid"></div>
+    <!-- تبويبات التصنيف -->
+    <div class="category-tabs" id="categoryTabs">
+      <button class="tab-btn active" onclick="filterCategory('all', event)">الكل</button>
+      <button class="tab-btn" onclick="filterCategory('puzzle', event)">🧠 ذكاء</button>
+      <button class="tab-btn" onclick="filterCategory('card', event)">🃏 ورق</button>
+      <button class="tab-btn live-badge" onclick="filterCategory('online', event)">🌐 أونلاين</button>
+      <button class="tab-btn" onclick="filterCategory('favorites', event)">⭐ المفضلة</button>
+    </div>
+
+    <div class="games-grid" id="gamesGrid"></div>
 
   </div>
 <!-- SNAKE MODAL -->
@@ -249,6 +369,40 @@
   </div>
 </div>
 
+<!-- QUESTS MODAL -->
+<div class="overlay" id="questsOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 المهام اليومية</div>
+      <button type="button" class="close-btn" onclick="closeQuests()">✕</button>
+    </div>
+    <p class="text-muted text-center mb-16 text-11">تتجدد المهام يومياً منتصف الليل</p>
+    <div id="questsList"></div>
+  </div>
+</div>
+
+<!-- PROFILE & ACHIEVEMENTS MODAL -->
+<div class="overlay" id="profileOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 الملف الشخصي والأوسمة</div>
+      <button type="button" class="close-btn" onclick="closeProfile()">✕</button>
+    </div>
+    <div class="profile-header text-center mb-16">
+      <select id="profileAvatar" class="avatar-select" title="اختر صورتك الرمزية" onchange="saveProfile()"></select>
+      <input type="text" id="profileName" class="name-input mt-8" placeholder="أدخل اسمك هنا" onchange="saveProfile()">
+    </div>
+    <h3 class="font-bold text-blue mb-15">🏅 إنجازاتي</h3>
+    <div id="achievementsList" class="achievements-grid">
+      <!-- سيتم تحميل الإنجازات هنا -->
+    </div>
+    <div class="flex-center-gap mt-15">
+      <button type="button" class="btn btn-blue" onclick="exportSave()">💾 تصدير التقدم</button>
+      <button type="button" class="btn btn-orange" onclick="importSave()">📂 استيراد</button>
+    </div>
+  </div>
+</div>
+
 <!-- AGAR.IO CLONE MODAL -->
 <div class="overlay" id="agarOverlay">
   <div class="game-modal large-modal">
@@ -256,26 +410,56 @@
       <div class="modal-title">🌐 معركة الخلايا (أونلاين)</div>
       <button type="button" class="close-btn" onclick="closeGame('agar')">✕</button>
     </div>
-    <div id="agarStartScreen" class="start-screen">
-        <input type="text" id="agarName" placeholder="أدخل اسمك لتلعب" class="name-input">
-        <div class="flex-center-gap-10 mb-15">
-            <input type="color" id="agarColor" value="#007aff" class="color-picker" title="اختر لون الخلية">
-            <select id="agarSkin" title="اختر شكل الخلية" class="skin-select">
-                <option value="">بدون شكل (لون فقط)</option>
-                <option value="👽">👽 فضائي</option>
-                <option value="🐯">🐯 نمر</option>
-                <option value="🤡">🤡 مهرج</option>
-                <option value="👻">👻 شبح</option>
-                <option value="🎃">🎃 يقطينة</option>
-                <option value="🤖">🤖 آلي</option>
-                <option value="💀">💀 جمجمة</option>
-                <option value="😎">😎 رائع</option>
-            </select>
+    <div id="agarStartScreen" class="agar-start-container">
+        <div class="agar-decor"></div>
+        <div class="agar-decor-2"></div>
+        <h2 class="agar-title">🦠 معركة الخلايا</h2>
+        <p class="agar-subtitle">جهز خليتك، اختر شكلك، واستعد للالتهام!</p>
+
+        <div class="agar-setup-box">
+            <input type="text" id="agarName" placeholder="أدخل اسمك هنا" class="agar-name-input">
+            <div class="agar-options">
+                <div class="color-wrap flex-center-gap">
+                    <label>اللون:</label>
+                    <input type="color" id="agarColor" value="#00d2ff" class="agar-color-picker" title="اختر لون الخلية">
+                </div>
+                <div class="skin-wrap flex-center-gap">
+                    <label>الشكل:</label>
+                    <select id="agarSkin" title="اختر شكل الخلية" class="agar-skin-select">
+                        <option value="">بدون شكل</option>
+                        <option value="👽">👽 فضائي</option>
+                        <option value="🐯">🐯 نمر</option>
+                        <option value="🤡">🤡 مهرج</option>
+                        <option value="👻">👻 شبح</option>
+                        <option value="🎃">🎃 يقطينة</option>
+                        <option value="🤖">🤖 آلي</option>
+                        <option value="💀">💀 جمجمة</option>
+                        <option value="😎">😎 رائع</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="flex-center-wrap mt-15">
-            <button type="button" class="btn primary" onclick="joinAgarGame('public')">🌐 أونلاين (عام)</button>
-            <button type="button" class="btn btn-purple" onclick="joinAgarGame('private')">🔒 غرفة خاصة</button>
-            <button type="button" class="btn btn-orange" onclick="joinAgarGame('computer')">🤖 ضد الكمبيوتر</button>
+
+        <div class="agar-modes-grid">
+            <button type="button" class="agar-mode-btn mode-online live-badge" onclick="joinAgarGame('public')">
+                <span class="mode-icon">🌐</span>
+                <span class="mode-text">أونلاين (عام)</span>
+            </button>
+            <button type="button" class="agar-mode-btn mode-private" onclick="joinAgarGame('private')">
+                <span class="mode-icon">🔒</span>
+                <span class="mode-text">غرفة خاصة</span>
+            </button>
+            <button type="button" class="agar-mode-btn mode-bot" onclick="joinAgarGame('computer')">
+                <span class="mode-icon">🤖</span>
+                <span class="mode-text">ضد الكمبيوتر</span>
+            </button>
+        </div>
+
+        <div class="agar-settings-box">
+            <label style="cursor: pointer; user-select: none;">
+                <input type="checkbox" id="agarLowGraphics" style="margin-left: 5px;">
+                رسومات منخفضة (بدون ظلال لتسريع اللعب)
+            </label>
         </div>
     </div>
     <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas d-none"></canvas>
@@ -288,6 +472,7 @@
 
     <!-- زر الانقسام لمستخدمي اللمس (الجوال) -->
     <button type="button" id="mobileSplitBtn" class="mobile-action-btn d-none" onclick="splitAgarMobile()">انقسام</button>
+    <button type="button" id="mobileShootBtn" class="mobile-action-btn d-none" onclick="shootAgarMobile()">إطعام</button>
   </div>
 </div>
 
@@ -303,7 +488,7 @@
     <div id="balootStartScreen" class="start-screen">
         <input type="text" id="balootName" placeholder="أدخل اسمك" class="dark-name-input">
         <div class="flex-center-wrap mt-15">
-            <button type="button" class="btn primary" onclick="joinBalootGame('public')">🌐 أونلاين (عام)</button>
+            <button type="button" class="btn primary live-badge" onclick="joinBalootGame('public')">🌐 أونلاين (عام)</button>
             <button type="button" class="btn btn-purple" onclick="joinBalootGame('private')">🔒 غرفة خاصة</button>
             <button type="button" class="btn btn-orange" onclick="joinBalootGame('computer')">🤖 ضد الكمبيوتر</button>
         </div>
@@ -360,7 +545,7 @@
     <div id="unoStartScreen" class="start-screen">
         <input type="text" id="unoName" placeholder="أدخل اسمك" class="dark-name-input">
         <div class="flex-center-wrap mt-15">
-            <button type="button" class="btn primary" onclick="joinUnoGame('public')">🌐 أونلاين (5 لاعبين)</button>
+            <button type="button" class="btn primary live-badge" onclick="joinUnoGame('public')">🌐 أونلاين (5 لاعبين)</button>
             <button type="button" class="btn btn-purple" onclick="joinUnoGame('private')">🔒 غرفة خاصة (8 لاعبين)</button>
             <button type="button" class="btn btn-orange" onclick="joinUnoGame('computer')">🤖 ضد الكمبيوتر</button>
      </div>
@@ -379,6 +564,13 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+<script src="script.js?v=2"></script>
+<script>
+  // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
+  setTimeout(function() {
+    var loader = document.getElementById('globalLoader');
+    if (loader) loader.remove();
+  }, 1200);
+</script>
 </body>
 </html>

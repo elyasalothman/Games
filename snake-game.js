@@ -14,6 +14,14 @@ function drawSnakeIdle(){
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,320,320);
   ctx.fillStyle='#0f0f1b'; ctx.fillRect(0,0,320,320); // خلفية أركيد داكنة
+  
+  // رسم شبكة خفيفة لتسهيل اللعب
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)'; ctx.lineWidth = 1;
+  for(let i=0; i<=COLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i*SZ, 0); ctx.lineTo(i*SZ, 320); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*SZ); ctx.lineTo(320, i*SZ); ctx.stroke();
+  }
+
   ctx.fillStyle='#00d2ff'; ctx.font='bold 16px Tajawal'; ctx.textAlign='center';
   ctx.fillText('اضغط ▶ ابدأ للعب', 160, 160);
 }
@@ -46,7 +54,16 @@ function snakeDir(dx,dy){
 function tickSnake(){
   snakeGame.dir=snakeGame.nextDir;
   const head={x:snakeGame.snake[0].x+snakeGame.dir.x, y:snakeGame.snake[0].y+snakeGame.dir.y};
-  if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||snakeGame.snake.some(s=>s.x===head.x&&s.y===head.y)){
+  
+  // تحسين 2: عبور الجدران (الظهور من الجهة المقابلة) بدلاً من الخسارة
+  if(head.x < 0) head.x = COLS - 1;
+  else if(head.x >= COLS) head.x = 0;
+  
+  if(head.y < 0) head.y = ROWS - 1;
+  else if(head.y >= ROWS) head.y = 0;
+
+  // الخسارة فقط عند الاصطدام بالنفس
+  if(snakeGame.snake.some(s=>s.x===head.x&&s.y===head.y)){
     stopSnake(); playSound('gameover');
     submitScore('snake', snakeGame.score, false);
     const best=Math.max(snakeGame.score,getStore('best_snake',0));
@@ -68,6 +85,13 @@ function drawSnake(){
   ctx.clearRect(0,0,320,320);
   ctx.fillStyle='#0f0f1b'; ctx.fillRect(0,0,320,320);
   
+  // رسم شبكة خفيفة لمساعدة اللاعب في تحديد المسارات
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)'; ctx.lineWidth = 1;
+  for(let i=0; i<=COLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i*SZ, 0); ctx.lineTo(i*SZ, 320); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i*SZ); ctx.lineTo(320, i*SZ); ctx.stroke();
+  }
+
   ctx.shadowBlur = 10; ctx.shadowColor = '#ff3366'; // توهج الطعام
   ctx.fillStyle='#ff3366'; 
   ctx.beginPath();ctx.arc(snakeGame.food.x*SZ+SZ/2,snakeGame.food.y*SZ+SZ/2,SZ/2-2,0,Math.PI*2);ctx.fill();
@@ -75,7 +99,11 @@ function drawSnake(){
   ctx.shadowColor = '#00d2ff'; // توهج الثعبان
   ctx.fillStyle='#00d2ff'; 
   snakeGame.snake.forEach((s,i)=>{
-    ctx.beginPath();ctx.roundRect(s.x*SZ+1,s.y*SZ+1,SZ-2,SZ-2,4);ctx.fill();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();ctx.roundRect(s.x*SZ+1,s.y*SZ+1,SZ-2,SZ-2,4);ctx.fill();
+    } else {
+      ctx.fillRect(s.x*SZ+1,s.y*SZ+1,SZ-2,SZ-2);
+    }
   });
   ctx.shadowBlur = 0; // إعادة ضبط التوهج
 }

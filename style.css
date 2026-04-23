@@ -1,5 +1,6 @@
 :root {
   --bg-color: #121220;
+  --glass-bg: rgba(18, 18, 32, 0.75);
   --card-bg: #1c1c2e;
   --border-color: #2d2d44;
   --text-main: #ffffff;
@@ -17,12 +18,42 @@
   -webkit-tap-highlight-color: transparent; /* إخفاء الوميض الرمادي عند الضغط في الجوال */
 }
 
+/* 1. منع التحديد العشوائي للنص في العناصر التفاعلية */
+.btn, .game-card, .icon-btn, .dpad button, .seq-btn, .reaction-zone, .mem-card, .uno-card, .baloot-card, .stat-pill, .mobile-action-btn {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 2. توحيد الخطوط في حقول الإدخال */
+input, select, button, textarea {
+  font-family: inherit;
+}
+
+/* 3. استبدال إطار التركيز الافتراضي */
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
 body {
   background: var(--bg-color);
   color: var(--text-main);
   font-family: 'Tajawal', sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  position: relative;
+}
+
+/* 1. Animated Glow Background (خلفية مضيئة متحركة) */
+body::before {
+  content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.05), transparent 50%);
+  z-index: -1; pointer-events: none; animation: bgGlow 15s ease-in-out infinite alternate;
+}
+@keyframes bgGlow {
+  0% { transform: scale(0.8) translate(0, 0); }
+  100% { transform: scale(1.2) translate(5%, 5%); }
 }
 .container { max-width: 900px; margin: 0 auto; padding: 0 16px; }
 
@@ -44,8 +75,9 @@ body {
 }
 .loader-spinner {
   width: 50px; height: 50px;
-  border: 5px solid var(--border-color);
+  border: 4px solid var(--border-color);
   border-top-color: var(--accent-blue);
+  border-right-color: var(--accent-purple); /* 8. Modern Loader (عجلة تحميل عصرية) */
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -58,9 +90,20 @@ body {
 /* Header */
 header {
   text-align: center;
-  padding: 40px 16px 20px;
+  padding: 85px 16px 20px; /* زيادة المساحة العلوية لتجنب تداخل الشريط الزجاجي */
 }
-.logo-icon { font-size: 32px; margin-bottom: 8px; display: inline-block; }
+.logo-icon { 
+  font-size: 32px; margin-bottom: 8px; display: inline-block; 
+  background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple)); /* 2. Gradient Logo (شعار متدرج) */
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: floatLogo 3s ease-in-out infinite;
+}
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.2)); }
+  50% { transform: translateY(-6px); filter: drop-shadow(0 8px 20px rgba(0, 210, 255, 0.6)); }
+}
 .sub-logo { font-size: 15px; color: var(--text-muted); font-weight: 500; }
 
 /* Stats bar */
@@ -69,13 +112,14 @@ header {
   padding: 16px 0; margin: 0 auto;
 }
 .stat-pill {
-  background: var(--card-bg);
+  background: var(--glass-bg); /* 3. Glassmorphism Stats (إحصائيات زجاجية) */
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 4px 0 var(--border-color);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 .stat-pill span { color: var(--accent-blue); font-weight: 700; }
 
@@ -101,11 +145,20 @@ header {
   border-radius: 20px;
   padding: 24px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   position: relative;
   box-shadow: 0 8px 0 var(--border-color);
   animation: fadeInUp 0.5s ease backwards;
+  overflow: hidden;
 }
+
+/* 4. Card Shine Effect (تأثير لمعان البطاقات) */
+.game-card::after {
+  content: ''; position: absolute; top: -100%; left: -100%; width: 50%; height: 300%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(45deg); transition: all 0.6s ease; pointer-events: none;
+}
+.game-card:hover::after { left: 200%; }
 .game-card:nth-child(1) { animation-delay: 0.05s; }
 .game-card:nth-child(2) { animation-delay: 0.1s; }
 .game-card:nth-child(3) { animation-delay: 0.15s; }
@@ -116,6 +169,42 @@ header {
 .game-card:nth-child(8) { animation-delay: 0.4s; }
 .game-card:nth-child(9) { animation-delay: 0.45s; }
 .game-card:nth-child(10) { animation-delay: 0.5s; }
+/* 4. توسيع أنيميشن البطاقات لتشمل الألعاب الجديدة */
+.game-card:nth-child(11) { animation-delay: 0.55s; }
+.game-card:nth-child(12) { animation-delay: 0.6s; }
+.game-card:nth-child(13) { animation-delay: 0.65s; }
+.game-card:nth-child(14) { animation-delay: 0.7s; }
+
+/* Search Bar */
+.search-input {
+  width: 100%; max-width: 400px; padding: 12px 20px;
+  border-radius: 20px; border: 1px solid var(--border-color);
+  background: var(--glass-bg); color: var(--text-main);
+  font-size: 15px; font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05); outline: none;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+.search-input:focus { border-color: var(--accent-blue); box-shadow: 0 4px 20px rgba(0,210,255,0.15); }
+
+/* Category Tabs */
+.category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab-btn { background: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: Tajawal; font-weight: bold; transition: 0.2s; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.tab-btn:hover { color: var(--text-main); border-color: var(--accent-blue); }
+.tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+/* Card Actions (Fav, Share) */
+.card-actions { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; z-index: 10; }
+.card-action-btn { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: 0.2s; color: var(--text-main); }
+.card-action-btn:hover { transform: scale(1.1); border-color: var(--accent-blue); }
+.card-action-btn.active-fav { color: #ffcc00; border-color: #ffcc00; }
+
+/* Quests */
+.quest-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.quest-info h4 { font-size: 14px; margin-bottom: 8px; }
+.quest-progress-bg { background: var(--card-bg); height: 8px; border-radius: 4px; overflow: hidden; width: 140px; border: 1px solid var(--border-color); }
+.quest-progress-fill { background: var(--accent-green); height: 100%; width: 0%; transition: 0.3s; }
+.quest-reward { font-size: 12px; color: var(--accent-orange); font-weight: bold; margin-top: 4px; }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -142,7 +231,7 @@ header {
   background: rgba(0,0,0,0.75);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  z-index: 100;
+  z-index: 9999; /* تم الرفع ليغطي الشريط العلوي تماماً */
   align-items: center;
   justify-content: center;
   padding: 16px;
@@ -156,14 +245,16 @@ header {
   background: var(--card-bg);
   border-radius: 24px;
   width: 100%; max-width: 480px;
-  max-height: 90vh;
+  max-height: 85vh; /* تقليل الارتفاع لترك مساحة جمالية من الأعلى والأسفل */
+  display: flex; flex-direction: column;
   overflow-y: auto;
-  padding: 30px;
+  padding: 24px;
   box-shadow: 0 10px 0 var(--border-color), 0 0 40px rgba(0,210,255,0.2);
   border: 2px solid var(--border-color);
   transform: scale(0.95);
   opacity: 0;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; /* 5. Bouncy Modals (نوافذ مرنة) */
+  scroll-behavior: smooth; /* 5. تمرير ناعم للنوافذ */
 }
 .overlay.active .game-modal {
   transform: scale(1);
@@ -171,14 +262,28 @@ header {
 }
 .modal-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color); /* إضافة خط فاصل أنيق */
+  flex-shrink: 0;
 }
 .modal-title { font-size: 22px; font-weight: 700; }
 .close-btn {
-  background: var(--bg-color); border: none;
-  color: var(--text-muted); border-radius: 50%;
-  width: 32px; height: 32px; cursor: pointer; font-size: 14px;
+  background: var(--glass-bg); 
+  border: 1px solid var(--border-color);
+  color: var(--text-main); 
+  border-radius: 50%;
+  width: 38px; height: 38px; 
+  cursor: pointer; font-size: 16px;
   display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+}
+.close-btn:hover {
+  background: var(--accent-red);
+  color: #fff;
+  border-color: var(--accent-red);
+  transform: rotate(90deg);
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
 }
 .score-display {
   display: flex; justify-content: center; gap: 16px;
@@ -208,12 +313,24 @@ header {
   transition: all 0.1s;
   font-weight: 700;
   box-shadow: 0 5px 0 rgba(0,0,0,0.5);
-  touch-action: manipulation; /* تسريع الاستجابة للّمس ومنع التقريب */
 }
 .btn:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.5); }
-.btn.primary { background: var(--accent-blue); color: #fff; }
+.btn.primary { 
+  background: var(--accent-blue); color: #fff; 
+  animation: pulsePrimary 2s infinite; 
+}
+@keyframes pulsePrimary {
+  0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4), 0 5px 0 rgba(0,0,0,0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 210, 255, 0), 0 5px 0 rgba(0,0,0,0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0), 0 5px 0 rgba(0,0,0,0.5); }
+}
 .btn.primary:hover { filter: brightness(1.2); }
 .btn.danger { background: var(--accent-red); color: #fff; }
+
+/* 9. تسريع استجابة اللمس للبطاقات والأزرار المتبقية */
+.game-card, .icon-btn, .mobile-action-btn {
+  touch-action: manipulation;
+}
 
 /* Snake Game Fix */
 #snakeCanvas {
@@ -229,15 +346,17 @@ header {
 /* Toast */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.8); color: #fff;
-  border-radius: 20px; padding: 12px 24px;
+  background: var(--glass-bg); color: var(--text-main); /* 6. Premium Toasts (إشعارات فخمة) */
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
+  border-radius: 20px; padding: 12px 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   font-size: 14px; font-weight: 500; z-index: 999;
-  animation: toast-in 0.3s ease;
+  animation: toast-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes toast-in { from{opacity:0;transform:translate(-50%, 10px)} to{opacity:1;transform:translate(-50%, 0)} }
   /* الوضع الليلي (Dark Mode) */
 body.dark-mode {
   --bg-color: #f5f5f7;
+  --glass-bg: rgba(245, 245, 247, 0.75);
   --card-bg: #ffffff;
   --border-color: rgba(0, 0, 0, 0.08);
   --text-main: #1d1d1f;
@@ -246,10 +365,18 @@ body.dark-mode {
 
 /* أزرار التحكم باللغة والمظهر */
 .top-controls {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 16px;
+  z-index: 1000;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 16px 0 0;
+  pointer-events: none; /* السماح بالضغط على العناصر خلف المساحة الفارغة */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
 }
 .icon-btn {
   background: var(--card-bg);
@@ -260,8 +387,14 @@ body.dark-mode {
   font-size: 16px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: 0.2s; font-family: 'Tajawal', sans-serif; font-weight: bold;
+  pointer-events: auto; /* تفعيل الضغط على الأزرار فقط */
 }
-.icon-btn:hover { transform: scale(1.05); }
+/* 7. Top Controls Hover (تأثير حركي لأزرار التحكم) */
+.icon-btn:hover { 
+  transform: scale(1.1) translateY(-2px); 
+  border-color: var(--accent-blue);
+  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2);
+}
   /* ----------------------------------- */
 /* إصلاح شبكة لعبة تطابق الذاكرة (Memory Grid) */
 /* ----------------------------------- */
@@ -334,11 +467,12 @@ body.dark-mode {
   cursor: pointer;
   color: var(--text-main);
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 0 var(--border-color), 0 8px 15px rgba(0,0,0,0.1); /* 9. Neumorphic D-Pad (أزرار بارزة) */
 }
 .dpad button:active {
-  transform: scale(0.95);
-  background: var(--border-color);
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--border-color), inset 0 2px 5px rgba(0,0,0,0.2);
+  background: var(--bg-color);
 }
 /* إخفاء المربعات الفارغة في زوايا أزرار التحكم */
 .dpad div {
@@ -365,6 +499,15 @@ body.dark-mode {
   font-weight: bold;
   color: var(--accent-blue);
 }
+
+/* Profile & Achievements */
+.avatar-select { font-size: 40px; background: transparent; border: none; outline: none; cursor: pointer; text-align: center; }
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; max-height: 300px; overflow-y: auto; padding-right: 5px; }
+.achieve-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+.achieve-card.locked { opacity: 0.5; filter: grayscale(1); }
+.achieve-icon { font-size: 28px; }
+.achieve-info h4 { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+.achieve-info p { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
 
 /* Reaction Game Styles */
 .reaction-zone {
@@ -649,25 +792,82 @@ body.dark-mode {
 #leaderboardGameSelect { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid var(--border-color); font-family: Tajawal; font-size: 15px; outline: none; background: var(--bg-color); color: var(--text-main); }
 #leaderboardContent { min-height: 200px; max-height: 400px; overflow-y: auto; }
 
-.large-modal { width: 95vw; max-width: 1200px; height: 95vh; display: flex; flex-direction: column; padding: 16px; }
+.large-modal { width: 95vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; padding: 24px; }
 .dark-modal { background: #1a1a1a; color: #fff; }
 .start-screen { text-align: center; padding: 40px; }
 .name-input { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; font-family: Tajawal; }
 .dark-name-input { padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; font-family: Tajawal; background: #333; color: #fff; width: 60%; }
 
 /* زر الانقسام الخاص بالجوال في لعبة أجار */
-.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid white; color: white; border-radius: 50%; width: 85px; height: 85px; font-size: 16px; font-weight: bold; z-index: 1000; touch-action: none; cursor: pointer; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
-.mobile-action-btn:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.9); }
+.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 210, 255, 0.15); border: 1px solid rgba(0, 210, 255, 0.5); color: #fff; border-radius: 50%; width: 85px; height: 85px; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px rgba(0, 210, 255, 0.8); z-index: 1000; touch-action: none; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3), inset 0 0 10px rgba(0, 210, 255, 0.2); transition: all 0.2s ease; }
+.mobile-action-btn:active { background: rgba(0, 210, 255, 0.3); transform: scale(0.9); box-shadow: 0 0 25px rgba(0, 210, 255, 0.6), inset 0 0 15px rgba(0, 210, 255, 0.4); }
+#mobileShootBtn { bottom: 125px; }
 @media (hover: hover) and (pointer: fine) { .mobile-action-btn { display: none !important; } }
 
 /* زر التحريك الدائري للجوال (Joystick) */
-.joystick-container { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; z-index: 1000; touch-action: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
+.joystick-container { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(0, 210, 255, 0.05); border: 2px solid rgba(0, 210, 255, 0.3); border-radius: 50%; z-index: 1000; touch-action: none; box-shadow: 0 0 20px rgba(0, 210, 255, 0.2), inset 0 0 20px rgba(0, 210, 255, 0.1); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: radial-gradient(circle, rgba(0, 210, 255, 0.9) 0%, rgba(0, 210, 255, 0.6) 100%); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 15px rgba(0, 210, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.8); transition: transform 0.1s ease-out; }
+
+/* ----------------------------------- */
+/* شاشة بداية معركة الخلايا (Agar.io) */
+/* ----------------------------------- */
+.agar-start-container {
+  position: relative;
+  text-align: center;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(30, 30, 46, 0.9), rgba(15, 15, 25, 0.95));
+  border-radius: 20px;
+  border: 2px solid var(--accent-blue);
+  box-shadow: 0 0 30px rgba(0, 210, 255, 0.2), inset 0 0 20px rgba(0, 210, 255, 0.1);
+  overflow: hidden;
+  margin: 10px auto;
+  max-width: 600px;
+}
+.agar-decor {
+  position: absolute; top: -50px; right: -50px; width: 150px; height: 150px;
+  background: var(--accent-blue); filter: blur(60px); opacity: 0.3; border-radius: 50%; pointer-events: none;
+}
+.agar-decor-2 {
+  position: absolute; bottom: -50px; left: -50px; width: 150px; height: 150px;
+  background: var(--accent-purple); filter: blur(60px); opacity: 0.3; border-radius: 50%; pointer-events: none;
+}
+.agar-title { font-size: 28px; font-weight: bold; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.5); position: relative; z-index: 1; }
+.agar-subtitle { font-size: 14px; color: var(--accent-blue); margin-bottom: 25px; position: relative; z-index: 1; }
+.agar-setup-box { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); position: relative; z-index: 1; }
+.agar-name-input {
+  width: 100%; max-width: 300px; padding: 12px 20px; border-radius: 12px; border: 1px solid var(--accent-blue);
+  background: rgba(255,255,255,0.05); color: #fff; font-size: 16px; font-weight: bold;
+  text-align: center; margin-bottom: 15px; outline: none; transition: 0.3s; font-family: Tajawal;
+}
+.agar-name-input:focus { box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); background: rgba(255,255,255,0.1); }
+.agar-options { display: flex; justify-content: center; gap: 25px; align-items: center; flex-wrap: wrap; }
+.agar-options label { color: #ccc; font-size: 14px; font-weight: bold; }
+.agar-color-picker { width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer; background: none; padding: 0; outline: none; }
+.agar-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+.agar-color-picker::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; }
+.agar-skin-select { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.1); color: #fff; font-family: Tajawal; font-size: 16px; outline: none; cursor: pointer; }
+.agar-skin-select option { background: var(--bg-color); color: #fff; }
+.agar-modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; position: relative; z-index: 1; }
+.agar-mode-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 15px; border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); background: rgba(255,255,255,0.05); color: #fff; font-family: Tajawal;
+}
+.agar-mode-btn:hover { transform: translateY(-5px); }
+.agar-mode-btn.mode-online { border-color: var(--accent-blue); background: rgba(0, 210, 255, 0.1); }
+.agar-mode-btn.mode-online:hover { box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3); }
+.agar-mode-btn.mode-private { border-color: var(--accent-purple); background: rgba(184, 0, 255, 0.1); }
+.agar-mode-btn.mode-private:hover { box-shadow: 0 10px 20px rgba(184, 0, 255, 0.3); }
+.agar-mode-btn.mode-bot { border-color: var(--accent-orange); background: rgba(255, 170, 0, 0.1); }
+.agar-mode-btn.mode-bot:hover { box-shadow: 0 10px 20px rgba(255, 170, 0, 0.3); }
+.mode-icon { font-size: 28px; }
+.mode-text { font-size: 14px; font-weight: bold; }
+.agar-settings-box { color: var(--text-muted); font-size: 13px; position: relative; z-index: 1; background: rgba(0,0,0,0.2); display: inline-block; padding: 6px 15px; border-radius: 20px; }
 
 .color-picker { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; padding: 0; background: none; }
 .skin-select { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-family: Tajawal; outline: none; max-width: 200px; }
 
-.agar-canvas { width: 100%; flex-grow: 1; border-radius: 12px; background: #e5e5ea; cursor: crosshair; touch-action: none; }
+.agar-canvas { width: 100%; height: 100%; min-height: 0; flex-grow: 1; border-radius: 12px; background: #e5e5ea; cursor: crosshair; touch-action: none; }
 #agarStatus { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 8px; }
 
 /* Hiding elements is now done via the .d-none utility class */
@@ -677,7 +877,9 @@ body.dark-mode {
 .draw-pile { cursor: pointer; display: flex; align-items: center; justify-content: center; }
 #unoCenter { width: 80px; height: 120px; }
 #unoCurrentColor { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; }
-#unoMyHand { display: flex; gap: -20px; overflow-x: auto; padding: 20px 0; justify-content: center; }
+/* 6. إصلاح التمرير لأوراق الأونو لتجنب التداخل والتكدس */
+#unoMyHand { display: flex; gap: -20px; overflow-x: auto; padding: 20px 10px; justify-content: flex-start; scroll-behavior: smooth; }
+#unoMyHand::-webkit-scrollbar { height: 6px; }
 
 .color-opt-btn.answered-wrong {
   opacity: 0.2;
@@ -719,4 +921,79 @@ body.dark-mode {
   object-fit: cover;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   display: none;
+}
+
+/* ----------------------------------- */
+/* شريط التمرير المخصص (Custom Scrollbar) */
+/* ----------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+/* ----------------------------------- */
+/* توافق الشاشات (Responsive & Mobile) */
+/* ----------------------------------- */
+@media (max-width: 600px) {
+  /* 1. تخصيص النوافذ والمسافات للجوال */
+  .game-modal {
+    padding: 20px 16px;
+  }
+  .large-modal {
+    padding: 20px 12px;
+  }
+  header {
+    padding: 75px 12px 15px;
+  }
+  
+  /* 8. شبكة ألعاب متكيفة (عمودين بدلاً من عمود واحد لتقليص المساحة) */
+  .games-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+  .logo-icon {
+    font-size: 26px;
+  }
+  .stats-bar {
+    gap: 6px;
+  }
+  .stat-pill {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  /* 2. شريط تحكم علوي مرن */
+  .top-controls {
+    padding: 12px;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    font-size: 14px;
+  }
+  .leaderboard-btn {
+    font-size: 0; /* إخفاء النص في الجوال */
+    padding: 0; width: 36px; justify-content: center;
+  }
+  .leaderboard-btn::before {
+    content: '🏆'; font-size: 16px;
+  }
+
+  /* 3. توافقية طاولة البلوت ثلاثية الأبعاد */
+  .baloot-card { width: 45px; height: 75px; font-size: 14px; margin-left: -25px; }
+  .card-center { font-size: 16px; }
+  .baloot-center-table { width: 140px; height: 140px; }
+  /* 7. تصغير الأوراق المرمية في ساحة البلوت للجوال */
+  .baloot-center-table .baloot-card { transform: scale(0.65) !important; margin: -20px !important; }
+  .baloot-player { font-size: 12px; padding: 6px 16px; }
+  .baloot-status-3d { font-size: 18px; }
 }
