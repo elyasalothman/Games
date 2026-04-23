@@ -383,14 +383,6 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('chatMessage', (msg) => {
-        if (!socket.roomId || !rooms[socket.roomId]) return;
-        const player = rooms[socket.roomId].players[socket.id];
-        if (player) {
-            io.to(socket.roomId).emit('chatMessage', { name: player.name, msg: msg });
-        }
-    });
-
     socket.on('split', (dir) => {
         if (!socket.roomId || !rooms[socket.roomId]) return;
         Object.values(rooms[socket.roomId].players).forEach(p => {

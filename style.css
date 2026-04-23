@@ -602,18 +602,19 @@ body.dark-mode {
 .dark-name-input { padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; font-family: Tajawal; background: #333; color: #fff; width: 60%; }
 
 /* زر الانقسام الخاص بالجوال في لعبة أجار */
-.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 14px; font-weight: bold; z-index: 1000; touch-action: none; cursor: pointer; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
+.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid white; color: white; border-radius: 50%; width: 85px; height: 85px; font-size: 16px; font-weight: bold; z-index: 1000; touch-action: none; cursor: pointer; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 .mobile-action-btn:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.9); }
 @media (hover: hover) and (pointer: fine) { .mobile-action-btn { display: none !important; } }
+
+/* زر التحريك الدائري للجوال (Joystick) */
+.joystick-container { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; z-index: 1000; touch-action: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+.joystick-knob { position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
 
 .color-picker { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; padding: 0; background: none; }
 .skin-select { padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-family: Tajawal; outline: none; max-width: 200px; }
 
-.agar-canvas { width: 100%; flex-grow: 1; border-radius: 12px; background: #e5e5ea; cursor: crosshair; }
+.agar-canvas { width: 100%; flex-grow: 1; border-radius: 12px; background: #e5e5ea; cursor: crosshair; touch-action: none; }
 #agarStatus { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 8px; }
-#agarChat { position: absolute; bottom: 20px; left: 20px; width: 300px; background: rgba(0,0,0,0.6); border-radius: 12px; padding: 10px; z-index: 1000; }
-#chatMessages { height: 150px; overflow-y: auto; color: white; font-size: 14px; font-family: Tajawal; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; text-align: right; }
-#chatInput { width: 100%; padding: 8px; border-radius: 8px; border: none; outline: none; font-family: Tajawal; }
 
 /* Hiding elements is now done via the .d-none utility class */
 #unoGameScreen { flex-direction: column; flex-grow: 1; position: relative; }

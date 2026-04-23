@@ -11,8 +11,10 @@
 <meta property="og:description" content="مجموعة ألعاب ذهنية سريعة بتصميم مينيماليزم أنيق.">
 <meta property="og:url" content="https://games.alhajda.com/">
 <meta property="og:type" content="website">
-  <link rel="icon" type="image/png" href="icon.png">
-  <link rel="apple-touch-icon" href="icon.png">
+  <!-- الأيقونة الأساسية للمتصفحات الحديثة (SVG) -->
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <!-- أيقونة الشاشة الرئيسية لأجهزة آبل (iOS) - يُفضل PNG بجودة عالية -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ألعاب اليوم">
 <title>ألعاب اليوم | ألعاب ذكاء وتنشيط ذاكرة مجانية عبر المتصفح</title>
@@ -269,11 +271,11 @@
     <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas d-none"></canvas>
     <p id="agarStatus" class="d-none">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
     
-    <!-- واجهة الدردشة -->
-    <div id="agarChat" class="d-none">
-        <div id="chatMessages"></div>
-        <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا واضغط Enter...">
+    <!-- زر التحريك الدائري للجوال -->
+    <div id="joystickContainer" class="joystick-container d-none">
+        <div id="joystickKnob" class="joystick-knob"></div>
     </div>
+
     <!-- زر الانقسام لمستخدمي اللمس (الجوال) -->
     <button type="button" id="mobileSplitBtn" class="mobile-action-btn d-none" onclick="splitAgarMobile()">انقسام</button>
   </div>
