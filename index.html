@@ -12,6 +12,9 @@
 <meta property="og:url" content="https://games.alhajda.com/">
 <meta property="og:type" content="website">
   <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ألعاب اليوم">
 <title>ألعاب اليوم | ألعاب ذكاء وتنشيط ذاكرة مجانية عبر المتصفح</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -19,34 +22,43 @@
 <body>
 
   <div class="top-controls">
-    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
-    <button class="icon-btn" id="langBtn" onclick="toggleLang()">EN</button>
-    <button class="icon-btn" style="width:auto; padding:0 12px; font-size:14px;" onclick="openLeaderboard()">🏆 الأوائل</button>
+    <button type="button" class="icon-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <button type="button" class="icon-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    <button type="button" class="icon-btn leaderboard-btn" onclick="openLeaderboard()">🏆 الأوائل</button>
   </div>
 
   <div class="container">
     <header>
-      <h1 class="logo-icon" style="font-weight: 700;">🎮 ألعاب اليوم</h1>
+      <h1 class="logo-icon font-bold">🎮 ألعاب اليوم</h1>
       <div class="sub-logo">ألعاب سريعة لتنشيط ذهنك</div>
     </header>
 
     <div class="stats-bar">
+      <div class="stat-pill">مستواك: <span id="playerLevel">1</span> 🌟</div>
       <div class="stat-pill">سلسلة الأيام: <span id="streakCount">0</span></div>
       <div class="stat-pill">إجمالي النقاط: <span id="totalScore">0</span></div>
       <div class="stat-pill">ألعاب اليوم: <span id="todayGames">0</span>/8</div>
     </div>
 
     <div class="date-banner" id="dateBanner"></div>
-    <div class="date-banner" style="margin-top:-15px; color:var(--accent-blue);">✨ استمتع بأفضل ألعاب الذكاء لليوم</div>
+    <div class="date-banner mt-minus-15 text-blue">✨ استمتع بأفضل ألعاب الذكاء لليوم</div>
 
     <div class="games-grid" id="gamesGrid"></div>
+
+    <!-- قسم ألعاب الورق -->
+    <header class="pt-40 pb-0">
+      <h2 class="logo-icon font-bold text-28">🃏 ألعاب الورق</h2>
+      <div class="sub-logo">تحديات استراتيجية وجماعية</div>
+    </header>
+    <div class="games-grid" id="cardGamesGrid"></div>
+
   </div>
 <!-- SNAKE MODAL -->
 <div class="overlay" id="snakeOverlay">
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🐍 الثعبان</div>
-      <button class="close-btn" onclick="closeGame('snake')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('snake')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="snakeScore">0</div></div>
@@ -55,18 +67,18 @@
     <canvas id="snakeCanvas" width="320" height="320"></canvas>
   <div class="dpad" dir="ltr">
       <div></div>
-      <button onclick="snakeDir(0,-1)">▲</button>
+      <button type="button" onclick="snakeDir(0,-1)">▲</button>
       <div></div>
       
-      <button onclick="snakeDir(-1,0)">◀</button>
-      <button onclick="startSnake()" style="font-size: 18px; font-weight: bold;">ابدأ</button>
-      <button onclick="snakeDir(1,0)">▶</button>
+      <button type="button" onclick="snakeDir(-1,0)">◀</button>
+      <button type="button" class="snake-start-btn" onclick="startSnake()">ابدأ</button>
+      <button type="button" onclick="snakeDir(1,0)">▶</button>
       
       <div></div>
-      <button onclick="snakeDir(0,1)">▼</button>
+      <button type="button" onclick="snakeDir(0,1)">▼</button>
       <div></div>
     </div>
-    <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:8px">استخدم الأسهم أو WASD للتحكم</p>
+    <p class="text-center text-11 text-muted mt-8">استخدم الأسهم أو WASD للتحكم</p>
   </div>
 </div>
 
@@ -75,18 +87,18 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🤔 خمن الرقم</div>
-      <button class="close-btn" onclick="closeGame('guesser')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('guesser')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">المحاولات</div><div class="score-value" id="guessAttempts">0</div></div>
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="guessBest">-</div></div>
     </div>
-    <div style="text-align: center; margin: 20px 0;">
-      <p id="guessMessage" style="font-size: 18px; font-weight: bold; margin-bottom: 16px;">أنا أفكر في رقم بين 1 و 100</p>
-      <input type="number" id="guessInput" placeholder="أدخل رقمك هنا" style="padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); font-family: Tajawal; font-size: 16px; width: 60%; text-align: center; margin-bottom: 12px;">
+    <div class="text-center my-20">
+      <p id="guessMessage">أنا أفكر في رقم بين 1 و 100</p>
+      <input type="number" id="guessInput" placeholder="أدخل رقمك هنا">
       <br>
-      <button class="btn primary" onclick="checkGuess()">تخمين</button>
-      <button class="btn" onclick="initGuesser()" style="margin-right: 8px;">إعادة</button>
+      <button type="button" class="btn primary" onclick="checkGuess()">تخمين</button>
+      <button type="button" class="btn mr-8" onclick="initGuesser()">إعادة</button>
     </div>
   </div>
 </div>
@@ -95,19 +107,19 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🧩 تتبع النمط</div>
-      <button class="close-btn" onclick="closeGame('sequence')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('sequence')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">المستوى</div><div class="score-value" id="seqLevel">1</div></div>
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="seqBest">0</div></div>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 240px; margin: 0 auto 20px;">
-      <div class="seq-btn" id="seq0" onclick="handleSeqClick(0)" style="aspect-ratio: 1; border-radius: 20px; background: #ff3b30; opacity: 0.5; cursor: pointer; transition: opacity 0.1s;"></div>
-      <div class="seq-btn" id="seq1" onclick="handleSeqClick(1)" style="aspect-ratio: 1; border-radius: 20px; background: #34c759; opacity: 0.5; cursor: pointer; transition: opacity 0.1s;"></div>
-      <div class="seq-btn" id="seq2" onclick="handleSeqClick(2)" style="aspect-ratio: 1; border-radius: 20px; background: #007aff; opacity: 0.5; cursor: pointer; transition: opacity 0.1s;"></div>
-      <div class="seq-btn" id="seq3" onclick="handleSeqClick(3)" style="aspect-ratio: 1; border-radius: 20px; background: #ffcc00; opacity: 0.5; cursor: pointer; transition: opacity 0.1s;"></div>
+    <div class="seq-grid">
+      <div class="seq-btn" id="seq0" onclick="handleSeqClick(0)"></div>
+      <div class="seq-btn" id="seq1" onclick="handleSeqClick(1)"></div>
+      <div class="seq-btn" id="seq2" onclick="handleSeqClick(2)"></div>
+      <div class="seq-btn" id="seq3" onclick="handleSeqClick(3)"></div>
     </div>
-    <div style="text-align:center;"><button class="btn primary" id="seqStartBtn" onclick="startSequence()">▶ ابدأ</button></div>
+    <div class="text-center"><button type="button" class="btn primary" id="seqStartBtn" onclick="startSequence()">▶ ابدأ</button></div>
   </div>
 </div>
 <!-- MEMORY MODAL -->
@@ -115,7 +127,7 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🧠 تطابق الذاكرة</div>
-      <button class="close-btn" onclick="closeGame('memory')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('memory')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">المحاولات</div><div class="score-value" id="memAttempts">0</div></div>
@@ -123,7 +135,7 @@
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="memBest">-</div></div>
     </div>
     <div class="memory-grid" id="memoryGrid"></div>
-    <div style="text-align:center;margin-top:8px"><button class="btn" onclick="initMemory()">▶ جولة جديدة</button></div>
+    <div class="text-center mt-8"><button type="button" class="btn" onclick="initMemory()">▶ جولة جديدة</button></div>
   </div>
 </div>
 
@@ -132,17 +144,17 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🔢 تحدي الأرقام</div>
-      <button class="close-btn" onclick="closeGame('math')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('math')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="mathScore">0</div></div>
       <div class="score-box"><div class="score-label">سؤال</div><div class="score-value" id="mathQ">1</div></div>
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="mathBest">0</div></div>
     </div>
-    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
     <div class="math-question" id="mathQuestion">3 × 7 = ?</div>
     <div class="math-options" id="mathOptions"></div>
-    <div style="text-align:center;margin-top:8px"><button class="btn" id="mathStartBtn" onclick="startMath()">▶ ابدأ التحدي</button></div>
+    <div class="text-center mt-8"><button type="button" class="btn" id="mathStartBtn" onclick="startMath()">▶ ابدأ التحدي</button></div>
   </div>
 </div>
 
@@ -151,7 +163,7 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">📝 فك الكلمة</div>
-      <button class="close-btn" onclick="closeGame('word')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('word')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="wordScore">0</div></div>
@@ -161,9 +173,9 @@
     <div class="word-hint" id="wordHint"></div>
     <div class="answer-slots" id="answerSlots"></div>
     <div class="word-letters" id="wordLetters"></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-      <button class="btn danger" onclick="clearAnswer()">مسح</button>
-      <button class="btn" onclick="skipWord()">التالي ←</button>
+    <div class="flex-center-gap mt-12">
+      <button type="button" class="btn danger" onclick="clearAnswer()">مسح</button>
+      <button type="button" class="btn" onclick="skipWord()">التالي ←</button>
     </div>
   </div>
 </div>
@@ -173,7 +185,7 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">⚡ رد الفعل</div>
-      <button class="close-btn" onclick="closeGame('reaction')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('reaction')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">أسرع</div><div class="score-value" id="reactionBest">-</div></div>
@@ -192,18 +204,18 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🎨 مطابقة الألوان</div>
-      <button class="close-btn" onclick="closeGame('color')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('color')">✕</button>
     </div>
     <div class="score-display">
       <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="colorScore">0</div></div>
       <div class="score-box"><div class="score-label">خطأ</div><div class="score-value" id="colorWrong">0</div></div>
       <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="colorBest">0</div></div>
     </div>
-    <div class="timer-bar-wrap"><div class="timer-bar" id="colorTimerBar" style="width:100%"></div></div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="colorTimerBar"></div></div>
     <div class="color-instruction">اختر <strong>لون النص</strong> وليس معناه!</div>
     <div class="color-word" id="colorWord">أحمر</div>
     <div class="color-options" id="colorOptions"></div>
-    <div style="text-align:center;margin-top:8px"><button class="btn" id="colorStartBtn" onclick="startColor()">▶ ابدأ</button></div>
+    <div class="text-center mt-8"><button type="button" class="btn" id="colorStartBtn" onclick="startColor()">▶ ابدأ</button></div>
   </div>
 </div>
 
@@ -212,14 +224,14 @@
   <div class="game-modal">
     <div class="modal-header">
       <div class="modal-title">🏆 لوحة الصدارة</div>
-      <button class="close-btn" onclick="closeLeaderboard()">✕</button>
+      <button type="button" class="close-btn" onclick="closeLeaderboard()">✕</button>
     </div>
-    <div style="margin-bottom: 16px;">
-      <select id="leaderboardGameSelect" onchange="fetchLeaderboard()" style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border-color); font-family:Tajawal; font-size:15px; outline:none; background:var(--bg-color); color:var(--text-main);">
+    <div class="mb-16">
+      <select id="leaderboardGameSelect" title="اختر اللعبة لعرض المتصدرين" onchange="fetchLeaderboard()">
         <!-- سيتم ملء الخيارات برمجياً -->
       </select>
     </div>
-    <div id="leaderboardContent" style="min-height: 200px; max-height: 400px; overflow-y:auto;">
+    <div id="leaderboardContent">
       <!-- سيتم تحميل النتائج هنا -->
     </div>
   </div>
@@ -227,16 +239,16 @@
 
 <!-- AGAR.IO CLONE MODAL -->
 <div class="overlay" id="agarOverlay">
-  <div class="game-modal" style="max-width: 800px; padding: 16px;">
+  <div class="game-modal large-modal">
     <div class="modal-header">
       <div class="modal-title">🌐 معركة الخلايا (أونلاين)</div>
-      <button class="close-btn" onclick="closeGame('agar')">✕</button>
+      <button type="button" class="close-btn" onclick="closeGame('agar')">✕</button>
     </div>
-    <div id="agarStartScreen" style="text-align: center; padding: 40px;">
-        <input type="text" id="agarName" placeholder="أدخل اسمك لتلعب" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; font-family: Tajawal;">
-        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-            <input type="color" id="agarColor" value="#007aff" style="width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; padding: 0; background: none;" title="اختر لون الخلية">
-            <select id="agarSkin" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-family: Tajawal; outline: none; max-width: 200px;">
+    <div id="agarStartScreen" class="start-screen">
+        <input type="text" id="agarName" placeholder="أدخل اسمك لتلعب" class="name-input">
+        <div class="flex-center-gap-10 mb-15">
+            <input type="color" id="agarColor" value="#007aff" class="color-picker" title="اختر لون الخلية">
+            <select id="agarSkin" title="اختر شكل الخلية" class="skin-select">
                 <option value="">بدون شكل (لون فقط)</option>
                 <option value="👽">👽 فضائي</option>
                 <option value="🐯">🐯 نمر</option>
@@ -248,24 +260,114 @@
                 <option value="😎">😎 رائع</option>
             </select>
         </div>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
-            <button class="btn primary" onclick="joinAgarGame('public')">🌐 أونلاين (عام)</button>
-            <button class="btn" style="background: var(--accent-purple); color: white;" onclick="joinAgarGame('private')">🔒 غرفة خاصة</button>
-            <button class="btn" style="background: var(--accent-orange); color: white;" onclick="joinAgarGame('computer')">🤖 ضد الكمبيوتر</button>
+        <div class="flex-center-wrap mt-15">
+            <button type="button" class="btn primary" onclick="joinAgarGame('public')">🌐 أونلاين (عام)</button>
+            <button type="button" class="btn btn-purple" onclick="joinAgarGame('private')">🔒 غرفة خاصة</button>
+            <button type="button" class="btn btn-orange" onclick="joinAgarGame('computer')">🤖 ضد الكمبيوتر</button>
         </div>
     </div>
-    <canvas id="agarCanvas" width="800" height="500" style="display:none; width: 100%; border-radius: 12px; background: #e5e5ea; cursor: crosshair;"></canvas>
-    <p id="agarStatus" style="text-align:center; color: var(--text-muted); font-size: 12px; margin-top: 8px; display:none;">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
+    <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas"></canvas>
+    <p id="agarStatus">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
     
     <!-- واجهة الدردشة -->
-    <div id="agarChat" style="display:none; position:absolute; bottom:20px; left:20px; width:300px; background:rgba(0,0,0,0.6); border-radius:12px; padding:10px; z-index:1000;">
-        <div id="chatMessages" style="height:150px; overflow-y:auto; color:white; font-size:14px; font-family:Tajawal; margin-bottom:10px; display:flex; flex-direction:column; gap:4px; text-align:right;"></div>
-        <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا واضغط Enter..." style="width:100%; padding:8px; border-radius:8px; border:none; outline:none; font-family:Tajawal;">
+    <div id="agarChat">
+        <div id="chatMessages"></div>
+        <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا واضغط Enter...">
+    </div>
+    <!-- زر الانقسام لمستخدمي اللمس (الجوال) -->
+    <button type="button" id="mobileSplitBtn" class="mobile-action-btn" onclick="splitAgarMobile()" style="display:none;">انقسام</button>
+  </div>
+</div>
+
+<!-- BALOOT MODAL (Placeholder) -->
+<div class="overlay" id="balootOverlay">
+  <div class="game-modal large-modal dark-modal">
+    <div class="modal-header">
+      <div class="modal-title">♠️ بلوت</div>
+      <button type="button" class="close-btn dark-close-btn" onclick="closeGame('baloot')">✕</button>
+    </div>
+    
+    <!-- شاشة البداية -->
+    <div id="balootStartScreen" class="start-screen">
+        <input type="text" id="balootName" placeholder="أدخل اسمك" class="dark-name-input">
+        <div class="flex-center-wrap mt-15">
+            <button type="button" class="btn primary" onclick="joinBalootGame('public')">🌐 أونلاين (عام)</button>
+            <button type="button" class="btn btn-purple" onclick="joinBalootGame('private')">🔒 غرفة خاصة</button>
+            <button type="button" class="btn btn-orange" onclick="joinBalootGame('computer')">🤖 ضد الكمبيوتر</button>
+        </div>
+    </div>
+
+    <!-- طاولة اللعب -->
+    <div id="balootGameScreen" class="baloot-3d-container">
+        <div class="baloot-3d-table">
+
+        <!-- لوحة النتائج -->
+        <div class="baloot-scoreboard">
+            <div>لنا: <span id="balootScoreUs">0</span></div>
+            <div>لهم: <span id="balootScoreThem">0</span></div>
+        </div>
+
+        <!-- اللاعبين -->
+        <div class="baloot-player player-top" id="balootPlayerTop">الخوي</div>
+        <div class="baloot-player player-bottom" id="balootPlayerBottom">أنت</div>
+        <div class="baloot-player player-right" id="balootPlayerRight">خصم 1</div>
+        <div class="baloot-player player-left" id="balootPlayerLeft">خصم 2</div>
+
+        <!-- منطقة اللعب في المنتصف -->
+        <div class="baloot-center-table" id="balootCenter"></div>
+
+        <!-- رسالة حالة اللعبة (مثل: بانتظار فلان ليشتري) -->
+        <div id="balootActionStatus" class="baloot-status-3d"></div>
+
+        <!-- أزرار التحكم في اللعبة -->
+        <div id="balootControls" class="baloot-controls-3d">
+            <button type="button" id="btnDeal" class="btn primary d-none" onclick="dealBalootCards()">🃏 وزع الورق</button>
+            <button type="button" id="btnSan" class="btn btn-blue d-none" onclick="sendBalootAction('san')">صن</button>
+            <button type="button" id="btnHakam" class="btn btn-red d-none" onclick="sendBalootAction('hakam')">حكم</button>
+            <button type="button" id="btnPass" class="btn btn-dark d-none" onclick="sendBalootAction('pass')">بس</button>
+            <button type="button" id="btnProject" class="btn btn-purple d-none" onclick="declareProject()">أعلن مشروع</button>
+            <button type="button" id="btnQaid" class="btn btn-qaid d-none" onclick="balootQaid()">🚨 قيد</button>
+        </div>
+
+        <!-- أوراقي (في الأسفل) -->
+        <div class="baloot-my-hand" id="balootMyHand">
+            <!-- سيتم إضافة الأوراق هنا برمجياً -->
+        </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- UNO MODAL -->
+<div class="overlay" id="unoOverlay">
+  <div class="game-modal large-modal dark-modal">
+    <div class="modal-header">
+      <div class="modal-title">🃏 أونو (UNO)</div>
+      <button type="button" class="close-btn dark-close-btn" onclick="closeUno()">✕</button>
+    </div>
+    <div id="unoStartScreen" class="start-screen">
+        <input type="text" id="unoName" placeholder="أدخل اسمك" class="dark-name-input">
+        <div class="flex-center-wrap mt-15">
+            <button type="button" class="btn primary" onclick="joinUnoGame('public')">🌐 أونلاين (5 لاعبين)</button>
+            <button type="button" class="btn btn-purple" onclick="joinUnoGame('private')">🔒 غرفة خاصة (8 لاعبين)</button>
+            <button type="button" class="btn btn-orange" onclick="joinUnoGame('computer')">🤖 ضد الكمبيوتر</button>
+     </div>
+    </div>
+    <div id="unoGameScreen">
+        <div id="unoOpponents"></div>
+        <div class="uno-table-center">
+            <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>
+            <div id="unoCenter"></div>
+            <div id="unoCurrentColor"></div>
+        </div>
+        <button type="button" id="unoStartBtn" class="btn primary uno-start-btn" onclick="startUno()">▶ ابدأ اللعب</button>
+        <div id="unoMyHand"></div>
     </div>
   </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="uno-client.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
