@@ -767,7 +767,7 @@ function initAgar() {
 function joinAgarGame(mode) {
     // التحقق من أن الموقع يعمل عبر الخادم المحلي وليس كملف مباشر
     if (typeof io === 'undefined') {
-        alert('❌ عذراً! للعب "معركة الخلايا" أونلاين، يجب أن تفتح الموقع عبر الرابط: http://localhost:3000');
+        alert('❌ عذراً! لا يمكن الاتصال بالخادم حالياً. يرجى التأكد من اتصالك بالإنترنت وتحديث الصفحة.');
         return;
     }
 
@@ -798,7 +798,7 @@ function joinAgarGame(mode) {
     socket.on('connect_error', () => {
         ctx.clearRect(0, 0, cvs.width, cvs.height);
         ctx.fillStyle = '#ff3b30';
-        ctx.fillText('❌ فشل الاتصال! يرجى إعادة تشغيل الخادم (Ctrl+C ثم npm start)', cvs.width / 2, cvs.height / 2);
+        ctx.fillText('❌ فشل الاتصال بالخادم! يرجى تحديث الصفحة.', cvs.width / 2, cvs.height / 2);
     });
 
     socket.emit('joinGame', { name, room, mode });

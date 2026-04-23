@@ -7,7 +7,11 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*", // السماح بالاتصال من أي دومين (مهم جداً لدومينك الخاص)
+    }
+});
 const PORT = process.env.PORT || 3000;
 
 // Middleware لقراءة البيانات المرسلة بصيغة JSON
@@ -34,7 +38,7 @@ const limiter = rateLimit({
     max: 100, // الحد الأقصى لكل عنوان IP هو 100 طلب خلال 15 دقيقة
     message: { status: 'error', message: 'تم تجاوز الحد المسموح من الطلبات، يرجى المحاولة لاحقاً.' }
 });
-app.use(limiter); // تطبيق الحماية على جميع المسارات
+app.use('/api', limiter); // تطبيق الحماية على واجهات الـ API فقط لتجنب حظر الاتصال باللعبة
 
 // تقديم الملفات الثابتة الموجودة في نفس المجلد (مثل index.html والآيقونات)
 app.use(express.static(path.join(__dirname)));
