@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const sqlite3 = require('sqlite3').verbose();
+const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -16,6 +17,9 @@ const PORT = process.env.PORT || 3000;
 
 // استدعاء ملف خادم الأونو
 require('./uno-server.js')(io);
+
+// تفعيل ضغط Gzip لتقليل حجم ملفات CSS و JS المرسلة للمتصفح
+app.use(compression());
 
 // Middleware لقراءة البيانات المرسلة بصيغة JSON
 app.use(express.json());
@@ -44,7 +48,11 @@ const limiter = rateLimit({
 app.use('/api', limiter); // تطبيق الحماية على واجهات الـ API فقط لتجنب حظر الاتصال باللعبة
 
 // تقديم الملفات الثابتة الموجودة في نفس المجلد (مثل index.html والآيقونات)
-app.use(express.static(path.join(__dirname)));
+const staticOptions = {
+    maxAge: '30d', // زيادة مدة التخزين المؤقت إلى 30 يوماً لتسريع التحميل للزوار العائدين
+    etag: true,
+};
+app.use(express.static(path.join(__dirname), staticOptions));
 
 // توجيه المسار الرئيسي لعرض واجهة الألعاب
 app.get('/', (req, res) => {
