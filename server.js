@@ -81,6 +81,7 @@ app.get('/api/leaderboard/:game_id', (req, res) => {
 // --- منطق اللعبة الجماعية (Agar.io Clone) ---
 const GAME_SIZE = 2000;
 const MAX_FOOD = 200;
+const MAX_VIRUSES = 15;
 
 // كائن يحتوي على جميع الغرف النشطة
 const rooms = {};
@@ -88,9 +89,20 @@ const rooms = {};
 // دالة لتهيئة غرفة جديدة وتوليد الطعام فيها
 function initRoom(roomId) {
     if (!rooms[roomId]) {
-        rooms[roomId] = { players: {}, foods: [] };
+        rooms[roomId] = { players: {}, foods: [], viruses: [], isStarted: false, realPlayersCount: 0 };
         for (let i = 0; i < MAX_FOOD; i++) spawnFood(roomId);
+        for (let i = 0; i < MAX_VIRUSES; i++) spawnVirus(roomId);
     }
+}
+
+function spawnVirus(roomId) {
+    if (!rooms[roomId]) return;
+    rooms[roomId].viruses.push({
+        id: 'virus_' + Math.random().toString(36).substr(2, 9),
+        x: Math.random() * GAME_SIZE,
+        y: Math.random() * GAME_SIZE,
+        r: 35 // حجم اللغم القياسي
+    });
 }
 
 function spawnFood(roomId) {
@@ -104,6 +116,7 @@ function spawnFood(roomId) {
 }
 
 function spawnBots(roomId, count) {
+    const skins = ['👽', '🐯', '🤡', '👻', '🎃', '🤖', '💀', '😎', ''];
     for (let i = 0; i < count; i++) {
         const botId = 'bot_' + Math.random().toString(36).substr(2, 9);
         rooms[roomId].players[botId] = {
@@ -111,6 +124,7 @@ function spawnBots(roomId, count) {
             x: Math.random() * GAME_SIZE, y: Math.random() * GAME_SIZE,
             r: 25 + Math.random() * 20, // أحجام مختلفة للبوتات
             color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            skin: skins[Math.floor(Math.random() * skins.length)],
             name: '🤖 بوت ' + (i + 1),
             vx: 0, vy: 0
         };
@@ -118,7 +132,7 @@ function spawnBots(roomId, count) {
 }
 
 io.on('connection', (socket) => {
-    socket.on('joinGame', ({ name, room, mode }) => {
+    socket.on('joinGame', ({ name, room, mode, color, skin }) => {
         const roomId = room || 'public';
         socket.join(roomId);
         socket.roomId = roomId; // حفظ معرف الغرفة في المتصل
@@ -135,7 +149,8 @@ io.on('connection', (socket) => {
             x: Math.random() * GAME_SIZE,
             y: Math.random() * GAME_SIZE,
             r: 20,
-            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            color: color || `hsl(${Math.random() * 360}, 100%, 50%)`,
+            skin: skin || '',
             name: name || 'لاعب',
             vx: 0, vy: 0
         };
@@ -144,13 +159,26 @@ io.on('connection', (socket) => {
 
     socket.on('move', (dir) => {
         if (!socket.roomId || !rooms[socket.roomId]) return;
+        // إذا تم إرسال {x:0, y:0} فهذا يعني وقوف تام
         Object.values(rooms[socket.roomId].players).forEach(player => {
             if (player.owner === socket.id) {
-                const speed = 150 / player.r;
-                player.x = Math.max(player.r, Math.min(GAME_SIZE - player.r, player.x + dir.x * speed));
-                player.y = Math.max(player.r, Math.min(GAME_SIZE - player.r, player.y + dir.y * speed));
+                if (dir.x === 0 && dir.y === 0) {
+                    player.vx = 0; player.vy = 0; // وقوف قسري
+                } else {
+                    const speed = 150 / player.r;
+                    player.x = Math.max(player.r, Math.min(GAME_SIZE - player.r, player.x + dir.x * speed));
+                    player.y = Math.max(player.r, Math.min(GAME_SIZE - player.r, player.y + dir.y * speed));
+                }
             }
         });
+    });
+
+    socket.on('chatMessage', (msg) => {
+        if (!socket.roomId || !rooms[socket.roomId]) return;
+        const player = rooms[socket.roomId].players[socket.id];
+        if (player) {
+            io.to(socket.roomId).emit('chatMessage', { name: player.name, msg: msg });
+        }
     });
 
     socket.on('split', (dir) => {
@@ -163,7 +191,7 @@ io.on('connection', (socket) => {
                 rooms[socket.roomId].players[newId] = {
                     id: newId, owner: socket.id,
                     x: p.x, y: p.y, r: p.r,
-                    color: p.color, name: p.name,
+                    color: p.color, name: p.name, skin: p.skin,
                     vx: dir.x * 25, vy: dir.y * 25 // قوة الاندفاع للأمام
                 };
             }
@@ -190,6 +218,20 @@ setInterval(() => {
         const room = rooms[roomId];
         const playerList = Object.values(room.players);
         
+        // حساب عدد اللاعبين الحقيقيين للغرفة العامة
+        const uniquePlayers = new Set();
+        playerList.forEach(p => { if (!p.isBot) uniquePlayers.add(p.owner); });
+        room.realPlayersCount = uniquePlayers.size;
+        
+        // اللعبة تبدأ فوراً إذا لم تكن الغرفة العامة، أو إذا اكتمل 4 أشخاص
+        room.isStarted = (roomId !== 'public' || room.realPlayersCount >= 4);
+
+        // إذا كانت اللعبة قيد الانتظار، لا نحدث الفيزياء، نكتفي بإرسال الحالة فقط
+        if (!room.isStarted) {
+            io.to(roomId).emit('gameState', { players: room.players, foods: room.foods, viruses: room.viruses, isStarted: room.isStarted, realPlayersCount: room.realPlayersCount });
+            continue;
+        }
+
         playerList.forEach(p => {
             if (!room.players[p.id]) return;
 
@@ -219,6 +261,27 @@ setInterval(() => {
                 const dx = p.x - room.foods[i].x, dy = p.y - room.foods[i].y;
                 if (dx * dx + dy * dy < p.r * p.r) { p.r += 0.5; room.foods.splice(i, 1); spawnFood(roomId); }
             }
+            
+            // تصادم اللاعب مع الألغام (Viruses)
+            for (let i = room.viruses.length - 1; i >= 0; i--) {
+                const v = room.viruses[i];
+                const dx = p.x - v.x, dy = p.y - v.y;
+                if (dx * dx + dy * dy < p.r * p.r && p.r > v.r * 1.15) {
+                    room.viruses.splice(i, 1); spawnVirus(roomId); // التهام اللغم
+                    p.r = p.r / 2; // يصغر الحجم للنصف
+                    // ينقسم إلى 3 أجزاء إضافية تتناثر عشوائياً
+                    for(let j=0; j<3; j++) {
+                        const newId = p.owner + '_' + Math.random().toString(36).substr(2, 6);
+                        const angle = Math.random() * Math.PI * 2;
+                        room.players[newId] = {
+                            id: newId, owner: p.owner, isBot: p.isBot,
+                            x: p.x, y: p.y, r: p.r, color: p.color, name: p.name, skin: p.skin,
+                            vx: Math.cos(angle) * 30, vy: Math.sin(angle) * 30
+                        };
+                    }
+                }
+            }
+
             playerList.forEach(p2 => {
                 if (!room.players[p.id] || !room.players[p2.id] || p.id === p2.id) return;
                 const dx = p.x - p2.x, dy = p.y - p2.y;
@@ -243,7 +306,7 @@ setInterval(() => {
         });
         
         // إرسال البيانات للاعبي هذه الغرفة فقط
-        io.to(roomId).emit('gameState', { players: room.players, foods: room.foods });
+        io.to(roomId).emit('gameState', { players: room.players, foods: room.foods, viruses: room.viruses, isStarted: room.isStarted, realPlayersCount: room.realPlayersCount });
     }
 }, 1000 / 30);
 

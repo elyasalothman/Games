@@ -756,11 +756,14 @@ let agarState = { players: {}, foods: [] };
 let myAgarId = null;
 let agarLoop;
 let mouseX = 0, mouseY = 0;
+let isStopped = false; // متغير لحالة الوقوف
 
 function initAgar() {
     document.getElementById('agarStartScreen').style.display = 'block';
     document.getElementById('agarCanvas').style.display = 'none';
     document.getElementById('agarStatus').style.display = 'none';
+    document.getElementById('agarChat').style.display = 'none';
+    document.getElementById('chatMessages').innerHTML = '';
     if(socket) { socket.disconnect(); socket = null; }
 }
 
@@ -772,10 +775,12 @@ function joinAgarGame(mode) {
     }
 
     const name = document.getElementById('agarName').value || 'لاعب';
+    const color = document.getElementById('agarColor').value;
+    const skin = document.getElementById('agarSkin').value;
     let room = 'public';
 
     if (mode === 'private') {
-        room = prompt('أدخل اسم أو رقم الغرفة الخاصة:');
+        room = prompt('أدخل اسم أو رقم الغرفة لإنشائها أو الانضمام إليها:');
         if (!room) return; // إذا ألغى المستخدم الإدخال
     } else if (mode === 'computer') {
         // إنشاء غرفة عشوائية فريدة للعب ضد الكمبيوتر
@@ -786,7 +791,12 @@ function joinAgarGame(mode) {
     const cvs = document.getElementById('agarCanvas');
     const ctx = cvs.getContext('2d');
     cvs.style.display = 'block'; document.getElementById('agarStatus').style.display = 'block';
+    document.getElementById('agarChat').style.display = 'block';
     
+    // تفعيل وضع ملء الشاشة (Fullscreen)
+    const overlay = document.getElementById('agarOverlay');
+    if (overlay.requestFullscreen) overlay.requestFullscreen().catch(e => console.log(e));
+
     // عرض رسالة تحميل أثناء الاتصال بدلاً من الشاشة الفارغة
     ctx.clearRect(0, 0, cvs.width, cvs.height);
     ctx.fillStyle = '#007aff';
@@ -801,17 +811,34 @@ function joinAgarGame(mode) {
         ctx.fillText('❌ فشل الاتصال بالخادم! يرجى تحديث الصفحة.', cvs.width / 2, cvs.height / 2);
     });
 
-    socket.emit('joinGame', { name, room, mode });
+    socket.emit('joinGame', { name, room, mode, color, skin });
     
     socket.on('init', (data) => { myAgarId = data.id; });
     socket.on('gameState', (state) => { 
         agarState = state; 
         requestAnimationFrame(drawAgar); // تحسين الأداء أثناء الرسم
     });
+    socket.on('chatMessage', (data) => {
+        const chatBox = document.getElementById('chatMessages');
+        chatBox.innerHTML += `<div><strong style="color:var(--accent-orange)">${data.name}:</strong> ${data.msg}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
     socket.on('died', () => { showToast('❌ لقد تم ابتلاعك!'); playSound('fail'); initAgar(); });
+
+    // إرسال رسائل الدردشة
+    const chatInput = document.getElementById('chatInput');
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+            socket.emit('chatMessage', chatInput.value.trim());
+            chatInput.value = '';
+        }
+    });
 
     // تتبع حركة الماوس وتوجيه الخلية
     cvs.addEventListener('mousemove', (e) => {
+        if (document.activeElement === chatInput) return; // لا تتحرك إذا كان يكتب بالدردشة
+        
+        isStopped = false; // إلغاء الوقوف عند تحريك الماوس
         const rect = cvs.getBoundingClientRect();
         mouseX = e.clientX - rect.left - (cvs.width / 2);
         mouseY = e.clientY - rect.top - (cvs.height / 2);
@@ -820,16 +847,23 @@ function joinAgarGame(mode) {
     if(agarLoop) clearInterval(agarLoop);
     agarLoop = setInterval(() => {
         if(!myAgarId) return;
-        const myCells = Object.values(agarState.players).filter(p => p.owner === myAgarId);
-        if (myCells.length === 0) return;
+        const myCells = Object.values(agarState.players || {}).filter(p => p.owner === myAgarId);
+        if (myCells.length === 0 || !agarState.isStarted) return;
         const dist = Math.hypot(mouseX, mouseY);
-        if (dist > 10) socket.emit('move', { x: mouseX / dist, y: mouseY / dist }); // إرسال اتجاه الماوس
+        if (dist > 10 && !isStopped) socket.emit('move', { x: mouseX / dist, y: mouseY / dist }); // إرسال اتجاه الماوس
     }, 1000 / 30);
 
     window.addEventListener('keydown', handleAgarKey);
 }
 
 function handleAgarKey(e) {
+    const chatInput = document.getElementById('chatInput');
+    if (document.activeElement === chatInput) return; // تعطيل الأزرار أثناء الدردشة
+
+    if (e.code === 'KeyS' || e.code === 'KeyQ') {
+        isStopped = true;
+        socket.emit('move', { x: 0, y: 0 }); // أمر الوقوف
+    }
     if (e.code === 'Space' && document.getElementById('agarOverlay').classList.contains('active')) {
         e.preventDefault();
         const dist = Math.hypot(mouseX, mouseY);
@@ -853,18 +887,50 @@ function drawAgar() {
     ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.strokeRect(0, 0, 2000, 2000);
 
     // رسم الطعام
-    agarState.foods.forEach(f => {
+    (agarState.foods || []).forEach(f => {
         ctx.beginPath(); ctx.arc(f.x, f.y, 5, 0, Math.PI * 2); ctx.fillStyle = f.color; ctx.fill();
+    });
+    
+    // رسم الألغام (الفيروسات)
+    (agarState.viruses || []).forEach(v => {
+        ctx.beginPath();
+        for(let i=0; i<15; i++) {
+            const angle = (i / 15) * Math.PI * 2;
+            const r = i % 2 === 0 ? v.r : v.r - 4; // شكل مسنن
+            ctx.lineTo(v.x + Math.cos(angle)*r, v.y + Math.sin(angle)*r);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#34c759'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#248a3d'; ctx.stroke();
     });
 
     // رسم اللاعبين مرتبين بحسب الحجم (الأصغر بالخلف)
     Object.values(agarState.players).sort((a,b) => a.r - b.r).forEach(p => {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
         ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.stroke();
+        
+        // رسم الشكل (Skin) إذا وجد
+        if (p.skin) {
+            ctx.font = `${p.r * 1.2}px Arial`; // حجم الشكل يتناسب مع حجم الخلية
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(p.skin, p.x, p.y);
+        }
+
         ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Tajawal'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4; ctx.fillText(p.name, p.x, p.y); ctx.shadowBlur = 0;
+        ctx.fillText(p.name, p.x, p.y + (p.skin ? p.r / 2 + 10 : 0)); // إزاحة الاسم لأسفل قليلاً إذا كان هناك شكل
+        ctx.shadowBlur = 0;
     });
     ctx.restore();
+
+    // رسم رسالة الانتظار إذا كانت اللعبة العامة لم تبدأ (أقل من 4 لاعبين)
+    if (!agarState.isStarted) {
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,cvs.width,cvs.height);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 30px Tajawal'; ctx.textAlign = 'center';
+        ctx.fillText('بانتظار لاعبين آخرين...', cvs.width/2, cvs.height/2 - 20);
+        ctx.font = '20px Tajawal';
+        ctx.fillText(`العدد الحالي: ${agarState.realPlayersCount} / 4 للاستمرار`, cvs.width/2, cvs.height/2 + 20);
+    }
 }
 
 function closeAgar() { 

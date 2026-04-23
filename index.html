@@ -234,6 +234,20 @@
     </div>
     <div id="agarStartScreen" style="text-align: center; padding: 40px;">
         <input type="text" id="agarName" placeholder="أدخل اسمك لتلعب" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; font-family: Tajawal;">
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+            <input type="color" id="agarColor" value="#007aff" style="width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; padding: 0; background: none;" title="اختر لون الخلية">
+            <select id="agarSkin" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-family: Tajawal; outline: none; max-width: 200px;">
+                <option value="">بدون شكل (لون فقط)</option>
+                <option value="👽">👽 فضائي</option>
+                <option value="🐯">🐯 نمر</option>
+                <option value="🤡">🤡 مهرج</option>
+                <option value="👻">👻 شبح</option>
+                <option value="🎃">🎃 يقطينة</option>
+                <option value="🤖">🤖 آلي</option>
+                <option value="💀">💀 جمجمة</option>
+                <option value="😎">😎 رائع</option>
+            </select>
+        </div>
         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
             <button class="btn primary" onclick="joinAgarGame('public')">🌐 أونلاين (عام)</button>
             <button class="btn" style="background: var(--accent-purple); color: white;" onclick="joinAgarGame('private')">🔒 غرفة خاصة</button>
@@ -242,6 +256,12 @@
     </div>
     <canvas id="agarCanvas" width="800" height="500" style="display:none; width: 100%; border-radius: 12px; background: #e5e5ea; cursor: crosshair;"></canvas>
     <p id="agarStatus" style="text-align:center; color: var(--text-muted); font-size: 12px; margin-top: 8px; display:none;">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
+    
+    <!-- واجهة الدردشة -->
+    <div id="agarChat" style="display:none; position:absolute; bottom:20px; left:20px; width:300px; background:rgba(0,0,0,0.6); border-radius:12px; padding:10px; z-index:1000;">
+        <div id="chatMessages" style="height:150px; overflow-y:auto; color:white; font-size:14px; font-family:Tajawal; margin-bottom:10px; display:flex; flex-direction:column; gap:4px; text-align:right;"></div>
+        <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا واضغط Enter..." style="width:100%; padding:8px; border-radius:8px; border:none; outline:none; font-family:Tajawal;">
+    </div>
   </div>
 </div>
 
