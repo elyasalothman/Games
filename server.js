@@ -573,7 +573,7 @@ setInterval(() => {
         }
 
         playerList.forEach(p => {
-ش            if (!room.players[p.id]) return;
+            if (!room.players[p.id]) return;
 
             // تحريك البوتات (الكمبيوتر) بذكاء يحاكي البشر
             if (p.isBot) {

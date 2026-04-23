@@ -10,7 +10,13 @@
   --accent-orange: #ffaa00;
   --accent-purple: #b800ff;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; /* إخفاء الوميض الرمادي عند الضغط في الجوال */
+}
+
 body {
   background: var(--bg-color);
   color: var(--text-main);
@@ -148,6 +154,7 @@ header {
   transition: all 0.1s;
   font-weight: 700;
   box-shadow: 0 5px 0 rgba(0,0,0,0.5);
+  touch-action: manipulation; /* تسريع الاستجابة للّمس ومنع التقريب */
 }
 .btn:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.5); }
 .btn.primary { background: var(--accent-blue); color: #fff; }
@@ -211,6 +218,49 @@ body.dark-mode {
   margin-top: 16px;
 }
 
+/* Memory Game Card Styles */
+.mem-card {
+  aspect-ratio: 1;
+  background: var(--accent-purple);
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--border-color);
+  transition: all 0.2s;
+}
+.mem-card.flipped, .mem-card.matched {
+  background: var(--card-bg);
+}
+.mem-card span {
+  display: none;
+}
+.mem-card.flipped span, .mem-card.matched span {
+  display: block;
+}
+
+/* Math Game Option Buttons */
+.math-opt {
+  flex: 1 1 40%; /* Allow buttons to grow and wrap */
+}
+
+/* Word Scramble Game Styles */
+.word-hint {
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.answer-slots, .word-letters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+}
 /* ----------------------------------- */
 /* إصلاح أزرار التحكم للعبة الثعبان (DPAD) */
 /* ----------------------------------- */
@@ -246,7 +296,65 @@ body.dark-mode {
 .leaderboard-table th, .leaderboard-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
 .leaderboard-table th { color: var(--text-muted); font-size: 13px; font-weight: 500; }
 .leaderboard-table tr:first-child td { font-weight: 700; color: var(--accent-orange); font-size: 16px; }
+/* New classes for leaderboard status and score */
+.leaderboard-status {
+  text-align: center;
+  padding: 20px;
+}
+.leaderboard-status.empty {
+  color: var(--text-muted);
+}
+.leaderboard-status.error {
+  color: var(--accent-red);
+}
+.leaderboard-score {
+  font-weight: bold;
+  color: var(--accent-blue);
+}
 
+/* Reaction Game Styles */
+.reaction-zone {
+  border-radius: 20px;
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 20px 0;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+.reaction-zone.idle {
+  background: var(--card-bg);
+  border: 2px dashed var(--accent-blue);
+  box-shadow: 0 0 20px rgba(0,210,255,0.1);
+  color: var(--text-main);
+}
+.reaction-zone.waiting {
+  background: #ffcc00;
+  color: #000;
+  border: 2px solid #ffcc00;
+}
+.reaction-zone.ready {
+  background: #34c759;
+  color: #fff;
+  border: 2px solid #34c759;
+}
+.reaction-zone.too-soon {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 2px dashed var(--accent-red);
+}
+.reaction-zone.finished {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 2px dashed var(--accent-green);
+}
+.reaction-result {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 16px;
+  min-height: 24px;
+}
 /* تمييز المراكز الثلاثة الأولى */
 .rank-1 td { background: rgba(255, 215, 0, 0.15); color: #ffd700 !important; border-bottom: none; }
 .rank-2 td { background: rgba(192, 192, 192, 0.15); color: #c0c0c0 !important; border-bottom: none; }
@@ -406,9 +514,13 @@ body.dark-mode {
   margin-bottom: 20px;
 }
 .d-none {
-  display: none;
+  display: none !important;
+}
+.d-flex {
+  display: flex !important;
 }
 
+/* Color Match Game Styles */
 /* Refactored Inline Styles */
 .font-bold { font-weight: 700; }
 .text-blue { color: var(--accent-blue); }
@@ -425,6 +537,37 @@ body.dark-mode {
 .mb-16 { margin-bottom: 16px; }
 .my-20 { margin: 20px 0; }
 .text-muted { color: var(--text-muted); }
+.color-instruction {
+  text-align: center;
+  color: var(--text-muted);
+  margin: 12px 0;
+}
+.color-word {
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  margin: 20px 0;
+  text-shadow: 0 0 10px currentColor;
+  transition: color 0.2s;
+}
+.color-options {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.color-opt-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  border: none;
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+  transition: opacity 0.2s;
+}
 
 #guessMessage { font-size: 18px; font-weight: bold; margin-bottom: 16px; }
 #guessInput { padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); font-family: Tajawal; font-size: 16px; width: 60%; text-align: center; margin-bottom: 12px; }
@@ -436,7 +579,14 @@ body.dark-mode {
 #seq2 { background: #007aff; }
 #seq3 { background: #ffcc00; }
 
-#timerBar, #colorTimerBar { width: 100%; }
+.timer-bar-wrap {
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+.timer-bar { height: 100%; border-radius: 4px; transition: width 0.1s linear, background-color 0.3s; }
 
 .flex-center-gap { display: flex; gap: 8px; justify-content: center; }
 .flex-center-gap-10 { display: flex; gap: 10px; justify-content: center; }
@@ -452,7 +602,7 @@ body.dark-mode {
 .dark-name-input { padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; font-family: Tajawal; background: #333; color: #fff; width: 60%; }
 
 /* زر الانقسام الخاص بالجوال في لعبة أجار */
-.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 14px; font-weight: bold; z-index: 1000; touch-action: none; cursor: pointer; backdrop-filter: blur(5px); }
+.mobile-action-btn { position: absolute; bottom: 30px; right: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid white; color: white; border-radius: 50%; width: 70px; height: 70px; font-size: 14px; font-weight: bold; z-index: 1000; touch-action: none; cursor: pointer; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 .mobile-action-btn:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.9); }
 @media (hover: hover) and (pointer: fine) { .mobile-action-btn { display: none !important; } }
 
@@ -465,14 +615,7 @@ body.dark-mode {
 #chatMessages { height: 150px; overflow-y: auto; color: white; font-size: 14px; font-family: Tajawal; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; text-align: right; }
 #chatInput { width: 100%; padding: 8px; border-radius: 8px; border: none; outline: none; font-family: Tajawal; }
 
-#agarCanvas,
-#agarStatus,
-#agarChat,
-#balootGameScreen,
-#unoGameScreen {
-  display: none;
-}
-
+/* Hiding elements is now done via the .d-none utility class */
 #unoGameScreen { flex-direction: column; flex-grow: 1; position: relative; }
 #unoOpponents { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
 .uno-table-center { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 20px; }
@@ -480,6 +623,13 @@ body.dark-mode {
 #unoCenter { width: 80px; height: 120px; }
 #unoCurrentColor { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; }
 #unoMyHand { display: flex; gap: -20px; overflow-x: auto; padding: 20px 0; justify-content: center; }
+
+.color-opt-btn.answered-wrong {
+  opacity: 0.2;
+}
+.color-word.ended {
+  color: var(--accent-red) !important;
+}
 
 /* ----------------------------------- */
 /* تنسيقات لعبة الأنمي */

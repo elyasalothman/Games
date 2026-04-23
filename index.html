@@ -266,16 +266,16 @@
             <button type="button" class="btn btn-orange" onclick="joinAgarGame('computer')">🤖 ضد الكمبيوتر</button>
         </div>
     </div>
-    <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas"></canvas>
-    <p id="agarStatus">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
+    <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas d-none"></canvas>
+    <p id="agarStatus" class="d-none">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
     
     <!-- واجهة الدردشة -->
-    <div id="agarChat">
+    <div id="agarChat" class="d-none">
         <div id="chatMessages"></div>
         <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا واضغط Enter...">
     </div>
     <!-- زر الانقسام لمستخدمي اللمس (الجوال) -->
-    <button type="button" id="mobileSplitBtn" class="mobile-action-btn" onclick="splitAgarMobile()" style="display:none;">انقسام</button>
+    <button type="button" id="mobileSplitBtn" class="mobile-action-btn d-none" onclick="splitAgarMobile()">انقسام</button>
   </div>
 </div>
 
@@ -298,7 +298,7 @@
     </div>
 
     <!-- طاولة اللعب -->
-    <div id="balootGameScreen" class="baloot-3d-container">
+    <div id="balootGameScreen" class="baloot-3d-container d-none">
         <div class="baloot-3d-table">
 
         <!-- لوحة النتائج -->
@@ -353,7 +353,7 @@
             <button type="button" class="btn btn-orange" onclick="joinUnoGame('computer')">🤖 ضد الكمبيوتر</button>
      </div>
     </div>
-    <div id="unoGameScreen">
+    <div id="unoGameScreen" class="d-none">
         <div id="unoOpponents"></div>
         <div class="uno-table-center">
             <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>

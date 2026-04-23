@@ -196,13 +196,13 @@ function openGame(id){
   if (overlay) {
     overlay.classList.add('active');
     document.body.style.overflow='hidden';
-  }
-  
+  }  
   if(id==='memory') initMemory();
   if(id==='word') initWord();
   if(id==='reaction') initReaction();
   if(id==='color') initColor();
   if(id==='snake') initSnakeDisplay();
+  if(id==='math') initMath();
   if(id==='guesser') initGuesser();
   if(id==='sequence') initSequence();
   if(id==='agar') initAgar();
@@ -289,20 +289,20 @@ async function fetchLeaderboard() {
   const game_id = document.getElementById('leaderboardGameSelect').value;
   const isLowerBetter = ['memory', 'reaction', 'guesser'].includes(game_id);
   const content = document.getElementById('leaderboardContent');
-  content.innerHTML = '<div style="text-align:center; padding:20px;">جاري التحميل...</div>';
+  content.innerHTML = '<div class="leaderboard-status">جاري التحميل...</div>';
   try {
     const res = await fetch(`/api/leaderboard/${game_id}?sort=${isLowerBetter ? 'asc' : 'desc'}`);
     const data = await res.json();
-    if (data.length === 0) { content.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد نتائج بعد. كن الأول!</div>'; return; }
+    if (data.length === 0) { content.innerHTML = '<div class="leaderboard-status empty">لا توجد نتائج بعد. كن الأول!</div>'; return; }
     let html = '<table class="leaderboard-table"><tr><th>#</th><th>اللاعب</th><th>النتيجة</th></tr>';
     data.forEach((row, i) => {
         const displayScore = game_id === 'reaction' ? row.score + ' ms' : row.score;
         let rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
         let medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
-        html += `<tr class="${rankClass}"><td>${medal}${i+1}</td><td>${row.player_name}</td><td style="font-weight:bold; color:var(--accent-blue);">${displayScore}</td></tr>`;
+        html += `<tr class="${rankClass}"><td>${medal}${i+1}</td><td>${row.player_name}</td><td class="leaderboard-score">${displayScore}</td></tr>`;
     });
     content.innerHTML = html + '</table>';
-  } catch(e) { content.innerHTML = '<div style="text-align:center; padding:20px; color:var(--accent-red);">خطأ في الاتصال بالخادم</div>'; }
+  } catch(e) { content.innerHTML = '<div class="leaderboard-status error">خطأ في الاتصال بالخادم</div>'; }
 }
 
 // ─────────────────────────────────────────────
@@ -419,9 +419,10 @@ function renderMemory(){
   const g=document.getElementById('memoryGrid'); g.innerHTML='';
   memState.cards.forEach((c,i)=>{
     const d=document.createElement('div');
-    d.className='mem-card'+(c.flipped?' flipped':'')+(c.matched?' matched':'');
-    d.style.cssText = `aspect-ratio:1; background:${c.flipped||c.matched?'var(--card-bg)':'var(--accent-purple)'}; border-radius:16px; border:2px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:28px; cursor:pointer; box-shadow:0 6px 0 var(--border-color); transition: all 0.2s;`;
-    d.innerHTML=`<span style="display:${c.flipped||c.matched?'block':'none'}">${c.emoji}</span>`;
+    d.className='mem-card';
+    if (c.flipped) d.classList.add('flipped');
+    if (c.matched) d.classList.add('matched');
+    d.innerHTML=`<span>${c.emoji}</span>`;
     if(!c.matched) d.onclick=()=>flipCard(i);
     g.appendChild(d);
   });
@@ -459,9 +460,14 @@ function flipCard(i){
 // 🔢 MATH (تم زيادة الوقت المتاح)
 // ─────────────────────────────────────────────
 let mathState={score:0,q:0,total:10,timer:null,timerVal:0,active:false};
+function initMath() {
+  document.getElementById('mathScore').textContent = 0;
+  document.getElementById('mathQ').textContent = 1;
+  document.getElementById('mathBest').textContent = getStore('best_math', 0);
+}
 function startMath(){
   mathState={score:0,q:0,total:10,timer:null,timerVal:0,active:true};
-  document.getElementById('mathStartBtn').style.display='none';
+  document.getElementById('mathStartBtn').classList.add('d-none');
   nextMathQ();
 }
 function stopMath(){if(mathState.timer)clearInterval(mathState.timer);mathState.active=false;}
@@ -478,7 +484,7 @@ function nextMathQ(){
   const cont=document.getElementById('mathOptions'); cont.innerHTML='';
   shuffled.forEach(o=>{
     const btn=document.createElement('button');
-    btn.className='math-opt btn'; btn.textContent=o;
+    btn.className='math-opt btn'; btn.textContent=o; // .math-opt is new
     btn.onclick=()=>answerMath(btn,o,ans);
     cont.appendChild(btn);
   });
@@ -487,28 +493,31 @@ function nextMathQ(){
 function startMathTimer(correctAns){
   if(mathState.timer)clearInterval(mathState.timer);
   let t=100; const bar=document.getElementById('timerBar');
-  bar.style.width='100%'; bar.style.background='var(--accent-blue)';
+  bar.style.width='100%'; bar.style.backgroundColor='var(--accent-blue)';
   mathState.timer=setInterval(()=>{
     t-=0.7; // كان 1.4، الآن أبطأ بالنصف (وقت أكثر)
     bar.style.width=t+'%';
-    if(t<30) bar.style.background='var(--accent-red)';
+    if(t<30) bar.style.backgroundColor='var(--accent-red)';
     if(t<=0){clearInterval(mathState.timer); playSound('gameover'); wrongFlash(correctAns); setTimeout(nextMathQ,800);}
   },70);
 }
 function answerMath(btn,chosen,correct){
   clearInterval(mathState.timer);
   document.querySelectorAll('.math-opt').forEach(b=>b.onclick=null);
+  btn.classList.remove('primary', 'danger'); // Reset any previous state
   if(chosen===correct){
-    playSound('coin'); btn.style.background='var(--accent-green)'; btn.style.color='#fff';
+    playSound('coin'); btn.classList.add('btn-green');
     mathState.score++; document.getElementById('mathScore').textContent=mathState.score;
     setTimeout(nextMathQ,500);
   } else {
-    playSound('gameover'); btn.style.background='var(--accent-red)'; btn.style.color='#fff';
+    playSound('gameover'); btn.classList.add('danger');
     wrongFlash(correct); setTimeout(nextMathQ,800);
   }
 }
 function wrongFlash(correct){
-  document.querySelectorAll('.math-opt').forEach(b=>{if(parseInt(b.textContent)===correct){b.style.background='var(--accent-green)';b.style.color='#fff';}});
+  document.querySelectorAll('.math-opt').forEach(b=>{
+    if(parseInt(b.textContent)===correct){ b.classList.add('btn-green'); }
+  });
 }
 function endMath(){
   mathState.active=false;
@@ -518,8 +527,9 @@ function endMath(){
   addScore(mathState.score*10); recordGamePlayed();
   document.getElementById('mathQuestion').textContent='انتهى التحدي!';
   document.getElementById('mathOptions').innerHTML='';
-  document.getElementById('mathStartBtn').style.display='inline-block';
-  document.getElementById('mathStartBtn').textContent='▶ العب مجدداً';
+  const startBtn = document.getElementById('mathStartBtn');
+  startBtn.classList.remove('d-none');
+  startBtn.textContent='▶ العب مجدداً';
 }
 
 // ─────────────────────────────────────────────
@@ -551,14 +561,14 @@ function renderWord(){
   slots.innerHTML='';
   wordState.answer.forEach((l,i)=>{
     const d=document.createElement('div'); d.className='answer-slot';
-    d.style.cssText='width:40px;height:50px;border-bottom:3px solid var(--accent-blue);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;margin:4px;cursor:pointer; text-shadow: 0 0 10px var(--accent-blue);';
     d.textContent=l||''; if(l) d.onclick=()=>removeFromAnswer(i);
     slots.appendChild(d);
   });
   letters.innerHTML='';
   wordState.tiles.forEach((l,i)=>{
     const d=document.createElement('div');
-    d.style.cssText=`width:40px;height:50px;background:var(--card-bg);border:2px solid var(--border-color);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;margin:4px;cursor:pointer;box-shadow:0 4px 0 var(--border-color); opacity:${wordState.usedIdx.includes(i)?'0.3':'1'};`;
+    d.className = 'word-letter';
+    if(wordState.usedIdx.includes(i)) d.classList.add('used');
     d.textContent=l; if(!wordState.usedIdx.includes(i)) d.onclick=()=>addToAnswer(i,l);
     letters.appendChild(d);
   });
@@ -597,22 +607,22 @@ function initReaction(){
   document.getElementById('reactionAvg').textContent='-'; document.getElementById('reactionRound').textContent='1/5';
   document.getElementById('reactionResult').textContent='';
   const zone=document.getElementById('reactionZone');
-  zone.style.cssText='background:var(--card-bg); border:2px dashed var(--accent-blue); border-radius:20px; padding:60px 20px; text-align:center; font-size:20px; font-weight:bold; cursor:pointer; margin:20px 0; box-shadow: 0 0 20px rgba(0,210,255,0.1);';
+  zone.className = 'reaction-zone idle';
   zone.textContent='انقر للبدء';
 }
 function handleReaction(){
   const zone=document.getElementById('reactionZone'); const res=document.getElementById('reactionResult');
   if(reactionState.phase==='idle'){
-    zone.style.background='#ffcc00'; zone.style.color='#000'; zone.style.border='none'; zone.textContent='انتظر... لا تضغط!';
+    zone.className = 'reaction-zone waiting'; zone.textContent='انتظر... لا تضغط!';
     res.textContent=''; const delay=1500+Math.random()*3000;
     reactionState.timeout=setTimeout(()=>{
       reactionState.phase='ready'; reactionState.startTime=performance.now();
-      zone.style.background='#34c759'; zone.style.color='#fff'; zone.textContent='اضغط الآن! ⚡';
+      zone.className = 'reaction-zone ready'; zone.textContent='اضغط الآن! ⚡';
     },delay);
     reactionState.phase='waiting';
   } else if(reactionState.phase==='waiting'){
     clearTimeout(reactionState.timeout); playSound('gameover');
-    zone.style.background='var(--card-bg)'; zone.style.color='var(--text-main)'; zone.style.border='2px dashed var(--accent-red)'; zone.textContent='مبكر جداً! انقر مجدداً';
+    zone.className = 'reaction-zone too-soon'; zone.textContent='مبكر جداً! انقر مجدداً';
     reactionState.phase='idle'; res.textContent='❌ تعجّلت!';
   } else if(reactionState.phase==='ready'){
     playSound('coin');
@@ -622,12 +632,12 @@ function handleReaction(){
     setStore('best_reaction',best); document.getElementById('reactionBest').textContent=best+' ms';
     if(reactionState.round<reactionState.maxRounds){
       document.getElementById('reactionRound').textContent=`${reactionState.round+1}/5`;
-      zone.style.background='var(--card-bg)'; zone.style.color='var(--text-main)'; zone.style.border='2px dashed var(--accent-blue)'; zone.textContent='انقر مجدداً';
+      zone.className = 'reaction-zone idle'; zone.textContent='انقر مجدداً';
       reactionState.phase='idle';
     } else {
       const avg=Math.round(reactionState.times.reduce((a,b)=>a+b,0)/reactionState.times.length);
       document.getElementById('reactionAvg').textContent=avg+' ms';
-      zone.style.background='var(--card-bg)'; zone.style.color='var(--text-main)'; zone.style.border='2px dashed var(--accent-green)'; zone.textContent='انقر لبدء جولة جديدة';
+      zone.className = 'reaction-zone finished'; zone.textContent='انقر لبدء جولة جديدة';
       res.textContent=`متوسطك: ${avg} ms`;
       submitScore('reaction', avg, true);
       addScore(100); recordGamePlayed(); reactionState.phase='idle'; reactionState.round=0; reactionState.times=[];
@@ -649,15 +659,17 @@ function initColor(){
   colorState={score:0,wrong:0,timer:null,active:false,correctColor:null};
   document.getElementById('colorScore').textContent=0; document.getElementById('colorWrong').textContent=0;
   document.getElementById('colorBest').textContent=getStore('best_color',0);
-  document.getElementById('colorWord').textContent='لعبة الألوان';
-  document.getElementById('colorWord').style.cssText='font-size:36px; font-weight:bold; text-align:center; margin:20px 0; color:var(--text-main); text-shadow: 0 0 10px currentColor;';
-  document.getElementById('colorOptions').innerHTML=''; document.getElementById('colorOptions').style.cssText='display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
-  document.getElementById('colorStartBtn').style.display='inline-block';
-  document.getElementById('colorTimerBar').style.width='100%';
+  const colorWordEl = document.getElementById('colorWord');
+  colorWordEl.className = 'color-word';
+  colorWordEl.textContent='لعبة الألوان';
+  colorWordEl.style.color = 'var(--text-main)';
+  document.getElementById('colorOptions').innerHTML='';
+  document.getElementById('colorStartBtn').classList.remove('d-none');
+  document.getElementById('timerBar').style.width='100%';
 }
 function startColor(){
   colorState.active=true; colorState.score=0; colorState.wrong=0;
-  document.getElementById('colorStartBtn').style.display='none';
+  document.getElementById('colorStartBtn').classList.add('d-none');
   nextColorQ();
 }
 function stopColor(){if(colorState.timer)clearInterval(colorState.timer);colorState.active=false;}
@@ -674,7 +686,8 @@ function nextColorQ(){
   const opts=document.getElementById('colorOptions'); opts.innerHTML='';
   shuffled.forEach(c=>{
     const btn=document.createElement('button');
-    btn.style.cssText=`width:80px;height:80px;border-radius:16px;border:none;background:${c.hex};color:#fff;font-family:Tajawal;font-weight:bold;cursor:pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);`;
+    btn.className = 'color-opt-btn';
+    btn.style.background = c.hex;
     btn.textContent=c.name; btn.onclick=()=>answerColor(c.name===textColor.name,btn);
     opts.appendChild(btn);
   });
@@ -682,12 +695,12 @@ function nextColorQ(){
 }
 function startColorTimer(){
   if(colorState.timer)clearInterval(colorState.timer);
-  let t=100; const bar=document.getElementById('colorTimerBar');
-  bar.style.width='100%'; bar.style.background='var(--accent-blue)';
+  let t=100; const bar=document.getElementById('timerBar');
+  bar.style.width='100%'; bar.style.backgroundColor='var(--accent-blue)';
   colorState.timer=setInterval(()=>{
     t-=1; // كان 2، الآن أبطأ بالنصف (وقت أكثر)
     bar.style.width=t+'%';
-    if(t<30) bar.style.background='var(--accent-red)';
+    if(t<30) bar.style.backgroundColor='var(--accent-red)';
     if(t<=0){
       clearInterval(colorState.timer); playSound('gameover'); colorState.wrong++;
       document.getElementById('colorWrong').textContent=colorState.wrong;
@@ -705,16 +718,18 @@ function answerColor(correct,btn){
     setTimeout(nextColorQ,400);
   } else {
     playSound('gameover'); colorState.wrong++; document.getElementById('colorWrong').textContent=colorState.wrong;
-    btn.style.opacity='0.2';
+    btn.classList.add('answered-wrong');
     if(colorState.wrong>=3) setTimeout(endColor,400); else setTimeout(nextColorQ,400);
   }
 }
 function endColor(){
   colorState.active=false; addScore(colorState.score*10); recordGamePlayed();
   submitScore('color', colorState.score, false);
-  document.getElementById('colorWord').textContent='انتهت اللعبة!'; document.getElementById('colorWord').style.color='#ff3b30';
+  const colorWordEl = document.getElementById('colorWord');
+  colorWordEl.textContent='انتهت اللعبة!';
+  colorWordEl.classList.add('ended');
   document.getElementById('colorOptions').innerHTML='';
-  document.getElementById('colorStartBtn').style.display='inline-block'; document.getElementById('colorStartBtn').textContent='▶ العب مجدداً';
+  document.getElementById('colorStartBtn').classList.remove('d-none'); document.getElementById('colorStartBtn').textContent='▶ العب مجدداً';
 }
 
 // ─────────────────────────────────────────────
@@ -767,10 +782,10 @@ function initSequence(){
   seqState = { sequence: [], playerStep: 0, level: 1, playing: false };
   document.getElementById('seqLevel').textContent = '1';
   document.getElementById('seqBest').textContent = getStore('best_seq', 0);
-  document.getElementById('seqStartBtn').style.display = 'inline-block';
+  document.getElementById('seqStartBtn').classList.remove('d-none');
 }
 function startSequence(){
-  document.getElementById('seqStartBtn').style.display = 'none';
+  document.getElementById('seqStartBtn').classList.add('d-none');
   seqState.sequence = []; seqState.level = 1; document.getElementById('seqLevel').textContent = seqState.level;
   nextSeqLevel();
 }
@@ -818,8 +833,9 @@ function handleSeqClick(id){
     playSound('gameover');
     addScore(seqState.level * 10); recordGamePlayed();
     submitScore('sequence', seqState.level - 1, false);
-    document.getElementById('seqStartBtn').style.display = 'inline-block';
-    document.getElementById('seqStartBtn').textContent = '▶ إعادة المحاولة';
+    const startBtn = document.getElementById('seqStartBtn');
+    startBtn.classList.remove('d-none');
+    startBtn.textContent = '▶ إعادة المحاولة';
     seqState.sequence = [];
     showToast('❌ تسلسل خاطئ!');
   }
@@ -840,12 +856,12 @@ let mouseX = 0, mouseY = 0;
 let isStopped = false; // متغير لحالة الوقوف
 
 function initAgar() {
-    document.getElementById('agarStartScreen').style.display = 'block';
-    document.getElementById('agarCanvas').style.display = 'none';
-    document.getElementById('agarStatus').style.display = 'none';
-    document.getElementById('agarChat').style.display = 'none';
+    document.getElementById('agarStartScreen').classList.remove('d-none');
+    document.getElementById('agarCanvas').classList.add('d-none');
+    document.getElementById('agarStatus').classList.add('d-none');
+    document.getElementById('agarChat').classList.add('d-none');
     document.getElementById('chatMessages').innerHTML = '';
-    document.getElementById('mobileSplitBtn').style.display = 'none';
+    document.getElementById('mobileSplitBtn').classList.add('d-none');
     if(socket) { socket.disconnect(); socket = null; }
 }
 
@@ -869,14 +885,17 @@ function joinAgarGame(mode) {
         room = 'bot_room_' + Math.random().toString(36).substr(2, 6);
     }
 
-    document.getElementById('agarStartScreen').style.display = 'none';
+    document.getElementById('agarStartScreen').classList.add('d-none');
     const cvs = document.getElementById('agarCanvas');
     const ctx = cvs.getContext('2d');
-    cvs.style.display = 'block'; document.getElementById('agarStatus').style.display = 'block';
-    document.getElementById('agarChat').style.display = 'block';
+    cvs.classList.remove('d-none');
+    document.getElementById('agarStatus').classList.remove('d-none');
+    document.getElementById('agarChat').classList.remove('d-none');
     
     // إظهار زر الانقسام إذا كان الجهاز يدعم اللمس
-    if ('ontouchstart' in window) document.getElementById('mobileSplitBtn').style.display = 'block';
+    if ('ontouchstart' in window) {
+        document.getElementById('mobileSplitBtn').classList.remove('d-none');
+    }
     
     // عرض رسالة تحميل أثناء الاتصال بدلاً من الشاشة الفارغة
     ctx.clearRect(0, 0, cvs.width, cvs.height);
@@ -1094,8 +1113,8 @@ let myBalootState = null;
 function initBaloot() {
     document.getElementById('balootOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
-    document.getElementById('balootStartScreen').style.display = 'block';
-    document.getElementById('balootGameScreen').style.display = 'none';
+    document.getElementById('balootStartScreen').classList.remove('d-none');
+    document.getElementById('balootGameScreen').classList.add('d-none');
 }
 
 function joinBalootGame(mode) {
@@ -1109,8 +1128,8 @@ function joinBalootGame(mode) {
         room = 'bot_baloot_' + Math.random().toString(36).substr(2, 6);
     }
 
-    document.getElementById('balootStartScreen').style.display = 'none';
-    document.getElementById('balootGameScreen').style.display = 'block';
+    document.getElementById('balootStartScreen').classList.add('d-none');
+    document.getElementById('balootGameScreen').classList.remove('d-none');
     
     // الاتصال بخادم البلوت
     balootSocket = io();
@@ -1212,15 +1231,15 @@ function renderBalootTable() {
     const btnQaid = document.getElementById('btnQaid');
     const statusDiv = document.getElementById('balootActionStatus');
 
-    btnDeal.style.display = 'none'; btnSan.style.display = 'none';
-    btnHakam.style.display = 'none'; btnPass.style.display = 'none'; 
-    btnProject.style.display = 'none'; btnQaid.style.display = 'none';
+    [btnDeal, btnSan, btnHakam, btnPass, btnProject, btnQaid].forEach(btn => btn.classList.add('d-none'));
     statusDiv.textContent = '';
 
     if (myBalootState.state === 'waiting') {
         // السماح للاعب الأول (مدير الغرفة) بتوزيع الورق
         const firstPlayerId = Object.keys(myBalootState.players)[0];
-        if (balootSocket.id === firstPlayerId) btnDeal.style.display = 'inline-block';
+        if (balootSocket.id === firstPlayerId) {
+            btnDeal.classList.remove('d-none');
+        }
         else statusDiv.textContent = 'بانتظار توزيع الورق...';
     } else if (myBalootState.state === 'bidding') {
         const currentTurnId = myBalootState.turnOrder[myBalootState.currentTurnIndex];
@@ -1234,7 +1253,7 @@ function renderBalootTable() {
     } else if (myBalootState.state === 'playing') {
         // إظهار زر "قيد" إذا رمى شخص آخر ورقة
         if (myBalootState.lastPlay && myBalootState.lastPlay.playerId !== balootSocket.id) {
-            btnQaid.style.display = 'inline-block';
+            btnQaid.classList.remove('d-none');
         }
 
         const currentTurnId = myBalootState.turnOrder[myBalootState.currentTurnIndex];
@@ -1243,7 +1262,7 @@ function renderBalootTable() {
             const me = myBalootState.players[balootSocket.id];
             if (myBalootState.firstTrick && me.project && !me.projectDeclared) {
                 btnProject.textContent = `أعلن ${me.project.name}`;
-                btnProject.style.display = 'inline-block';
+                btnProject.classList.remove('d-none');
             }
 
             statusDiv.textContent = 'دورك! العب ورقة.';
