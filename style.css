@@ -11,6 +11,78 @@
   --accent-orange: #ffaa00;
   --accent-purple: #b800ff;
 }
+
+/* ─── لمسات جمالية مضافة ─── */
+/* 1. تأثير الدخول السلس للمحتوى (Fade-In Up) */
+.container {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 2. تأثير الزجاج (Glassmorphism) للشريط العلوي والإحصائيات */
+.top-controls, .stats-bar {
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 3. تأثير التمويه والخلفية للنوافذ المنبثقة (Modals Backdrop Blur) */
+.overlay {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.3s ease;
+}
+.game-modal {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+/* 4. حركة طفو لطيفة لشعار الموقع (Floating Logo) */
+header h1.logo-icon {
+  display: inline-block;
+  animation: floatLogo 4s ease-in-out infinite;
+  /* 5. توهج نيون جذاب للشعار */
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* 6. توهج وتأثير صعود للأزرار الرئيسية عند التمرير */
+.btn.primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+/* 7. حركة تكبير لأزرار التبويبات (Category Tabs) */
+.tab-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tab-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+/* 8. دوران وتكبير للأيقونات العلوية عند التمرير */
+.icon-btn {
+  transition: all 0.3s ease;
+}
+.icon-btn:hover {
+  transform: rotate(15deg) scale(1.15);
+}
+
+/* 11. تفاعل مربعات النقاط (Score Boxes Lift) */
+.score-box { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.score-box:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+/* ─── نهاية اللمسات الجمالية ─── */
+
 * { 
   margin: 0; 
   padding: 0; 
@@ -150,7 +222,7 @@ header {
   box-shadow: 0 8px 0 var(--border-color);
   animation: fadeInUp 0.5s ease backwards;
   overflow: hidden;
-}
+} 
 
 /* 4. Card Shine Effect (تأثير لمعان البطاقات) */
 .game-card::after {
@@ -175,6 +247,16 @@ header {
 .game-card:nth-child(13) { animation-delay: 0.65s; }
 .game-card:nth-child(14) { animation-delay: 0.7s; }
 
+/* 13. توهج الشاشة الافتتاحية ونبض النص (Loader Enhancements) */
+.loader-spinner { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)); }
+.loader-text { animation: pulseText 1.5s infinite alternate; }
+@keyframes pulseText { from { opacity: 0.6; transform: scale(0.98); } to { opacity: 1; transform: scale(1.02); } }
+
+/* 14. نقطة حمراء نابضة للألعاب المباشرة (Live Badge) */
+.live-badge { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.live-badge::before { content: ''; display: inline-block; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; animation: liveBlink 1s infinite alternate; }
+@keyframes liveBlink { from { opacity: 1; box-shadow: 0 0 8px #ef4444; } to { opacity: 0.4; box-shadow: none; } }
+
 /* Search Bar */
 .search-input {
   width: 100%; max-width: 400px; padding: 12px 20px;
@@ -185,7 +267,12 @@ header {
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 }
-.search-input:focus { border-color: var(--accent-blue); box-shadow: 0 4px 20px rgba(0,210,255,0.15); }
+/* 9. تأثير النبض لشريط البحث عند التركيز */
+.search-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 20px rgba(0,210,255,0.15);
+  transform: scale(1.02);
+}
 
 /* Category Tabs */
 .category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -228,9 +315,7 @@ header {
   visibility: hidden;
   opacity: 0;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: rgba(0,0,0,0.75); /* يتم تعديله في اللمسات الجمالية */
   z-index: 9999; /* تم الرفع ليغطي الشريط العلوي تماماً */
   align-items: center;
   justify-content: center;
@@ -248,8 +333,7 @@ header {
   max-height: 85vh; /* تقليل الارتفاع لترك مساحة جمالية من الأعلى والأسفل */
   display: flex; flex-direction: column;
   overflow-y: auto;
-  padding: 24px;
-  box-shadow: 0 10px 0 var(--border-color), 0 0 40px rgba(0,210,255,0.2);
+  padding: 24px;  box-shadow: 0 10px 0 var(--border-color), 0 0 40px rgba(0,210,255,0.2);
   border: 2px solid var(--border-color);
   transform: scale(0.95);
   opacity: 0;
@@ -377,6 +461,10 @@ body.dark-mode {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
+}
+/* 15. تمييز إضافي لشريط الإعلانات عند التمرير (Date Banner Interactive) */
+.date-banner { transition: all 0.3s ease; border-radius: 12px; }
+.date-banner:hover { background-color: rgba(128, 128, 128, 0.1); transform: scale(1.01);
 }
 .icon-btn {
   background: var(--card-bg);
@@ -930,6 +1018,12 @@ body.dark-mode {
   width: 8px;
   height: 8px;
 }
+/* 10. شريط تمرير (Scrollbar) حديث وأنيق */
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/*
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
 }
@@ -940,6 +1034,7 @@ body.dark-mode {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-blue);
 }
+*/
 
 /* ----------------------------------- */
 /* توافق الشاشات (Responsive & Mobile) */

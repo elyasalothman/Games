@@ -1,15 +1,18 @@
-// ─── إخفاء شاشة التحميل كأولوية قصوى قبل أي كود آخر ───
-function hideLoader() {
-  const loader = document.getElementById('globalLoader');
-  if (loader && !loader.classList.contains('hidden')) {
-    loader.classList.add('hidden');
-    setTimeout(() => loader.remove(), 500);
-  }
-}
-setTimeout(hideLoader, 800); // حماية فورية
-window.addEventListener('load', hideLoader);
-document.addEventListener('DOMContentLoaded', hideLoader);
+(function() { // ─── تغليف الكود بالكامل لمنع تلوث النطاق العام (IIFE) ───
+  'use strict';
 
+  // ─── إخفاء شاشة التحميل كأولوية قصوى قبل أي كود آخر ───
+  function hideLoader() {
+    const loader = document.getElementById('globalLoader');
+    if (loader && !loader.classList.contains('hidden')) {
+      loader.classList.add('hidden');
+      setTimeout(() => loader.remove(), 500);
+    }
+  }
+  setTimeout(hideLoader, 800); // حماية فورية
+  window.addEventListener('load', hideLoader);
+  document.addEventListener('DOMContentLoaded', hideLoader);
+  
 // ─── AUDIO SYSTEM & RADIO (نظام الصوت والراديو مثل قراند) ───
 let audioCtx;
 let isSoundEnabled = getStore('sound', false); // إيقاف الصوت والموسيقى افتراضياً عند أول زيارة للموقع
@@ -81,53 +84,60 @@ function nextRadioStation() {
   showToast('📻 ' + station.name);
 }
 
+const SOUND_EFFECTS = {
+  coin: { type: 'square', freq1: 880, freq2: 1760, freqTime: 0.08, gain: 0.1, duration: 0.3 },
+  gameover: { type: 'sawtooth', freq1: 300, freq2: 50, gain: 0.1, duration: 0.5, ramp: 'exponential' },
+  blip: { type: 'square', freq1: 440, gain: 0.05, duration: 0.05, ramp: 'exponential' },
+  levelup: {
+    type: 'square',
+    freqSteps: [{ f: 440, t: 0 }, { f: 554, t: 0.1 }, { f: 659, t: 0.2 }, { f: 880, t: 0.3 }],
+    gain: 0.1,
+    duration: 0.5,
+    ramp: 'linear'
+  },
+  card: { type: 'triangle', freq1: 150, freq2: 50, gain: 0.1, duration: 0.1, ramp: 'exponential' }
+};
+
 function playSound(type) {
   if (!isSoundEnabled) return; // منع المؤثرات إذا كان الصوت مكتوماً
 
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   
+  const effect = SOUND_EFFECTS[type];
+  if (!effect) return;
+
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain); gain.connect(audioCtx.destination);
-  
-  if (type === 'coin') {
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); // قفزة أوكتاف (صوت جمع العملة)
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-  } else if (type === 'gameover') {
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-  } else if (type === 'blip') {
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-  } else if (type === 'levelup') {
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.1);
-    osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.2);
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-  } else if (type === 'card') {
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+
+  const now = audioCtx.currentTime;
+  osc.type = effect.type;
+  gain.gain.setValueAtTime(effect.gain, now);
+
+  if (effect.freqSteps) {
+    effect.freqSteps.forEach(step => {
+      osc.frequency.setValueAtTime(step.f, now + step.t);
+    });
+  } else {
+    osc.frequency.setValueAtTime(effect.freq1, now);
+    if (effect.freq2) {
+      if (effect.freqTime) {
+        osc.frequency.setValueAtTime(effect.freq2, now + effect.freqTime);
+      } else {
+        osc.frequency.exponentialRampToValueAtTime(effect.freq2, now + effect.duration);
+      }
+    }
   }
+
+  if (effect.ramp === 'linear') {
+    gain.gain.linearRampToValueAtTime(0.0001, now + effect.duration);
+  } else {
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + effect.duration);
+  }
+
+  osc.start(now);
+  osc.stop(now + effect.duration);
 }
 
 // ─── DATA (تم توحيد الألعاب وتصنيفها) ───
@@ -144,12 +154,13 @@ const ALL_GAMES = [
   {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
   {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
   {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
-  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}}
+  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}},
+  {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}}
 ];
 
 // ─── STORAGE & CORE ───
-function getStore(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
-function setStore(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function getStore(key, defaultValue){try{const value=localStorage.getItem(key);return value!==null?JSON.parse(value):defaultValue;}catch(e){return defaultValue;}}
+function setStore(key, value){try{localStorage.setItem(key,JSON.stringify(value));}catch(e){console.error(`Failed to save to localStorage: ${key}`, e);}}
 
 function checkDailyReset() {
   const today = new Date().toDateString();
@@ -235,13 +246,13 @@ function applyLang() {
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
   document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'EN' : 'عربي';
   
-  const d = DICT[currentLang];
-  document.querySelector('.sub-logo').textContent = d.subtitle;
+  const dict = DICT[currentLang];
+  document.querySelector('.sub-logo').textContent = dict.subtitle;
   try {
-    document.querySelectorAll('.stat-pill')[0].childNodes[0].nodeValue = d.level + ' ';
-    document.querySelectorAll('.stat-pill')[1].childNodes[0].nodeValue = d.streak + ' ';
-    document.querySelectorAll('.stat-pill')[2].childNodes[0].nodeValue = d.totalScore + ' ';
-    document.querySelectorAll('.stat-pill')[3].childNodes[0].nodeValue = d.todayGames + ' ';
+    document.getElementById('levelLabel').textContent = dict.level + ' ';
+    document.getElementById('streakLabel').textContent = dict.streak + ' ';
+    document.getElementById('totalScoreLabel').textContent = dict.totalScore + ' ';
+    document.getElementById('todayGamesLabel').textContent = dict.todayGames + ' ';
   } catch(e) {}
   if(document.querySelector('.ad-label')) document.querySelector('.ad-label').textContent = d.adLabel;
   if(document.querySelector('.ad-content span')) document.querySelector('.ad-content span').textContent = d.adSpace;
@@ -268,7 +279,7 @@ function filterCategory(cat, btnEvent) {
 function renderGames() {
   const grid = document.getElementById('gamesGrid');
   if (!grid) return;
-  grid.innerHTML = '';
+  
   const searchInput = document.getElementById('gameSearchInput');
   const term = searchInput ? searchInput.value.toLowerCase() : '';
   let favs = getStore('favorites', []);
@@ -280,22 +291,31 @@ function renderGames() {
     
     const gameName = g.name.ar + ' ' + g.name.en;
     if (term && !gameName.toLowerCase().includes(term)) return;
+  });
 
-    const best = getStore(`best_${g.id}`, '---');
-    const isFav = favs.includes(g.id);
-    const favColor = isFav ? 'active-fav' : '';
-
-    grid.innerHTML += `<div class="game-card" onclick="openGame('${g.id}')">
+  const gamesHtml = ALL_GAMES
+    .filter(g => {
+      if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
+      if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
+      const gameName = g.name.ar + ' ' + g.name.en;
+      return !term || gameName.toLowerCase().includes(term);
+    })
+    .map(g => {
+      const best = getStore(`best_${g.id}`, '---');
+      const isFav = favs.includes(g.id);
+      return `<div class="game-card" data-game-id="${g.id}">
       <div class="card-actions">
-        <button class="card-action-btn ${favColor}" onclick="toggleFavorite('${g.id}', event)" title="المفضلة">⭐</button>
-        <button class="card-action-btn" onclick="shareGame('${g.id}', '${g.name[currentLang]}', event)" title="مشاركة">🔗</button>
+        <button class="card-action-btn ${isFav ? 'active-fav' : ''}" data-action="favorite" data-game-id="${g.id}" title="المفضلة">⭐</button>
+        <button class="card-action-btn" data-action="share" data-game-id="${g.id}" data-game-name="${g.name[currentLang]}" title="مشاركة">🔗</button>
       </div>
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
       <div class="game-desc">${g.desc[currentLang]}</div>
       <div class="game-best">${DICT[currentLang].best} ${best}</div>
     </div>`;
-  });
+    }).join('');
+
+  grid.innerHTML = gamesHtml;
 }
 
 // تحديث دالة init لتدعم اللغة
@@ -333,7 +353,24 @@ const gameFiles = {
   'guesser': 'guesser-game.js',
   'sequence': 'sequence-game.js',
   'agar': 'agar-game.js',
-  'baloot': 'baloot-game.js'
+  'baloot': 'baloot-game.js',
+  'money': 'money-game.js'
+};
+
+const gameInitializers = {
+  'memory': () => typeof initMemory === 'function' && initMemory(),
+  'word': () => typeof initWord === 'function' && initWord(),
+  'reaction': () => typeof initReaction === 'function' && initReaction(),
+  'color': () => typeof initColor === 'function' && initColor(),
+  'snake': () => typeof initSnakeDisplay === 'function' && initSnakeDisplay(),
+  'math': () => typeof initMath === 'function' && initMath(),
+  'guesser': () => typeof initGuesser === 'function' && initGuesser(),
+  'sequence': () => typeof initSequence === 'function' && initSequence(),
+  'agar': () => typeof initAgar === 'function' && initAgar(),
+  'anime': () => typeof initAnime === 'function' && initAnime(),
+  'baloot': () => typeof initBaloot === 'function' && initBaloot(),
+  'uno': () => typeof initUno === 'function' && initUno(),
+  'money': () => typeof initMoney === 'function' && initMoney()
 };
 
 function openGame(id) {
@@ -366,23 +403,26 @@ function runGameInit(id) {
     if (nameInput && !nameInput.value) nameInput.value = getStore('globalPlayerName', '');
   }
 
-  if(id==='memory' && typeof initMemory === 'function') initMemory();
-  if(id==='word' && typeof initWord === 'function') initWord();
-  if(id==='reaction' && typeof initReaction === 'function') initReaction();
-  if(id==='color' && typeof initColor === 'function') initColor();
-  if(id==='snake' && typeof initSnakeDisplay === 'function') initSnakeDisplay();
-  if(id==='math' && typeof initMath === 'function') initMath();
-  if(id==='guesser' && typeof initGuesser === 'function') initGuesser();
-  if(id==='sequence' && typeof initSequence === 'function') initSequence();
-  if(id==='agar' && typeof initAgar === 'function') initAgar();
-  if(id==='anime' && typeof initAnime === 'function') initAnime();
+  if (gameInitializers[id]) {
+    gameInitializers[id]();
+  }
+
   if(id==='domino') { // Placeholder for Card Games
     document.getElementById('balootOverlay').classList.add('active');
     document.body.style.overflow='hidden';
   }
-  if(id==='baloot' && typeof initBaloot === 'function') initBaloot();
-  if(id==='uno' && typeof initUno === 'function') initUno();
 }
+
+const gameClosers = {
+  'snake': () => typeof stopSnake === 'function' && stopSnake(),
+  'math': () => typeof stopMath === 'function' && stopMath(),
+  'color': () => typeof stopColor === 'function' && stopColor(),
+  'agar': () => typeof closeAgar === 'function' && closeAgar(),
+  'anime': () => typeof closeAnime === 'function' && closeAnime(),
+  'baloot': () => typeof closeBaloot === 'function' && closeBaloot(),
+  'uno': () => typeof closeUno === 'function' && closeUno(),
+  'money': () => typeof closeMoney === 'function' && closeMoney()
+};
 
 function closeGame(id){
   playSound('blip');
@@ -391,14 +431,10 @@ function closeGame(id){
     overlay.classList.remove('active');
   }
   document.body.style.overflow='';
-  if(id==='snake' && typeof stopSnake === 'function') stopSnake();
-  if(id==='math' && typeof stopMath === 'function') stopMath();
-  if(id==='color' && typeof stopColor === 'function') stopColor();
-  if(id==='agar' && typeof closeAgar === 'function') closeAgar();
-  if(id==='anime' && typeof closeAnime === 'function') closeAnime();
+  if (gameClosers[id]) {
+    gameClosers[id]();
+  }
   if(id==='domino') document.getElementById('balootOverlay').classList.remove('active');
-  if(id==='baloot' && typeof closeBaloot === 'function') closeBaloot();
-  if(id==='uno' && typeof closeUno === 'function') closeUno();
 }
 
 function addScore(pts){
@@ -485,8 +521,8 @@ async function fetchLeaderboard() {
 }
 
 // ─── THE REST OF THE 7 FEATURES ───
-function toggleFavorite(id, e) {
-  e.stopPropagation(); playSound('blip');
+function toggleFavorite(id) {
+  playSound('blip');
   let favs = getStore('favorites', []);
   if (!Array.isArray(favs)) favs = [];
   if (favs.includes(id)) {
@@ -497,8 +533,8 @@ function toggleFavorite(id, e) {
   setStore('favorites', favs); renderGames();
 }
 
-function shareGame(id, name, e) {
-  e.stopPropagation(); playSound('blip');
+function shareGame(id, name) {
+  playSound('blip');
   const text = `جرب لعبة ${name} الممتعة على ألعاب اليوم وتحداني! 🎮`;
   if (navigator.share) { navigator.share({ title: 'ألعاب اليوم', text: text, url: window.location.href });
   } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast('تم نسخ الرابط! 📋'); }
@@ -598,7 +634,37 @@ function closeAd() {
     document.body.style.paddingBottom = '0';
 }
 
-// ─── START ───
-applyTheme();
-applyLang(); // تقوم هذه الدالة بتشغيل init() تلقائياً بداخلها
-applySoundState();
+  // ─── EVENT LISTENERS ───
+  function setupEventListeners() {
+    document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+    document.getElementById('langBtn').addEventListener('click', toggleLang);
+    document.getElementById('soundBtn').addEventListener('click', toggleSound);
+    document.getElementById('radioBtn').addEventListener('click', nextRadioStation);
+    document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+    document.getElementById('questsBtn').addEventListener('click', openQuests);
+    document.getElementById('leaderboardBtn').addEventListener('click', openLeaderboard);
+    document.getElementById('profileBtn').addEventListener('click', openProfile);
+    document.getElementById('gameSearchInput').addEventListener('input', filterGames);
+
+    document.getElementById('gamesGrid').addEventListener('click', (e) => {
+      const card = e.target.closest('.game-card');
+      const actionBtn = e.target.closest('.card-action-btn');
+
+      if (actionBtn) {
+        e.stopPropagation();
+        const { action, gameId, gameName } = actionBtn.dataset;
+        if (action === 'favorite') toggleFavorite(gameId);
+        if (action === 'share') shareGame(gameId, gameName);
+      } else if (card) {
+        openGame(card.dataset.gameId);
+      }
+    });
+  }
+
+  // ─── INITIALIZATION ───
+  applyTheme();
+  applyLang(); // تقوم هذه الدالة بتشغيل init() تلقائياً بداخلها
+  applySoundState();
+  setupEventListeners();
+
+})();

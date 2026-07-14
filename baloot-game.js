@@ -58,10 +58,7 @@ function balootQaid() {
     if (balootSocket) balootSocket.emit('balootQaid');
 }
 
-function renderBalootTable() {
-    if (!myBalootState || !balootSocket) return;
-    
-    // تحديث لوحة النتائج (لنا ولهم)
+function renderBalootScores() {
     if (myBalootState.team1 && myBalootState.team2) {
         const isTeam1 = myBalootState.team1.includes(balootSocket.id);
         const myTeamScore = isTeam1 ? myBalootState.scoreTeam1 : myBalootState.scoreTeam2;
@@ -69,96 +66,103 @@ function renderBalootTable() {
         document.getElementById('balootScoreUs').textContent = myTeamScore;
         document.getElementById('balootScoreThem').textContent = theirTeamScore;
     }
+}
 
-    // تحديث أسماء اللاعبين حول الطاولة بناءً على ترتيب الجلوس
+function renderBalootPlayerNames() {
     if (myBalootState.turnOrder && myBalootState.turnOrder.length === 4) {
         const myIndex = myBalootState.turnOrder.indexOf(balootSocket.id);
         if (myIndex !== -1) {
             const rightId = myBalootState.turnOrder[(myIndex + 1) % 4];
             const topId = myBalootState.turnOrder[(myIndex + 2) % 4];
             const leftId = myBalootState.turnOrder[(myIndex + 3) % 4];
-
+            
             document.getElementById('balootPlayerRight').textContent = myBalootState.players[rightId] ? myBalootState.players[rightId].name : 'خصم 1';
             document.getElementById('balootPlayerTop').textContent = myBalootState.players[topId] ? myBalootState.players[topId].name : 'الخوي';
             document.getElementById('balootPlayerLeft').textContent = myBalootState.players[leftId] ? myBalootState.players[leftId].name : 'خصم 2';
         }
     }
+}
 
-    // رسم أوراق اللاعب (أنت)
+function renderMyBalootHand() {
     const myPlayer = myBalootState.players[balootSocket.id];
+    const hand = document.getElementById('balootMyHand');
     if (myPlayer && myPlayer.cards) {
-        const hand = document.getElementById('balootMyHand');
-        hand.innerHTML = '';
-        myPlayer.cards.forEach((c, index) => {
+        hand.innerHTML = myPlayer.cards.map((c, index) => {
             const colorClass = c.color === 'red' ? 'card-red' : 'card-black';
-            hand.innerHTML += `<div class="baloot-card ${colorClass}" onclick="playBalootCard(${index})"><div class="card-top-left">${c.value}${c.suit}</div><div class="card-center">${c.suit}</div></div>`;
-        });
+            return `<div class="baloot-card ${colorClass}" onclick="playBalootCard(${index})"><div class="card-top-left">${c.value}${c.suit}</div><div class="card-center">${c.suit}</div></div>`;
+        }).join('');
+    } else {
+        hand.innerHTML = '';
     }
-    
-    // رسم الأوراق في منتصف الطاولة (الطاولة الحالية)
+}
+
+function renderBalootCenterTable() {
     const center = document.getElementById('balootCenter');
+    center.innerHTML = ''; // مسح الطاولة قبل الرسم
+
     if (myBalootState.state === 'playing') {
-        center.innerHTML = '';
         if (myBalootState.currentTrick) {
-            myBalootState.currentTrick.forEach((play, i) => {
+            const trickHtml = myBalootState.currentTrick.map((play, i) => {
                 const c = play.card;
                 const colorClass = c.color === 'red' ? 'card-red' : 'card-black';
                 const rotation = (i * 20) - 30; // ميلان خفيف لكل ورقة لتبدو متراكمة
                 // رفع الورقة في البعد Z لتبدو الأوراق متراكمة فوق بعضها في الـ 3D
-                center.innerHTML += `<div class="baloot-card ${colorClass}" style="position:absolute; transform: rotate(${rotation}deg) translateZ(${i * 5}px); margin:0; box-shadow: -2px 5px 10px rgba(0,0,0,0.5); cursor:default;"><div class="card-top-left">${c.value}${c.suit}</div><div class="card-center">${c.suit}</div></div>`;
-            });
+                return `<div class="baloot-card ${colorClass}" style="position:absolute; transform: rotate(${rotation}deg) translateZ(${i * 5}px); margin:0; box-shadow: -2px 5px 10px rgba(0,0,0,0.5); cursor:default;"><div class="card-top-left">${c.value}${c.suit}</div><div class="card-center">${c.suit}</div></div>`;
+            }).join('');
+            center.innerHTML = trickHtml;
         }
     } else if (myBalootState.centerCard) {
         const c = myBalootState.centerCard;
         const colorClass = c.color === 'red' ? 'card-red' : 'card-black';
         center.innerHTML = `<div class="baloot-card ${colorClass}" style="margin:0; transform: scale(1.2) translateZ(10px); box-shadow: 0 15px 25px rgba(0,0,0,0.6); cursor:default;"><div class="card-top-left">${c.value}${c.suit}</div><div class="card-center">${c.suit}</div></div>`;
-    } else {
-        center.innerHTML = '';
     }
+}
 
-    // التحكم في الأزرار وحالة اللعبة
+function updateBalootControlsAndStatus() {
     const btnDeal = document.getElementById('btnDeal');
     const btnSan = document.getElementById('btnSan');
     const btnHakam = document.getElementById('btnHakam');
     const btnPass = document.getElementById('btnPass');
     const btnProject = document.getElementById('btnProject');
     const btnQaid = document.getElementById('btnQaid');
+    const controls = [btnDeal, btnSan, btnHakam, btnPass, btnProject, btnQaid];
     const statusDiv = document.getElementById('balootActionStatus');
 
-    [btnDeal, btnSan, btnHakam, btnPass, btnProject, btnQaid].forEach(btn => btn.classList.add('d-none'));
+    controls.forEach(btn => btn.classList.add('d-none'));
     statusDiv.textContent = '';
 
     if (myBalootState.state === 'waiting') {
-        // السماح للاعب الأول (مدير الغرفة) بتوزيع الورق
         const firstPlayerId = Object.keys(myBalootState.players)[0];
-        if (balootSocket.id === firstPlayerId) {
-            btnDeal.classList.remove('d-none');
+        btnDeal.classList.toggle('d-none', balootSocket.id !== firstPlayerId);
+        if (balootSocket.id !== firstPlayerId) {
+            statusDiv.textContent = 'بانتظار توزيع الورق...';
         }
-        else statusDiv.textContent = 'بانتظار توزيع الورق...';
     } else if (myBalootState.state === 'bidding') {
         const currentTurnId = myBalootState.turnOrder[myBalootState.currentTurnIndex];
-        if (currentTurnId === balootSocket.id) {
-            btnSan.style.display = 'inline-block'; btnHakam.style.display = 'inline-block'; btnPass.style.display = 'inline-block';
+        const isMyTurn = currentTurnId === balootSocket.id;
+        
+        btnSan.classList.toggle('d-none', !isMyTurn);
+        btnHakam.classList.toggle('d-none', !isMyTurn);
+        btnPass.classList.toggle('d-none', !isMyTurn);
+
+        if (isMyTurn) {
             statusDiv.textContent = 'دورك في المشترا!';
         } else {
             const turnPlayer = myBalootState.players[currentTurnId];
             statusDiv.textContent = `بانتظار ${turnPlayer ? turnPlayer.name : 'اللاعب'} ليشتري...`;
         }
     } else if (myBalootState.state === 'playing') {
-        // إظهار زر "قيد" إذا رمى شخص آخر ورقة
-        if (myBalootState.lastPlay && myBalootState.lastPlay.playerId !== balootSocket.id) {
-            btnQaid.classList.remove('d-none');
-        }
-
         const currentTurnId = myBalootState.turnOrder[myBalootState.currentTurnIndex];
-        if (currentTurnId === balootSocket.id) {
-            // إظهار زر إعلان المشروع إذا كان متوفراً في أول أكلة
+        const isMyTurn = currentTurnId === balootSocket.id;
+        
+        btnQaid.classList.toggle('d-none', !myBalootState.lastPlay || myBalootState.lastPlay.playerId === balootSocket.id);
+
+        if (isMyTurn) {
             const me = myBalootState.players[balootSocket.id];
             if (myBalootState.firstTrick && me.project && !me.projectDeclared) {
                 btnProject.textContent = `أعلن ${me.project.name}`;
                 btnProject.classList.remove('d-none');
             }
-
             statusDiv.textContent = 'دورك! العب ورقة.';
         } else {
             const turnPlayer = myBalootState.players[currentTurnId];
@@ -166,6 +170,17 @@ function renderBalootTable() {
         }
     }
 }
+
+function renderBalootTable() {
+    if (!myBalootState || !balootSocket) return;
+    
+    renderBalootScores();
+    renderBalootPlayerNames();
+    renderMyBalootHand();
+    renderBalootCenterTable();
+    updateBalootControlsAndStatus();
+}
+
 
 function closeBaloot() {
     document.getElementById('balootOverlay').classList.remove('active');
