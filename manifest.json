@@ -1,0 +1,27 @@
+{
+  "name": "ألعاب اليوم",
+  "short_name": "ألعاب اليوم",
+  "description": "منصة ألعاب ذكاء وتنشيط ذاكرة مجانية — 14 لعبة عربية",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121220",
+  "theme_color": "#121220",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -150,12 +150,14 @@ const ALL_GAMES = [
   {id:'color',   category: 'puzzle', name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
   {id:'guesser', category: 'puzzle', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
   {id:'sequence',category: 'puzzle', name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
-  {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}},
+  {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
   {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
   {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
   {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
-  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}},
-  {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}}
+  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
+  {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
+  {id:'empire',  category: 'puzzle', name:{ar:'إمبراطورية الضغط', en:'Tap Empire'}, icon:'👑', desc:{ar:'اضغط واجمع الثروة وابنِ إمبراطوريتك على الجوال!', en:'Tap to earn and build your mobile money empire!'}, isNew: true},
+  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true}
 ];
 
 // ─── STORAGE & CORE ───
@@ -200,8 +202,49 @@ const DICT = {
     totalScore: "إجمالي النقاط:",
     todayGames: "ألعاب اليوم:",
     best: "🏆 أفضل:",
-    adLabel: "إعلان",
-    adSpace: "مساحة إعلانية (مثال: 728x90)"
+    tabAll: "الكل",
+    tabPuzzle: "🧠 ذكاء",
+    tabCard: "🃏 ورق",
+    tabOnline: "🌐 أونلاين",
+    tabFav: "⭐ المفضلة",
+    catPuzzle: "ذكاء",
+    catCard: "ورق",
+    catOnline: "أونلاين",
+    heroTitle: "العب، تنافس، وطوّر مهاراتك!",
+    heroDesc: "مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.",
+    randomPlay: "🎲 العب عشوائياً",
+    dailyQuests: "📋 المهام اليومية",
+    heroGames: "لعبة",
+    heroOnline: "أونلاين",
+    heroLeader: "صدارة",
+    featured: "⭐ ألعاب مميزة",
+    hot: "رائج",
+    footerTagline: "منصة ألعاب عربية مجانية لتنشيط الذهن والترفيه",
+    footerCopy: "© 2026 الياس العثمان",
+    welcomeTitle: "مرحباً بك في ألعاب اليوم!",
+    welcomeText: "اختر اسمك، العب الألعاب، اجمع النقاط، ونافس على لوحة الصدارة.",
+    welcomeName: "أدخل اسمك",
+    welcomeStart: "🚀 ابدأ اللعب",
+    welcomeSkip: "تخطي",
+    searchPlaceholder: "🔍 ابحث عن لعبة...",
+    emptyGames: "لا توجد ألعاب مطابقة للبحث",
+    loadingGame: "جاري تحميل اللعبة...",
+    recent: "🕐 آخر ما لعبت",
+    newBadge: "جديد",
+    installBanner: "📲 ثبّت ألعاب اليوم على جهازك للوصول السريع!",
+    installBtn: "تثبيت",
+    questPlay: "العب 5 ألعاب مختلفة",
+    questScore: "اجمع 500 نقطة إجمالية",
+    questOnline: "العب جولة واحدة أونلاين",
+    questClaimed: "تم الاستلام",
+    questClaim: "استلام المكافأة",
+    questRenew: "تتجدد المهام يومياً منتصف الليل",
+    lbLoading: "جاري التحميل...",
+    lbEmpty: "لا توجد نتائج بعد. كن الأول!",
+    lbError: "خطأ في الاتصال بالخادم",
+    lbPlayer: "اللاعب",
+    lbScore: "النتيجة",
+    levelUp: "مبروك! وصلت للمستوى"
   },
   en: {
     subtitle: "Quick games to boost your mind",
@@ -210,8 +253,49 @@ const DICT = {
     totalScore: "Total Score:",
     todayGames: "Today's Games:",
     best: "🏆 Best:",
-    adLabel: "Ad",
-    adSpace: "Ad Space (e.g., 728x90)"
+    tabAll: "All",
+    tabPuzzle: "🧠 Puzzle",
+    tabCard: "🃏 Cards",
+    tabOnline: "🌐 Online",
+    tabFav: "⭐ Favorites",
+    catPuzzle: "Puzzle",
+    catCard: "Cards",
+    catOnline: "Online",
+    heroTitle: "Play, Compete, and Level Up!",
+    heroDesc: "A variety of puzzle, card, and online games — completely free, no signup required.",
+    randomPlay: "🎲 Random Game",
+    dailyQuests: "📋 Daily Quests",
+    heroGames: "Games",
+    heroOnline: "Online",
+    heroLeader: "Leaderboard",
+    featured: "⭐ Featured Games",
+    hot: "Hot",
+    footerTagline: "Free Arabic games platform for brain training and fun",
+    footerCopy: "© 2026 Elyas Al-Othman",
+    welcomeTitle: "Welcome to Today Games!",
+    welcomeText: "Pick your name, play games, earn points, and compete on the leaderboard.",
+    welcomeName: "Enter your name",
+    welcomeStart: "🚀 Start Playing",
+    welcomeSkip: "Skip",
+    searchPlaceholder: "🔍 Search for a game...",
+    emptyGames: "No games match your search",
+    loadingGame: "Loading game...",
+    recent: "🕐 Recently Played",
+    newBadge: "NEW",
+    installBanner: "📲 Install Today Games on your device for quick access!",
+    installBtn: "Install",
+    questPlay: "Play 5 different games",
+    questScore: "Collect 500 total points",
+    questOnline: "Play one online game",
+    questClaimed: "Claimed",
+    questClaim: "Claim Reward",
+    questRenew: "Quests renew daily at midnight",
+    lbLoading: "Loading...",
+    lbEmpty: "No scores yet. Be the first!",
+    lbError: "Server connection error",
+    lbPlayer: "Player",
+    lbScore: "Score",
+    levelUp: "Level up! You reached level"
   }
 };
 
@@ -221,7 +305,12 @@ const ACHIEVEMENTS = [
   { id: 'level_5', icon: '🌟', name: { ar: 'نجم صاعد', en: 'Rising Star' }, desc: { ar: 'صل إلى المستوى 5', en: 'Reach level 5' }, check: () => (Math.floor(getStore('totalScore', 0) / 200) + 1) >= 5 },
   { id: 'streak_3', icon: '🔥', name: { ar: 'متحمس', en: 'On Fire' }, desc: { ar: 'العب لـ 3 أيام متتالية', en: 'Play for 3 consecutive days' }, check: () => getStore('streak', 0) >= 3 },
   { id: 'score_1000', icon: '💰', name: { ar: 'غني بالنقاط', en: 'Score Wealthy' }, desc: { ar: 'اجمع 1000 نقطة', en: 'Collect 1000 total points' }, check: () => getStore('totalScore', 0) >= 1000 },
-  { id: 'social_player', icon: '🌐', name: { ar: 'اجتماعي', en: 'Social' }, desc: { ar: 'جرب الألعاب الأونلاين', en: 'Try online games' }, check: () => getStore('best_agar', 0) > 0 || getStore('best_baloot', 0) > 0 || getStore('best_uno', 0) > 0 }
+  { id: 'social_player', icon: '🌐', name: { ar: 'اجتماعي', en: 'Social' }, desc: { ar: 'جرب الألعاب الأونلاين', en: 'Try online games' }, check: () => getStore('best_agar', 0) > 0 || getStore('best_baloot', 0) > 0 || getStore('best_uno', 0) > 0 },
+  { id: 'domino_win', icon: '🀄', name: { ar: 'سيد الدومينو', en: 'Domino Master' }, desc: { ar: 'افز في جولة دومينو', en: 'Win a domino round' }, check: () => getStore('domino_player_wins', 0) >= 1 },
+  { id: 'anime_fan', icon: '🎌', name: { ar: 'أوتاكو', en: 'Otaku' }, desc: { ar: 'أجب على 3 أسئلة أنمي صح', en: 'Answer 3 anime questions correctly' }, check: () => getStore('best_anime', 0) >= 60 },
+  { id: 'money_rich', icon: '💰', name: { ar: 'ثري', en: 'Tycoon' }, desc: { ar: 'اجمع 500$ في صائد الأموال', en: 'Collect $500 in Money Catcher' }, check: () => getStore('best_money', 0) >= 500 },
+  { id: 'empire_builder', icon: '👑', name: { ar: 'إمبراطور', en: 'Emperor' }, desc: { ar: 'اجمع 10,000$ في إمبراطورية الضغط', en: 'Earn $10,000 in Tap Empire' }, check: () => getStore('best_empire', 0) >= 10000 },
+  { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 }
 ];
 const AVATARS = ['👤', '👦', '👧', '👨', '👩', '🤖', '👽', '👻', '🤡', '🐯', '🦁', '😎', '🤓', '🤠', '👑'];
 
@@ -241,6 +330,9 @@ function toggleTheme() {
   setStore('theme', currentTheme); applyTheme();
 }
 
+const FEATURED_IDS = ['empire', 'invest', 'agar', 'baloot', 'anime'];
+const CAT_LABELS = { puzzle: 'catPuzzle', card: 'catCard', online: 'catOnline' };
+
 function applyLang() {
   document.documentElement.lang = currentLang;
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -253,12 +345,37 @@ function applyLang() {
     document.getElementById('streakLabel').textContent = dict.streak + ' ';
     document.getElementById('totalScoreLabel').textContent = dict.totalScore + ' ';
     document.getElementById('todayGamesLabel').textContent = dict.todayGames + ' ';
+    document.getElementById('heroTitle').textContent = dict.heroTitle;
+    document.getElementById('heroDesc').textContent = dict.heroDesc;
+    document.getElementById('randomGameBtn').textContent = dict.randomPlay;
+    document.getElementById('heroQuestsBtn').textContent = dict.dailyQuests;
+    document.getElementById('heroGamesLabel').textContent = dict.heroGames;
+    document.getElementById('heroOnlineLabel').textContent = dict.heroOnline;
+    document.getElementById('heroLeaderLabel').textContent = dict.heroLeader;
+    document.getElementById('featuredTitle').textContent = dict.featured;
+    document.getElementById('footerTagline').textContent = dict.footerTagline;
+    document.getElementById('footerCopy').textContent = dict.footerCopy;
+    document.getElementById('welcomeTitle').textContent = dict.welcomeTitle;
+    document.getElementById('welcomeText').textContent = dict.welcomeText;
+    document.getElementById('welcomeName').placeholder = dict.welcomeName;
+    document.getElementById('welcomeStartBtn').textContent = dict.welcomeStart;
+    document.getElementById('welcomeSkipBtn').textContent = dict.welcomeSkip;
+    document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
+    document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
+    const recentTitle = document.getElementById('recentTitle');
+    if (recentTitle) recentTitle.textContent = dict.recent;
+    const installText = document.getElementById('installBannerText');
+    if (installText) installText.textContent = dict.installBanner;
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) installBtn.textContent = dict.installBtn;
+    const tabs = document.querySelectorAll('.tab-btn');
+    const tabKeys = ['tabAll', 'tabPuzzle', 'tabCard', 'tabOnline', 'tabFav'];
+    tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = dict[tabKeys[i]]; });
   } catch(e) {}
-  if(document.querySelector('.ad-label')) document.querySelector('.ad-label').textContent = d.adLabel;
-  if(document.querySelector('.ad-content span')) document.querySelector('.ad-content span').textContent = d.adSpace;
-  
-  if (document.getElementById('gameSearchInput')) document.getElementById('gameSearchInput').placeholder = currentLang === 'ar' ? '🔍 ابحث عن لعبة...' : '🔍 Search for a game...';
-  init(); // إعادة رسم البطاقات باللغة الجديدة
+  if (document.getElementById('gameSearchInput')) document.getElementById('gameSearchInput').placeholder = dict.searchPlaceholder;
+  renderFeatured();
+  renderRecent();
+  init();
 }
 
 function toggleLang() {
@@ -272,7 +389,10 @@ function filterCategory(cat, btnEvent) {
   playSound('blip');
   currentCategory = cat;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if(btnEvent) btnEvent.target.classList.add('active');
+  if (btnEvent) {
+    const btn = btnEvent.target.closest ? btnEvent.target.closest('.tab-btn') : btnEvent.target;
+    if (btn) btn.classList.add('active');
+  }
   renderGames();
 }
 
@@ -284,38 +404,86 @@ function renderGames() {
   const term = searchInput ? searchInput.value.toLowerCase() : '';
   let favs = getStore('favorites', []);
   if (!Array.isArray(favs)) favs = [];
+  const dict = DICT[currentLang];
 
-  ALL_GAMES.forEach(g => {
-    if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return;
-    if (currentCategory === 'favorites' && !favs.includes(g.id)) return;
-    
+  const filtered = ALL_GAMES.filter(g => {
+    if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
+    if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
     const gameName = g.name.ar + ' ' + g.name.en;
-    if (term && !gameName.toLowerCase().includes(term)) return;
+    return !term || gameName.toLowerCase().includes(term);
   });
 
-  const gamesHtml = ALL_GAMES
-    .filter(g => {
-      if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
-      if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
-      const gameName = g.name.ar + ' ' + g.name.en;
-      return !term || gameName.toLowerCase().includes(term);
-    })
-    .map(g => {
-      const best = getStore(`best_${g.id}`, '---');
-      const isFav = favs.includes(g.id);
-      return `<div class="game-card" data-game-id="${g.id}">
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">${dict.emptyGames}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(g => {
+    const best = getStore(`best_${g.id}`, '---');
+    const isFav = favs.includes(g.id);
+    const catKey = CAT_LABELS[g.category];
+    const catLabel = catKey ? dict[catKey] : '';
+    const catClass = g.category === 'card' ? 'cat-card' : g.category === 'online' ? 'cat-online' : '';
+    return `<div class="game-card" data-game-id="${g.id}">
       <div class="card-actions">
         <button class="card-action-btn ${isFav ? 'active-fav' : ''}" data-action="favorite" data-game-id="${g.id}" title="المفضلة">⭐</button>
         <button class="card-action-btn" data-action="share" data-game-id="${g.id}" data-game-name="${g.name[currentLang]}" title="مشاركة">🔗</button>
       </div>
+      ${g.isNew ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
       <div class="game-desc">${g.desc[currentLang]}</div>
-      <div class="game-best">${DICT[currentLang].best} ${best}</div>
+      <div class="game-best">${dict.best} ${best}</div>
+      ${catLabel ? `<span class="cat-badge ${catClass}">${catLabel}</span>` : ''}
     </div>`;
-    }).join('');
+  }).join('');
+}
 
-  grid.innerHTML = gamesHtml;
+function trackRecentGame(id) {
+  let recent = getStore('recentGames', []);
+  if (!Array.isArray(recent)) recent = [];
+  recent = recent.filter(r => r !== id);
+  recent.unshift(id);
+  recent = recent.slice(0, 6);
+  setStore('recentGames', recent);
+  renderRecent();
+}
+
+function renderRecent() {
+  const section = document.getElementById('recentSection');
+  const container = document.getElementById('recentGames');
+  if (!section || !container) return;
+
+  const recent = getStore('recentGames', []);
+  if (!Array.isArray(recent) || recent.length === 0) {
+    section.classList.add('d-none');
+    return;
+  }
+
+  section.classList.remove('d-none');
+  container.innerHTML = recent.map(id => {
+    const g = ALL_GAMES.find(x => x.id === id);
+    if (!g) return '';
+    return `<div class="recent-card" data-game-id="${g.id}">
+      <span class="game-icon">${g.icon}</span>
+      <div class="game-name">${g.name[currentLang]}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderFeatured() {
+  const container = document.getElementById('featuredGames');
+  if (!container) return;
+  const dict = DICT[currentLang];
+  container.innerHTML = FEATURED_IDS.map(id => {
+    const g = ALL_GAMES.find(x => x.id === id);
+    if (!g) return '';
+    return `<div class="featured-card" data-game-id="${g.id}">
+      <span class="game-icon">${g.icon}</span>
+      <div class="game-name">${g.name[currentLang]}</div>
+      <div class="featured-badge">${dict.hot}</div>
+    </div>`;
+  }).join('');
 }
 
 // تحديث دالة init لتدعم اللغة
@@ -354,7 +522,10 @@ const gameFiles = {
   'sequence': 'sequence-game.js',
   'agar': 'agar-game.js',
   'baloot': 'baloot-game.js',
-  'money': 'money-game.js'
+  'money': 'money-game.js',
+  'empire': 'empire-game.js',
+  'domino': 'domino-game.js',
+  'invest': 'invest-game.js'
 };
 
 const gameInitializers = {
@@ -370,11 +541,15 @@ const gameInitializers = {
   'anime': () => typeof initAnime === 'function' && initAnime(),
   'baloot': () => typeof initBaloot === 'function' && initBaloot(),
   'uno': () => typeof initUno === 'function' && initUno(),
-  'money': () => typeof initMoney === 'function' && initMoney()
+  'money': () => typeof initMoney === 'function' && initMoney(),
+  'empire': () => typeof initEmpire === 'function' && initEmpire(),
+  'domino': () => typeof initDomino === 'function' && initDomino(),
+  'invest': () => typeof initInvest === 'function' && initInvest()
 };
 
 function openGame(id) {
   playSound('blip');
+  trackRecentGame(id);
   const overlay = document.getElementById(id+'Overlay');
   if (overlay) {
     overlay.classList.add('active');
@@ -382,7 +557,7 @@ function openGame(id) {
   }
 
   if (gameFiles[id] && !loadedScripts[id]) {
-    showToast('جاري تحميل اللعبة...');
+    showToast(DICT[currentLang].loadingGame);
     const script = document.createElement('script');
     script.src = gameFiles[id] + '?v=' + Date.now();
     script.onload = () => {
@@ -406,11 +581,6 @@ function runGameInit(id) {
   if (gameInitializers[id]) {
     gameInitializers[id]();
   }
-
-  if(id==='domino') { // Placeholder for Card Games
-    document.getElementById('balootOverlay').classList.add('active');
-    document.body.style.overflow='hidden';
-  }
 }
 
 const gameClosers = {
@@ -421,7 +591,10 @@ const gameClosers = {
   'anime': () => typeof closeAnime === 'function' && closeAnime(),
   'baloot': () => typeof closeBaloot === 'function' && closeBaloot(),
   'uno': () => typeof closeUno === 'function' && closeUno(),
-  'money': () => typeof closeMoney === 'function' && closeMoney()
+  'money': () => typeof stopMoney === 'function' && stopMoney(),
+  'empire': () => typeof closeEmpire === 'function' && closeEmpire(),
+  'domino': () => typeof closeDomino === 'function' && closeDomino(),
+  'invest': () => typeof closeInvest === 'function' && closeInvest()
 };
 
 function closeGame(id){
@@ -434,7 +607,6 @@ function closeGame(id){
   if (gameClosers[id]) {
     gameClosers[id]();
   }
-  if(id==='domino') document.getElementById('balootOverlay').classList.remove('active');
 }
 
 function addScore(pts){
@@ -450,17 +622,63 @@ function addScore(pts){
   
   if (newLevel > oldLevel) {
       playSound('levelup');
-      showToast(`🎉 مبروك! وصلت للمستوى ${newLevel} 🌟`);
+      showToast(`🎉 ${DICT[currentLang].levelUp} ${newLevel} 🌟`);
   }
   setStore('quest_score', getStore('quest_score', 0) + pts); // إضافة للنقاط اليومية
   checkAchievements();
 }
 function recordGamePlayed(){
+  const max = ALL_GAMES.length;
   let cnt=getStore('todayGamesCount',0)+1;
-  setStore('todayGamesCount',Math.min(cnt,8));
-  document.getElementById('todayGames').textContent=Math.min(cnt,8);
-  setStore('quest_play', getStore('quest_play', 0) + 1); // زيادة عدد مرات اللعب للمهام
+  setStore('todayGamesCount',Math.min(cnt,max));
+  document.getElementById('todayGames').textContent=Math.min(cnt,max);
+  setStore('quest_play', getStore('quest_play', 0) + 1);
   checkAchievements();
+}
+
+function playRandomGame() {
+  playSound('blip');
+  const random = ALL_GAMES[Math.floor(Math.random() * ALL_GAMES.length)];
+  openGame(random.id);
+}
+
+function showWelcome() {
+  if (getStore('welcomeSeen', false)) return;
+  document.getElementById('welcomeOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeWelcome() {
+  setStore('welcomeSeen', true);
+  document.getElementById('welcomeOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function startFromWelcome() {
+  const name = document.getElementById('welcomeName').value.trim();
+  if (name) {
+    setStore('globalPlayerName', name);
+    document.getElementById('profileName').value = name;
+  }
+  closeWelcome();
+  playSound('levelup');
+  showToast(currentLang === 'ar' ? `مرحباً ${name || 'بك'}! 🎮` : `Welcome ${name || ''}! 🎮`);
+}
+
+function setupScrollTop() {
+  let btn = document.getElementById('scrollTopBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'scrollTopBtn';
+    btn.className = 'scroll-top-btn';
+    btn.title = 'الأعلى';
+    btn.textContent = '↑';
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    document.body.appendChild(btn);
+  }
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
 }
 function showToast(msg){
   const t=document.createElement('div');
@@ -504,12 +722,13 @@ async function fetchLeaderboard() {
   const game_id = document.getElementById('leaderboardGameSelect').value;
   const isLowerBetter = ['memory', 'reaction', 'guesser'].includes(game_id);
   const content = document.getElementById('leaderboardContent');
-  content.innerHTML = '<div class="leaderboard-status">جاري التحميل...</div>';
+  const dict = DICT[currentLang];
+  content.innerHTML = `<div class="leaderboard-status">${dict.lbLoading}</div>`;
   try {
     const res = await fetch(`/api/leaderboard/${game_id}?sort=${isLowerBetter ? 'asc' : 'desc'}`);
     const data = await res.json();
-    if (data.length === 0) { content.innerHTML = '<div class="leaderboard-status empty">لا توجد نتائج بعد. كن الأول!</div>'; return; }
-    let html = '<table class="leaderboard-table"><tr><th>#</th><th>اللاعب</th><th>النتيجة</th></tr>';
+    if (data.length === 0) { content.innerHTML = `<div class="leaderboard-status empty">${dict.lbEmpty}</div>`; return; }
+    let html = `<table class="leaderboard-table"><tr><th>#</th><th>${dict.lbPlayer}</th><th>${dict.lbScore}</th></tr>`;
     data.forEach((row, i) => {
         const displayScore = game_id === 'reaction' ? row.score + ' ms' : row.score;
         let rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
@@ -517,7 +736,7 @@ async function fetchLeaderboard() {
         html += `<tr class="${rankClass}"><td>${medal}${i+1}</td><td>${row.player_name}</td><td class="leaderboard-score">${displayScore}</td></tr>`;
     });
     content.innerHTML = html + '</table>';
-  } catch(e) { content.innerHTML = '<div class="leaderboard-status error">خطأ في الاتصال بالخادم</div>'; }
+  } catch(e) { content.innerHTML = `<div class="leaderboard-status error">${dict.lbError}</div>`; }
 }
 
 // ─── THE REST OF THE 7 FEATURES ───
@@ -570,16 +789,17 @@ function importSave() {
 function openQuests() {
   playSound('blip'); document.getElementById('questsOverlay').classList.add('active');
   const list = document.getElementById('questsList');
+  const dict = DICT[currentLang];
   const quests = [
-    { id: 'play', target: 5, reward: 200, name: 'العب 5 ألعاب مختلفة' },
-    { id: 'score', target: 500, reward: 300, name: 'اجمع 500 نقطة إجمالية' },
-    { id: 'online', target: 1, reward: 150, name: 'العب جولة واحدة أونلاين' }
+    { id: 'play', target: 5, reward: 200, name: dict.questPlay },
+    { id: 'score', target: 500, reward: 300, name: dict.questScore },
+    { id: 'online', target: 1, reward: 150, name: dict.questOnline }
   ];
   list.innerHTML = quests.map(q => {
     const current = Math.min(getStore('quest_' + q.id, 0), q.target);
     const claimed = getStore('quest_claimed_' + q.id, false);
     const pct = (current / q.target) * 100;
-    const btnHtml = claimed ? `<button class="btn btn-dark" disabled>تم الاستلام</button>` : current >= q.target ? `<button class="btn btn-green" onclick="claimQuest('${q.id}', ${q.reward})">استلام المكافأة</button>` : `<button class="btn btn-dark" disabled>${current}/${q.target}</button>`;
+    const btnHtml = claimed ? `<button class="btn btn-dark" disabled>${dict.questClaimed}</button>` : current >= q.target ? `<button class="btn btn-green" onclick="claimQuest('${q.id}', ${q.reward})">${dict.questClaim}</button>` : `<button class="btn btn-dark" disabled>${current}/${q.target}</button>`;
     return `<div class="quest-card"><div class="quest-info"><h4>${q.name}</h4><div class="quest-progress-bg"><div class="quest-progress-fill" style="width:${pct}%"></div></div><div class="quest-reward">+${q.reward} نقطة</div></div>${btnHtml}</div>`;
   }).join('');
 }
@@ -600,7 +820,23 @@ function openProfile() {
   avatarSelect.innerHTML = AVATARS.map(a => `<option value="${a}">${a}</option>`).join('');
   avatarSelect.value = getStore('globalPlayerAvatar', '👤');
 
+  const cloudId = getStore('investCloudId', '');
+  const codeEl = document.getElementById('profileCloudCode');
+  const boxEl = document.getElementById('profileCloudBox');
+  if (codeEl && boxEl) {
+    codeEl.textContent = cloudId || '—';
+    boxEl.classList.toggle('d-none', !cloudId);
+  }
+
   renderAchievements();
+}
+
+function copyCloudCode() {
+  const cloudId = getStore('investCloudId', '');
+  if (!cloudId) { showToast('لا يوجد رمز بعد — العب الاستثمار واحفظ سحابياً أولاً'); return; }
+  navigator.clipboard.writeText(cloudId);
+  playSound('coin');
+  showToast('📋 تم نسخ رمزك السحابي: ' + cloudId);
 }
 function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
 function saveProfile() {
@@ -634,6 +870,60 @@ function closeAd() {
     document.body.style.paddingBottom = '0';
 }
 
+// ─── PWA (Service Worker + Install) ───
+let deferredInstallPrompt = null;
+
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+}
+
+function setupInstallPrompt() {
+  if (getStore('installDismissed', false)) return;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.classList.remove('d-none');
+  });
+}
+
+function promptInstall() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(() => {
+    deferredInstallPrompt = null;
+    document.getElementById('installBanner').classList.add('d-none');
+  });
+}
+
+function dismissInstall() {
+  setStore('installDismissed', true);
+  document.getElementById('installBanner').classList.add('d-none');
+}
+
+function handleDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('game');
+  if (gameId && ALL_GAMES.some(g => g.id === gameId)) {
+    setTimeout(() => openGame(gameId), 500);
+  }
+}
+
+function closeActiveOverlay() {
+  const active = document.querySelector('.overlay.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 'welcomeOverlay') { closeWelcome(); return; }
+  if (id === 'leaderboardOverlay') { closeLeaderboard(); return; }
+  if (id === 'questsOverlay') { closeQuests(); return; }
+  if (id === 'profileOverlay') { closeProfile(); return; }
+  const gameId = id.replace('Overlay', '');
+  if (gameId) closeGame(gameId);
+}
+
   // ─── EVENT LISTENERS ───
   function setupEventListeners() {
     document.getElementById('themeBtn').addEventListener('click', toggleTheme);
@@ -645,6 +935,34 @@ function closeAd() {
     document.getElementById('leaderboardBtn').addEventListener('click', openLeaderboard);
     document.getElementById('profileBtn').addEventListener('click', openProfile);
     document.getElementById('gameSearchInput').addEventListener('input', filterGames);
+    document.getElementById('randomGameBtn').addEventListener('click', playRandomGame);
+    document.getElementById('heroQuestsBtn').addEventListener('click', openQuests);
+    document.getElementById('footerLeaderBtn').addEventListener('click', openLeaderboard);
+    document.getElementById('footerProfileBtn').addEventListener('click', openProfile);
+    document.getElementById('footerQuestsBtn').addEventListener('click', openQuests);
+    document.getElementById('welcomeStartBtn').addEventListener('click', startFromWelcome);
+    document.getElementById('welcomeSkipBtn').addEventListener('click', closeWelcome);
+
+    const installBtn = document.getElementById('installBtn');
+    const installDismiss = document.getElementById('installDismiss');
+    if (installBtn) installBtn.addEventListener('click', promptInstall);
+    if (installDismiss) installDismiss.addEventListener('click', dismissInstall);
+
+    document.getElementById('recentGames').addEventListener('click', (e) => {
+      const card = e.target.closest('.recent-card');
+      if (card) openGame(card.dataset.gameId);
+    });
+
+    document.getElementById('categoryTabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      filterCategory(btn.dataset.cat, e);
+    });
+
+    document.getElementById('featuredGames').addEventListener('click', (e) => {
+      const card = e.target.closest('.featured-card');
+      if (card) openGame(card.dataset.gameId);
+    });
 
     document.getElementById('gamesGrid').addEventListener('click', (e) => {
       const card = e.target.closest('.game-card');
@@ -659,12 +977,35 @@ function closeAd() {
         openGame(card.dataset.gameId);
       }
     });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeActiveOverlay();
+      if (e.key === '/' && document.activeElement !== document.getElementById('gameSearchInput')) {
+        e.preventDefault();
+        document.getElementById('gameSearchInput').focus();
+      }
+    });
   }
 
   // ─── INITIALIZATION ───
   applyTheme();
-  applyLang(); // تقوم هذه الدالة بتشغيل init() تلقائياً بداخلها
+  applyLang();
   applySoundState();
   setupEventListeners();
+  setupScrollTop();
+  registerServiceWorker();
+  setupInstallPrompt();
+  handleDeepLink();
+  setTimeout(showWelcome, 1200);
+
+  // تصدير الدوال للـ HTML onclick
+  const api = {
+    filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
+    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode,
+    playRandomGame, showWelcome, closeWelcome, startFromWelcome,
+    openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
+    submitScore, showToast, getStore, setStore, playSound
+  };
+  Object.assign(window, api);
 
 })();

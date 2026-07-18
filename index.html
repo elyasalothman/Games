@@ -18,11 +18,13 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ألعاب اليوم">
+  <meta name="theme-color" content="#121220">
+  <link rel="manifest" href="manifest.json">
 <title>ألعاب اليوم | ألعاب ذكاء وتنشيط ذاكرة مجانية عبر المتصفح</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -49,11 +51,40 @@
       <div class="sub-logo">ألعاب سريعة لتنشيط ذهنك</div>
     </header>
 
+    <!-- قسم البطل (Hero) -->
+    <section class="hero-section" aria-label="مقدمة الموقع">
+      <div class="hero-content">
+        <h2 class="hero-title" id="heroTitle">العب، تنافس، وطوّر مهاراتك!</h2>
+        <p class="hero-desc" id="heroDesc">مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.</p>
+        <div class="hero-actions">
+          <button type="button" class="btn primary hero-btn" id="randomGameBtn">🎲 العب عشوائياً</button>
+          <button type="button" class="btn hero-btn-secondary" id="heroQuestsBtn">📋 المهام اليومية</button>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-num" id="heroGameCount">14</span><span class="hero-stat-label" id="heroGamesLabel">لعبة</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">🌐</span><span class="hero-stat-label" id="heroOnlineLabel">أونلاين</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">🏆</span><span class="hero-stat-label" id="heroLeaderLabel">صدارة</span></div>
+      </div>
+    </section>
+
+    <!-- ألعاب مميزة -->
+    <section class="featured-section" aria-label="ألعاب مميزة">
+      <h3 class="section-title" id="featuredTitle">⭐ ألعاب مميزة</h3>
+      <div class="featured-scroll" id="featuredGames"></div>
+    </section>
+
+    <!-- آخر ما لعبت -->
+    <section class="recent-section d-none" id="recentSection" aria-label="آخر الألعاب">
+      <h3 class="section-title" id="recentTitle">🕐 آخر ما لعبت</h3>
+      <div class="recent-scroll" id="recentGames"></div>
+    </section>
+
     <div class="stats-bar">
       <div class="stat-pill"><span id="levelLabel">مستواك: </span><span id="playerLevel">1</span> 🌟</div>
       <div class="stat-pill"><span id="streakLabel">سلسلة الأيام: </span><span id="streakCount">0</span></div>
       <div class="stat-pill"><span id="totalScoreLabel">إجمالي النقاط: </span><span id="totalScore">0</span></div>
-      <div class="stat-pill"><span id="todayGamesLabel">ألعاب اليوم: </span><span id="todayGames">0</span>/8</div>
+      <div class="stat-pill"><span id="todayGamesLabel">ألعاب اليوم: </span><span id="todayGames">0</span>/<span id="todayGamesMax">14</span></div>
     </div>
 
     <div class="date-banner" id="dateBanner"></div>
@@ -65,16 +96,51 @@
 
     <!-- تبويبات التصنيف -->
     <div class="category-tabs" id="categoryTabs">
-      <button class="tab-btn active" onclick="filterCategory('all', event)">الكل</button> <!-- onclick هنا مقبول لأنه يمرر event object -->
-      <button class="tab-btn" onclick="filterCategory('puzzle', event)">🧠 ذكاء</button>
-      <button class="tab-btn" onclick="filterCategory('card', event)">🃏 ورق</button>
-      <button class="tab-btn live-badge" onclick="filterCategory('online', event)">🌐 أونلاين</button>
-      <button class="tab-btn" onclick="filterCategory('favorites', event)">⭐ المفضلة</button>
+      <button class="tab-btn active" data-cat="all">الكل</button>
+      <button class="tab-btn" data-cat="puzzle">🧠 ذكاء</button>
+      <button class="tab-btn" data-cat="card">🃏 ورق</button>
+      <button class="tab-btn live-badge" data-cat="online">🌐 أونلاين</button>
+      <button class="tab-btn" data-cat="favorites">⭐ المفضلة</button>
     </div>
 
     <div class="games-grid" id="gamesGrid"></div>
 
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <span class="footer-logo">🎮 ألعاب اليوم</span>
+        <p class="footer-tagline" id="footerTagline">منصة ألعاب عربية مجانية لتنشيط الذهن والترفيه</p>
+      </div>
+      <div class="footer-links">
+        <button type="button" class="footer-link" id="footerLeaderBtn">🏆 لوحة الصدارة</button>
+        <button type="button" class="footer-link" id="footerProfileBtn">👤 الملف الشخصي</button>
+        <button type="button" class="footer-link" id="footerQuestsBtn">📋 المهام</button>
+      </div>
+      <div class="footer-meta">
+        <span id="footerCopy">© 2026 الياس العثمان</span>
+        <span class="footer-version">v2.2</span>
+      </div>
+    </footer>
+
   </div>
+
+  <!-- شريط تثبيت التطبيق (PWA) -->
+  <div class="install-banner d-none" id="installBanner">
+    <span id="installBannerText">📲 ثبّت ألعاب اليوم على جهازك للوصول السريع!</span>
+    <button type="button" class="btn primary install-btn" id="installBtn">تثبيت</button>
+    <button type="button" class="install-dismiss" id="installDismiss" aria-label="إغلاق">✕</button>
+  </div>
+
+<!-- WELCOME MODAL -->
+<div class="overlay" id="welcomeOverlay">
+  <div class="game-modal welcome-modal">
+    <div class="welcome-icon">🎮</div>
+    <h2 class="welcome-title" id="welcomeTitle">مرحباً بك في ألعاب اليوم!</h2>
+    <p class="welcome-text" id="welcomeText">اختر اسمك، العب الألعاب، اجمع النقاط، ونافس على لوحة الصدارة.</p>
+    <input type="text" id="welcomeName" class="name-input" placeholder="أدخل اسمك">
+    <button type="button" class="btn primary welcome-start-btn" id="welcomeStartBtn">🚀 ابدأ اللعب</button>
+    <button type="button" class="welcome-skip" id="welcomeSkipBtn">تخطي</button>
+  </div>
+</div>
 <!-- SNAKE MODAL -->
 <div class="overlay" id="snakeOverlay">
   <div class="game-modal">
@@ -282,6 +348,14 @@
       <select id="profileAvatar" class="avatar-select" title="اختر صورتك الرمزية" onchange="saveProfile()"></select>
       <input type="text" id="profileName" class="name-input mt-8" placeholder="أدخل اسمك هنا" onchange="saveProfile()">
     </div>
+    <div class="profile-cloud-box" id="profileCloudBox">
+      <div class="profile-cloud-label">☁️ رمز الحفظ السحابي (الاستثمار)</div>
+      <div class="profile-cloud-row">
+        <code class="profile-cloud-code" id="profileCloudCode">—</code>
+        <button type="button" class="btn btn-blue profile-cloud-copy" onclick="copyCloudCode()">📋 نسخ</button>
+      </div>
+      <p class="text-muted text-11">هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز.</p>
+    </div>
     <h3 class="font-bold text-blue mb-15">🏅 إنجازاتي</h3>
     <div id="achievementsList" class="achievements-grid">
       <!-- سيتم تحميل الإنجازات هنا -->
@@ -453,8 +527,246 @@
   </div>
 </div>
 
+<!-- DOMINO MODAL -->
+<div class="overlay" id="dominoOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🀄 دومينو</h2>
+      <button type="button" class="close-btn" onclick="closeGame('domino')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">أنت</div><div class="score-value" id="dominoPlayerWins">0</div></div>
+      <div class="score-box"><div class="score-label">الحالة</div><div class="score-value" id="dominoStatus">—</div></div>
+      <div class="score-box"><div class="score-label">البوت</div><div class="score-value" id="dominoBotWins">0</div></div>
+    </div>
+    <div class="domino-board" id="dominoBoard"></div>
+    <div class="domino-hand" id="dominoHand"></div>
+    <div class="text-center mt-8">
+      <button type="button" class="btn primary" id="dominoStartBtn" onclick="startDomino()">▶ جولة جديدة</button>
+      <button type="button" class="btn" id="dominoDrawBtn" onclick="drawDominoTile()" disabled>سحب 🎲</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVEST MODAL -->
+<div class="overlay" id="investOverlay">
+  <div class="game-modal large-modal invest-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">📈 محاكاة الاستثمار</h2>
+      <button type="button" class="close-btn" onclick="closeGame('invest')">✕</button>
+    </div>
+
+    <div id="investStartScreen" class="invest-start">
+      <p class="invest-intro">ابنِ ثروتك عبر أسهم وسندات وذهب وعقارات. الأسواق تتقلب، الفواتير تضغط، والتقدم يُحفظ في السحابة.</p>
+      <div class="score-display">
+        <div class="score-box"><div class="score-label">أفضل صافي ثروة</div><div class="score-value" id="investBest">0</div></div>
+      </div>
+      <div class="invest-start-actions">
+        <button type="button" class="btn primary" onclick="investNewGame()">▶ لعبة جديدة (10,000)</button>
+        <button type="button" class="btn btn-blue d-none" id="investContinueBtn" onclick="investContinueLocal()">📂 متابعة محلي</button>
+      </div>
+      <div class="invest-cloud-box">
+        <label for="investCloudInput">☁️ رمز الحفظ السحابي</label>
+        <div class="invest-cloud-row">
+          <input type="text" id="investCloudInput" class="name-input" placeholder="مثال: A7K2M9PX" maxlength="12">
+          <button type="button" class="btn btn-green" onclick="investCloudLoad(document.getElementById('investCloudInput').value)">تحميل</button>
+        </div>
+        <p class="text-muted text-11">احفظ رمزك لتستعيد تقدمك من أي جهاز.</p>
+      </div>
+    </div>
+
+    <div id="investGameScreen" class="invest-game d-none">
+      <div class="invest-hud">
+        <div class="invest-stat"><span>نقد</span><strong id="investCash">0</strong></div>
+        <div class="invest-stat"><span>صافي الثروة</span><strong id="investNet">0</strong></div>
+        <div class="invest-stat"><span>اليوم</span><strong id="investDay">1</strong></div>
+        <div class="invest-stat"><span>الهدف</span><strong id="investGoal">25000</strong></div>
+      </div>
+      <div class="invest-goal-bar"><div class="invest-goal-fill" id="investGoalFill"></div></div>
+      <div class="invest-stress-row">
+        <span>ضغط السوق</span>
+        <div class="invest-stress-track"><div class="invest-stress-fill" id="investStressFill"></div></div>
+        <strong id="investStressVal">0%</strong>
+      </div>
+      <div class="invest-lesson" id="investLesson">💡 نصيحة استثمارية تظهر هنا</div>
+
+      <div class="invest-main">
+        <div class="invest-col">
+          <h4 class="invest-col-title">الأصول</h4>
+          <div id="investAssetList" class="invest-asset-list"></div>
+        </div>
+        <div class="invest-col invest-trade">
+          <h4 class="invest-col-title" id="investSelectedName">🚀 أسهم نمو</h4>
+          <p class="invest-tip" id="investSelectedTip"></p>
+          <div class="invest-price-line">السعر: <strong id="investSelectedPrice">0</strong></div>
+          <select id="investAmountMode" title="مبلغ الشراء">
+            <option value="pct25">25% من النقد</option>
+            <option value="pct50">50% من النقد</option>
+            <option value="pct10">10% من النقد</option>
+            <option value="all">كل النقد</option>
+            <option value="custom">مبلغ مخصص</option>
+          </select>
+          <input type="number" id="investCustomAmount" class="name-input d-none" placeholder="المبلغ" min="10">
+          <div class="invest-trade-btns">
+            <button type="button" class="btn btn-green" onclick="investBuy()">شراء</button>
+            <button type="button" class="btn btn-orange" onclick="investSell(0.5)">بيع 50%</button>
+            <button type="button" class="btn btn-red" onclick="investSell(1)">بيع الكل</button>
+          </div>
+          <div class="invest-util-btns">
+            <button type="button" class="btn" id="investPauseBtn" onclick="investTogglePause()">⏸ إيقاف</button>
+            <button type="button" class="btn btn-purple" onclick="investBreathe()">😌 تهدئة</button>
+            <button type="button" class="btn btn-blue" onclick="investCloudSave(true)">☁️ حفظ سحابي</button>
+          </div>
+          <div class="invest-cloud-status">
+            <span>رمزك: <strong id="investCloudId">—</strong></span>
+            <span id="investSyncStatus">لم يُزامَن بعد</span>
+          </div>
+        </div>
+      </div>
+      <div id="investLog" class="invest-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMPIRE MODAL — إمبراطورية الضغط -->
+<div class="overlay" id="empireOverlay">
+  <div class="game-modal empire-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">👑 إمبراطورية الضغط</h2>
+      <button type="button" class="close-btn" onclick="closeGame('empire')">✕</button>
+    </div>
+
+    <div id="empireLobby" class="empire-lobby">
+      <div class="empire-hero-art" aria-hidden="true">
+        <span class="empire-orbit empire-orbit-a">🍋</span>
+        <span class="empire-orbit empire-orbit-b">🏦</span>
+        <span class="empire-orbit empire-orbit-c">🚀</span>
+        <div class="empire-hero-coin">👑</div>
+      </div>
+      <p class="empire-intro">اضغط، ابنِ أعمالك، وحوّل كشك الليمون إلى إمبراطورية عالمية.</p>
+      <div class="score-display">
+        <div class="score-box">
+          <div class="score-label">أفضل إجمالي</div>
+          <div class="score-value empire-gold" id="empireBestLobby">$0</div>
+        </div>
+      </div>
+      <div class="empire-lobby-actions">
+        <button type="button" class="btn primary empire-start-btn" onclick="startEmpireGame()">▶ ابدأ الإمبراطورية</button>
+        <button type="button" class="btn btn-blue d-none" id="empireContinueBtn" onclick="continueEmpireGame()">📂 متابعة</button>
+      </div>
+    </div>
+
+    <div id="empirePlay" class="empire-play d-none">
+      <div class="empire-hud">
+        <div class="empire-stat">
+          <span>الرصيد</span>
+          <strong id="empireCash" class="empire-gold">$0</strong>
+        </div>
+        <div class="empire-stat">
+          <span>دخل/ثانية</span>
+          <strong id="empireCps">$0/ث</strong>
+        </div>
+        <div class="empire-stat">
+          <span>الضغطة</span>
+          <strong id="empireTapPower">+1</strong>
+        </div>
+        <div class="empire-stat">
+          <span>المضاعف</span>
+          <strong id="empirePrestige">×1</strong>
+        </div>
+      </div>
+
+      <div class="empire-stage">
+        <span class="empire-stage-icon" id="empireStageIcon">🍋</span>
+        <span class="empire-stage-label" id="empireStageLabel">كشك ليمون</span>
+      </div>
+
+      <div class="empire-tap-zone" id="empireFloatLayer">
+        <button type="button" class="empire-tap-btn" id="empireTapBtn" aria-label="اضغط لكسب المال">
+          <span class="empire-tap-ring"></span>
+          <span class="empire-tap-core">💰</span>
+          <span class="empire-tap-hint">اضغط!</span>
+        </button>
+      </div>
+
+      <div class="empire-actions-row">
+        <button type="button" class="btn btn-orange empire-mini-btn" id="empireTapUpgradeBtn" onclick="upgradeEmpireTap()">
+          💪 ضغطة أقوى <span id="empireTapUpgradeLevel">0</span>
+          <small>$<span id="empireTapUpgradeCost">25</span></small>
+        </button>
+        <button type="button" class="btn btn-purple empire-mini-btn" id="empirePrestigeBtn" onclick="doEmpirePrestige()" disabled>
+          👑 ولادة جديدة
+        </button>
+      </div>
+      <p class="empire-prestige-hint" id="empirePrestigeHint">تحتاج $1.00M إجمالي</p>
+
+      <h4 class="empire-shop-title">أعمالك</h4>
+      <div id="empireBizList" class="empire-biz-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MONEY MODAL -->
+<div class="overlay" id="moneyOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">💰 صائد الأموال</h2>
+      <button type="button" class="close-btn" onclick="closeGame('money')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">الرصيد</div><div class="score-value money-score-val" id="moneyScore">$0</div></div>
+      <div class="score-box"><div class="score-label">أفضل رصيد</div><div class="score-value" id="moneyBest">$0</div></div>
+    </div>
+    <div id="moneyUpgrades" class="money-upgrades d-none">
+      <button type="button" class="btn btn-blue money-upgrade-btn" id="moneyUpgradeValue" onclick="upgradeMoney('value')">
+        قيمة أكبر (<span id="moneyUpgradeValueLevel">0</span>) (<span id="moneyUpgradeValueCost">50</span>$)
+      </button>
+      <button type="button" class="btn btn-purple money-upgrade-btn" id="moneyUpgradeLuck" onclick="upgradeMoney('luck')">
+        حظ أفضل (<span id="moneyUpgradeLuckLevel">0</span>) (<span id="moneyUpgradeLuckCost">100</span>$)
+      </button>
+      <button type="button" class="btn btn-green money-upgrade-btn" id="moneyUpgradeAutoCollector" onclick="upgradeMoney('autoCollector')">
+        جامع آلي (<span id="moneyUpgradeAutoCollectorLevel">0</span>) (<span id="moneyUpgradeAutoCollectorCost">200</span>$)
+      </button>
+    </div>
+    <div class="money-canvas-wrap">
+      <canvas id="moneyCanvas" width="320" height="400"></canvas>
+      <button type="button" id="moneyStartBtn" class="btn primary money-start-btn" onclick="startMoney()">▶ ابدأ اللعب</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANIME MODAL -->
+<div class="overlay" id="animeOverlay">
+  <div class="game-modal anime-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🎌 تحدي الأنمي</h2>
+      <button type="button" class="close-btn" onclick="closeGame('anime')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="animeScore">0</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="animeBest">0</div></div>
+    </div>
+    <div class="text-center my-20">
+      <div id="animeDifficultySelection">
+        <p class="anime-diff-title">اختر مستوى الصعوبة:</p>
+        <div class="flex-center-wrap">
+          <button type="button" class="btn btn-green" onclick="startAnime('easy')">🟢 سهل</button>
+          <button type="button" class="btn btn-orange" onclick="startAnime('medium')">🟠 متوسط</button>
+          <button type="button" class="btn btn-red" onclick="startAnime('hard')">🔴 صعب</button>
+        </div>
+      </div>
+      <div id="animeGameArea" class="d-none">
+        <img id="animeImage" class="anime-img" src="" alt="صورة توضيحية">
+        <div id="animeQuestion" class="anime-question"></div>
+        <div id="animeOptions" class="anime-options"></div>
+      </div>
+      <button type="button" id="animeStartBtn" class="btn primary anime-restart-btn d-none" onclick="showAnimeDifficulties()">▶ العب جولة جديدة</button>
+    </div>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js?v=2"></script>
+<script src="script.js?v=7"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {

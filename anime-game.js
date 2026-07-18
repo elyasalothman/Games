@@ -21,79 +21,29 @@ const ANIME_QUESTIONS = [
 let animeState = { score: 0, qIndex: 0, active: false, questions: [] };
 
 function initAnime() {
-    // إنشاء واجهة اللعبة برمجياً إذا لم تكن موجودة مسبقاً (تسهيلاً لعدم تعديل HTML)
-    if (!document.getElementById('animeOverlay')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'animeOverlay';
-        overlay.className = 'overlay';
-        overlay.innerHTML = `
-            <div class="game-modal anime-modal">
-                <div class="modal-header">
-                    <h2 class="modal-title">🎌 تحدي الأنمي</h2>
-                    <button class="close-btn" onclick="closeGame('anime')">✖</button>
-                </div>
-                <div class="score-display">
-                    <div class="score-box">
-                        <div class="score-label">النقاط</div>
-                        <div class="score-value" id="animeScore">0</div>
-                    </div>
-                    <div class="score-box">
-                        <div class="score-label">أفضل نتيجة</div>
-                        <div class="score-value" id="animeBest">0</div>
-                    </div>
-                </div>
-                <div style="text-align:center; padding: 20px 0;">
-                    <div id="animeDifficultySelection">
-                        <p style="margin-bottom:15px; font-size:18px; font-weight:bold;">اختر مستوى الصعوبة:</p>
-                        <div class="flex-center-wrap">
-                            <button class="btn btn-green" onclick="startAnime('easy')">🟢 سهل</button>
-                            <button class="btn btn-orange" onclick="startAnime('medium')">🟠 متوسط</button>
-                            <button class="btn btn-red" onclick="startAnime('hard')">🔴 صعب</button>
-                        </div>
-                    </div>
-                    <div id="animeGameArea" style="display:none;">
-                        <img id="animeImage" class="anime-img" src="" alt="صورة توضيحية">
-                        <div id="animeQuestion" style="font-size:22px; font-weight:bold; margin-bottom:24px; color:var(--text-main); line-height:1.4;"></div>
-                        <div id="animeOptions" style="display:flex; flex-direction:column; gap:12px;"></div>
-                    </div>
-                    <button id="animeStartBtn" class="btn primary" style="margin-top:20px; width:100%; font-size:18px; padding:15px; display:none;" onclick="showAnimeDifficulties()">▶ العب جولة جديدة</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-
     animeState = { score: 0, qIndex: 0, active: false, questions: [] };
     document.getElementById('animeScore').textContent = 0;
     document.getElementById('animeBest').textContent = getStore('best_anime', 0);
-    
-    // عرض شاشة اختيار الصعوبة عند الفتح
     showAnimeDifficulties();
-    
-    document.getElementById('animeOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
 }
 
 function closeAnime() {
-    const overlay = document.getElementById('animeOverlay');
-    if(overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
     animeState.active = false;
 }
 
 function showAnimeDifficulties() {
-    document.getElementById('animeDifficultySelection').style.display = 'block';
-    document.getElementById('animeGameArea').style.display = 'none';
-    document.getElementById('animeStartBtn').style.display = 'none';
+    document.getElementById('animeDifficultySelection').classList.remove('d-none');
+    document.getElementById('animeGameArea').classList.add('d-none');
+    document.getElementById('animeStartBtn').classList.add('d-none');
 }
 
 function startAnime(difficulty) {
     animeState.active = true;
     animeState.score = 0;
     document.getElementById('animeScore').textContent = 0;
-    document.getElementById('animeStartBtn').style.display = 'none';
-    document.getElementById('animeDifficultySelection').style.display = 'none';
-    document.getElementById('animeGameArea').style.display = 'block';
+    document.getElementById('animeStartBtn').classList.add('d-none');
+    document.getElementById('animeDifficultySelection').classList.add('d-none');
+    document.getElementById('animeGameArea').classList.remove('d-none');
     
     // تصفية الأسئلة حسب مستوى الصعوبة المختار
     let filteredQuestions = ANIME_QUESTIONS.filter(q => q.difficulty === difficulty);
@@ -120,7 +70,6 @@ function nextAnimeQ() {
     const qElem = document.getElementById('animeQuestion');
     const imgElem = document.getElementById('animeImage');
     
-    // عرض الصورة إذا كانت مرفقة بالسؤال، أو إخفاؤها
     if (qData.image) {
         imgElem.src = qData.image;
         imgElem.style.display = 'inline-block';
@@ -201,6 +150,6 @@ function endAnime() {
     document.getElementById('animeImage').style.display = 'none';
     
     const startBtn = document.getElementById('animeStartBtn');
-    startBtn.style.display = 'inline-block';
+    startBtn.classList.remove('d-none');
     startBtn.textContent = '▶ العب جولة جديدة';
 }

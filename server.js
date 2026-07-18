@@ -53,6 +53,16 @@ db.run(`CREATE TABLE IF NOT EXISTS leaderboard (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
 
+// جدول الحفظ السحابي (للتقدم طويل الأمد مثل لعبة الاستثمار)
+db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
+    cloud_id TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    player_name TEXT DEFAULT '',
+    data TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (cloud_id, game_id)
+)`);
+
 // إعداد نظام الحماية (Rate Limiting)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 دقيقة
@@ -107,6 +117,91 @@ app.get('/api/leaderboard/:game_id', (req, res) => {
         if (err) return res.status(500).json({ error: 'حدث خطأ داخلي' });
         res.status(200).json(rows);
     });
+});
+
+// --- الحفظ السحابي ---
+function generateCloudId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let id = '';
+    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+}
+
+app.post('/api/cloud-save', (req, res) => {
+    let { cloud_id, game_id, player_name, data } = req.body || {};
+    if (!game_id || data === undefined || data === null) {
+        return res.status(400).json({ error: 'بيانات غير مكتملة' });
+    }
+
+    game_id = String(game_id).substring(0, 40);
+    player_name = String(player_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30);
+
+    let payload;
+    try {
+        payload = typeof data === 'string' ? data : JSON.stringify(data);
+    } catch (e) {
+        return res.status(400).json({ error: 'بيانات غير صالحة' });
+    }
+    if (payload.length > 200000) {
+        return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
+    }
+
+    const finalize = (id) => {
+        db.run(
+            `INSERT INTO cloud_saves (cloud_id, game_id, player_name, data, updated_at)
+             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+             ON CONFLICT(cloud_id, game_id) DO UPDATE SET
+               data = excluded.data,
+               player_name = excluded.player_name,
+               updated_at = CURRENT_TIMESTAMP`,
+            [id, game_id, player_name, payload],
+            function (err) {
+                if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
+                res.status(200).json({ success: true, cloud_id: id, updated_at: new Date().toISOString() });
+            }
+        );
+    };
+
+    if (cloud_id) {
+        cloud_id = String(cloud_id).toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
+        if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
+        return finalize(cloud_id);
+    }
+
+    // إنشاء رمز جديد مع إعادة المحاولة عند التصادم النادر
+    const tryCreate = (attempts) => {
+        const id = generateCloudId();
+        db.get(`SELECT cloud_id FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`, [id, game_id], (err, row) => {
+            if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
+            if (row && attempts > 0) return tryCreate(attempts - 1);
+            finalize(id);
+        });
+    };
+    tryCreate(5);
+});
+
+app.get('/api/cloud-save/:cloud_id', (req, res) => {
+    const cloud_id = String(req.params.cloud_id || '').toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
+    const game_id = String(req.query.game_id || 'invest').substring(0, 40);
+    if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
+
+    db.get(
+        `SELECT cloud_id, game_id, player_name, data, updated_at FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`,
+        [cloud_id, game_id],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: 'خطأ في القراءة' });
+            if (!row) return res.status(404).json({ error: 'لا يوجد حفظ بهذا الرمز' });
+            let parsed;
+            try { parsed = JSON.parse(row.data); } catch (e) { parsed = row.data; }
+            res.status(200).json({
+                cloud_id: row.cloud_id,
+                game_id: row.game_id,
+                player_name: row.player_name,
+                data: parsed,
+                updated_at: row.updated_at
+            });
+        }
+    );
 });
 
 // --- منطق اللعبة الجماعية (Agar.io Clone) ---
