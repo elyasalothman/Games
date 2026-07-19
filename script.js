@@ -163,11 +163,11 @@ const ALL_GAMES = [
 // ─── STORAGE & CORE ───
 let cloudSyncTimer = null;
 let lastCloudSyncAt = null;
-const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser'];
+const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess'];
 const SYNC_EXACT_KEYS = new Set([
-  'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
+  'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
   'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
-  'investCloudId', 'investGameProgress', 'domino_player_wins',
+  'investCloudId', 'investGameProgress', 'domino_player_wins', 'domino_bot_wins',
   'quest_play', 'quest_score', 'quest_online',
   'quest_claimed_play', 'quest_claimed_score', 'quest_claimed_online'
 ]);
@@ -261,7 +261,8 @@ const DICT = {
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
     cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
-    cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز.",
+    cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز. سجّل الدخول بـ Google للحفظ التلقائي لكل تقدمك.",
+    cloudMerged: "☁️ تم دمج تقدمك السابق مع حسابك — لم يُفقد شيء!",
     searchPlaceholder: "🔍 ابحث عن لعبة...",
     emptyGames: "لا توجد ألعاب مطابقة للبحث",
     loadingGame: "جاري تحميل اللعبة...",
@@ -324,7 +325,8 @@ const DICT = {
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
     cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
-    cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device.",
+    cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device. Sign in with Google for automatic sync of all progress.",
+    cloudMerged: "☁️ Your existing progress was merged with your account — nothing was lost!",
     searchPlaceholder: "🔍 Search for a game...",
     emptyGames: "No games match your search",
     loadingGame: "Loading game...",
@@ -763,8 +765,12 @@ function pickBetterInvestProgress(a, b) {
 
 function mergeSyncData(local, cloud) {
   const merged = { ...(cloud || {}) };
-  Object.entries(local || {}).forEach(([key, localVal]) => {
+  const allKeys = new Set([...Object.keys(local || {}), ...Object.keys(cloud || {})]);
+  allKeys.forEach((key) => {
+    if (!shouldSyncKey(key)) return;
+    const localVal = local ? local[key] : undefined;
     const cloudVal = cloud ? cloud[key] : undefined;
+    if (localVal === undefined) { merged[key] = cloudVal; return; }
     if (cloudVal === undefined) { merged[key] = localVal; return; }
 
     if (key.startsWith('best_')) {
@@ -781,7 +787,7 @@ function mergeSyncData(local, cloud) {
       }
     } else if (key.startsWith('ach_') || key.startsWith('quest_claimed_')) {
       merged[key] = !!(localVal || cloudVal);
-    } else if (['totalScore', 'streak', 'domino_player_wins', 'quest_play', 'quest_score', 'quest_online', 'todayGamesCount'].includes(key)) {
+    } else if (['totalScore', 'streak', 'domino_player_wins', 'domino_bot_wins', 'quest_play', 'quest_score', 'quest_online', 'todayGamesCount'].includes(key)) {
       merged[key] = Math.max(Number(localVal) || 0, Number(cloudVal) || 0);
     } else if (key === 'favorites') {
       merged[key] = [...new Set([...(Array.isArray(localVal) ? localVal : []), ...(Array.isArray(cloudVal) ? cloudVal : [])])];
@@ -791,6 +797,8 @@ function mergeSyncData(local, cloud) {
       merged[key] = pickBetterInvestProgress(localVal, cloudVal);
     } else if (key === 'investCloudId') {
       merged[key] = localVal || cloudVal;
+    } else if (key === 'globalPlayerName') {
+      merged[key] = String(localVal || '').trim() || String(cloudVal || '').trim();
     } else if (['theme', 'lang', 'sound', 'radioStation'].includes(key)) {
       merged[key] = localVal;
     } else {
@@ -843,14 +851,15 @@ async function pushCloudSync() {
   updateCloudSyncUI(false);
 }
 
-async function pullAndMergeCloudSync() {
+async function pullAndMergeCloudSync(localSnapshot) {
   if (!currentUser) return;
   updateCloudSyncUI(true);
+  const hadLocalProgress = localSnapshot && Object.keys(localSnapshot).length > 0;
   try {
     const res = await fetch('/api/user-sync', { credentials: 'include' });
     if (!res.ok) return;
     const { data: cloudData, updated_at } = await res.json();
-    const merged = mergeSyncData(collectSyncData(), cloudData || {});
+    const merged = mergeSyncData(localSnapshot || collectSyncData(), cloudData || {});
     applySyncData(merged);
     refreshAfterCloudSync();
     await fetch('/api/user-sync', {
@@ -860,6 +869,9 @@ async function pullAndMergeCloudSync() {
       body: JSON.stringify({ data: merged })
     });
     lastCloudSyncAt = updated_at ? new Date(updated_at) : new Date();
+    if (hadLocalProgress) {
+      showToast(DICT[currentLang].cloudMerged || '☁️ تم دمج تقدمك السابق مع حسابك!');
+    }
   } catch (e) {
     console.error('Cloud pull failed', e);
   }
@@ -901,9 +913,11 @@ async function checkAuth() {
     }
     const res = await fetch('/auth/me', { credentials: 'include' });
     if (res.ok) {
+      const localSnapshot = collectSyncData();
+      const existingName = getStore('globalPlayerName', '').trim();
       currentUser = await res.json();
-      applyAuthUser(currentUser);
-      await pullAndMergeCloudSync();
+      applyAuthUser(currentUser, existingName);
+      await pullAndMergeCloudSync(localSnapshot);
     } else {
       currentUser = null;
     }
@@ -913,11 +927,13 @@ async function checkAuth() {
   updateAuthUI();
 }
 
-function applyAuthUser(user) {
+function applyAuthUser(user, existingName) {
   if (!user) return;
-  savePlayerName(user.name);
+  const savedName = (existingName || getStore('globalPlayerName', '')).trim();
+  if (savedName) restorePlayerNames(savedName);
+  else savePlayerName(user.name);
   const profileName = document.getElementById('profileName');
-  if (profileName) profileName.value = user.name;
+  if (profileName) profileName.value = savedName || user.name;
 }
 
 function updateAuthUI() {
