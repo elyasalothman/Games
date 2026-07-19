@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
@@ -14,7 +16,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         // حصر الاتصال بدومينك في بيئة الإنتاج لحماية الخادم
-        origin: process.env.NODE_ENV === 'production' ? ["https://games.alhajda.com/"] : "*",
+        origin: process.env.NODE_ENV === 'production' ? ["https://games.alhajda.com"] : "*",
     }
 });
 const PORT = process.env.PORT || 3000;

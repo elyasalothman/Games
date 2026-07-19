@@ -1,0 +1,5 @@
+node_modules
+.env
+.git
+leaderboard.db
+*.log
