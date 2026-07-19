@@ -161,8 +161,30 @@ const ALL_GAMES = [
 ];
 
 // ─── STORAGE & CORE ───
+let cloudSyncTimer = null;
+let lastCloudSyncAt = null;
+const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser'];
+const SYNC_EXACT_KEYS = new Set([
+  'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
+  'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
+  'investCloudId', 'investGameProgress', 'domino_player_wins',
+  'quest_play', 'quest_score', 'quest_online',
+  'quest_claimed_play', 'quest_claimed_score', 'quest_claimed_online'
+]);
+
+function shouldSyncKey(key) {
+  if (!key || key === 'installDismissed') return false;
+  if (SYNC_EXACT_KEYS.has(key)) return true;
+  return key.startsWith('best_') || key.startsWith('ach_');
+}
+
 function getStore(key, defaultValue){try{const value=localStorage.getItem(key);return value!==null?JSON.parse(value):defaultValue;}catch(e){return defaultValue;}}
-function setStore(key, value){try{localStorage.setItem(key,JSON.stringify(value));}catch(e){console.error(`Failed to save to localStorage: ${key}`, e);}}
+function setStore(key, value){
+  try{
+    localStorage.setItem(key,JSON.stringify(value));
+    if (currentUser && shouldSyncKey(key)) scheduleCloudSync();
+  }catch(e){console.error(`Failed to save to localStorage: ${key}`, e);}
+}
 
 function checkDailyReset() {
   const today = new Date().toDateString();
@@ -233,6 +255,13 @@ const DICT = {
     googleSignOut: "تسجيل الخروج",
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
+    cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
+    cloudSyncDesc: "تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
+    cloudSyncActive: "متزامن تلقائياً",
+    cloudSyncPending: "جاري المزامنة...",
+    cloudSyncSaved: "آخر حفظ:",
+    cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
+    cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز.",
     searchPlaceholder: "🔍 ابحث عن لعبة...",
     emptyGames: "لا توجد ألعاب مطابقة للبحث",
     loadingGame: "جاري تحميل اللعبة...",
@@ -289,6 +318,13 @@ const DICT = {
     googleSignOut: "Sign out",
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
+    cloudSyncTitle: "☁️ Your account cloud save",
+    cloudSyncDesc: "Your progress is saved on the Today Games server and linked to your Google account — restored automatically on any device.",
+    cloudSyncActive: "Auto-synced",
+    cloudSyncPending: "Syncing...",
+    cloudSyncSaved: "Last saved:",
+    cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
+    cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device.",
     searchPlaceholder: "🔍 Search for a game...",
     emptyGames: "No games match your search",
     loadingGame: "Loading game...",
@@ -380,6 +416,15 @@ function applyLang() {
     if (profileGoogleText) profileGoogleText.textContent = dict.googleSignIn;
     const signOutBtn = document.getElementById('profileSignOutBtn');
     if (signOutBtn) signOutBtn.textContent = dict.googleSignOut;
+    const cloudTitle = document.getElementById('profileCloudTitle');
+    if (cloudTitle) cloudTitle.textContent = dict.cloudSyncTitle;
+    const cloudDesc = document.getElementById('profileCloudDesc');
+    if (cloudDesc) cloudDesc.textContent = dict.cloudSyncDesc;
+    const guestCloudTitle = document.getElementById('profileGuestCloudTitle');
+    if (guestCloudTitle) guestCloudTitle.textContent = dict.cloudSyncGuest;
+    const guestCloudDesc = document.getElementById('profileGuestCloudDesc');
+    if (guestCloudDesc) guestCloudDesc.textContent = dict.cloudSyncGuestDesc;
+    updateCloudSyncUI();
     document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
     const recentTitle = document.getElementById('recentTitle');
@@ -688,6 +733,164 @@ function restorePlayerNames(name) {
   });
 }
 
+// ─── CLOUD SYNC (Google accounts) ───
+function collectSyncData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!shouldSyncKey(key)) continue;
+    try { data[key] = JSON.parse(localStorage.getItem(key)); } catch (e) { /* skip */ }
+  }
+  return data;
+}
+
+function investNetWorth(progress) {
+  if (!progress || !progress.started) return 0;
+  const holdings = progress.holdings || {};
+  const prices = progress.prices || {};
+  const holdingsValue = Object.entries(holdings).reduce((sum, [id, qty]) => sum + (Number(qty) || 0) * (Number(prices[id]) || 0), 0);
+  return (Number(progress.cash) || 0) + holdingsValue;
+}
+
+function pickBetterInvestProgress(a, b) {
+  if (!a || !a.started) return b;
+  if (!b || !b.started) return a;
+  const netA = investNetWorth(a);
+  const netB = investNetWorth(b);
+  if (netA !== netB) return netA > netB ? a : b;
+  return (a.day || 0) >= (b.day || 0) ? a : b;
+}
+
+function mergeSyncData(local, cloud) {
+  const merged = { ...(cloud || {}) };
+  Object.entries(local || {}).forEach(([key, localVal]) => {
+    const cloudVal = cloud ? cloud[key] : undefined;
+    if (cloudVal === undefined) { merged[key] = localVal; return; }
+
+    if (key.startsWith('best_')) {
+      const gameId = key.slice(5);
+      if (LOWER_BETTER_GAMES.includes(gameId)) {
+        const l = Number(localVal);
+        const c = Number(cloudVal);
+        const lValid = !isNaN(l) && l > 0 && l < 9999;
+        const cValid = !isNaN(c) && c > 0 && c < 9999;
+        if (lValid && cValid) merged[key] = Math.min(l, c);
+        else merged[key] = lValid ? l : cValid ? c : localVal;
+      } else {
+        merged[key] = Math.max(Number(localVal) || 0, Number(cloudVal) || 0);
+      }
+    } else if (key.startsWith('ach_') || key.startsWith('quest_claimed_')) {
+      merged[key] = !!(localVal || cloudVal);
+    } else if (['totalScore', 'streak', 'domino_player_wins', 'quest_play', 'quest_score', 'quest_online', 'todayGamesCount'].includes(key)) {
+      merged[key] = Math.max(Number(localVal) || 0, Number(cloudVal) || 0);
+    } else if (key === 'favorites') {
+      merged[key] = [...new Set([...(Array.isArray(localVal) ? localVal : []), ...(Array.isArray(cloudVal) ? cloudVal : [])])];
+    } else if (key === 'recentGames') {
+      merged[key] = [...new Set([...(Array.isArray(cloudVal) ? cloudVal : []), ...(Array.isArray(localVal) ? localVal : [])])].slice(-10);
+    } else if (key === 'investGameProgress') {
+      merged[key] = pickBetterInvestProgress(localVal, cloudVal);
+    } else if (key === 'investCloudId') {
+      merged[key] = localVal || cloudVal;
+    } else if (['theme', 'lang', 'sound', 'radioStation'].includes(key)) {
+      merged[key] = localVal;
+    } else {
+      merged[key] = cloudVal ?? localVal;
+    }
+  });
+  return merged;
+}
+
+function applySyncData(data) {
+  if (!data || typeof data !== 'object') return;
+  Object.entries(data).forEach(([key, value]) => {
+    if (!shouldSyncKey(key)) return;
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* skip */ }
+  });
+}
+
+function refreshAfterCloudSync() {
+  currentTheme = getStore('theme', 'light');
+  currentLang = getStore('lang', 'ar');
+  applyTheme();
+  applyLang();
+  restorePlayerNames();
+  init();
+}
+
+function scheduleCloudSync() {
+  if (!currentUser) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(pushCloudSync, 2500);
+}
+
+async function pushCloudSync() {
+  if (!currentUser) return;
+  updateCloudSyncUI(true);
+  try {
+    const res = await fetch('/api/user-sync', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: collectSyncData() })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      lastCloudSyncAt = json.updated_at ? new Date(json.updated_at) : new Date();
+    }
+  } catch (e) {
+    console.error('Cloud sync failed', e);
+  }
+  updateCloudSyncUI(false);
+}
+
+async function pullAndMergeCloudSync() {
+  if (!currentUser) return;
+  updateCloudSyncUI(true);
+  try {
+    const res = await fetch('/api/user-sync', { credentials: 'include' });
+    if (!res.ok) return;
+    const { data: cloudData, updated_at } = await res.json();
+    const merged = mergeSyncData(collectSyncData(), cloudData || {});
+    applySyncData(merged);
+    refreshAfterCloudSync();
+    await fetch('/api/user-sync', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: merged })
+    });
+    lastCloudSyncAt = updated_at ? new Date(updated_at) : new Date();
+  } catch (e) {
+    console.error('Cloud pull failed', e);
+  }
+  updateCloudSyncUI(false);
+}
+
+function updateCloudSyncUI(syncing) {
+  const dict = DICT[currentLang];
+  const accountBox = document.getElementById('profileAccountCloudBox');
+  const guestBox = document.getElementById('profileGuestCloudBox');
+  const statusEl = document.getElementById('profileCloudSyncStatus');
+  const timeEl = document.getElementById('profileCloudSyncTime');
+  const signedIn = !!currentUser;
+
+  if (accountBox) accountBox.classList.toggle('d-none', !signedIn);
+  if (guestBox) guestBox.classList.toggle('d-none', signedIn);
+
+  if (statusEl) {
+    statusEl.textContent = syncing ? dict.cloudSyncPending : dict.cloudSyncActive;
+    statusEl.classList.toggle('syncing', !!syncing);
+  }
+  if (timeEl) {
+    if (lastCloudSyncAt) {
+      const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+      timeEl.textContent = `${dict.cloudSyncSaved} ${lastCloudSyncAt.toLocaleString(locale)}`;
+    } else {
+      timeEl.textContent = '';
+    }
+  }
+}
+
 // ─── GOOGLE AUTH ───
 async function checkAuth() {
   try {
@@ -700,6 +903,7 @@ async function checkAuth() {
     if (res.ok) {
       currentUser = await res.json();
       applyAuthUser(currentUser);
+      await pullAndMergeCloudSync();
     } else {
       currentUser = null;
     }
@@ -756,7 +960,10 @@ async function signOut() {
     await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
   } catch (e) { /* ignore */ }
   currentUser = null;
+  lastCloudSyncAt = null;
+  clearTimeout(cloudSyncTimer);
   updateAuthUI();
+  updateCloudSyncUI(false);
   showToast(currentLang === 'ar' ? 'تم تسجيل الخروج' : 'Signed out');
   closeProfile();
 }
@@ -769,7 +976,10 @@ function handleAuthRedirect() {
   const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
   window.history.replaceState({}, '', newUrl);
   if (auth === 'success') {
-    checkAuth().then(() => showToast(DICT[currentLang].authSuccess));
+    checkAuth().then(() => {
+      showToast(DICT[currentLang].authSuccess);
+      refreshAfterCloudSync();
+    });
   } else if (auth === 'failed') {
     showToast(DICT[currentLang].authFailed);
   }
@@ -923,6 +1133,7 @@ function importSave() {
       const parsed = JSON.parse(decodeURIComponent(escape(atob(code))));
       Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
       showToast('تمت استعادة التقدم بنجاح! 🔄');
+      if (currentUser) scheduleCloudSync();
       setTimeout(() => location.reload(), 1500);
     } catch(e) { showToast('❌ الكود غير صحيح أو تالف!'); }
   }
@@ -968,11 +1179,10 @@ function openProfile() {
 
   const cloudId = getStore('investCloudId', '');
   const codeEl = document.getElementById('profileCloudCode');
-  const boxEl = document.getElementById('profileCloudBox');
-  if (codeEl && boxEl) {
-    codeEl.textContent = cloudId || '—';
-    boxEl.classList.toggle('d-none', !cloudId);
-  }
+  const guestBox = document.getElementById('profileGuestCloudBox');
+  if (codeEl) codeEl.textContent = cloudId || '—';
+  if (guestBox) guestBox.classList.toggle('d-none', !!currentUser);
+  updateCloudSyncUI(false);
 
   renderAchievements();
 }

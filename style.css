@@ -1251,6 +1251,13 @@ body.dark-mode {
   letter-spacing: 3px; color: var(--accent-green);
 }
 .profile-cloud-copy { padding: 8px 14px; font-size: 13px; }
+.profile-sync-status {
+  display: inline-block; padding: 6px 14px; border-radius: 20px;
+  background: rgba(52, 199, 89, 0.15); color: #34c759;
+  font-size: 13px; font-weight: 700; margin-bottom: 6px;
+}
+.profile-sync-status.syncing { background: rgba(0, 122, 255, 0.15); color: var(--accent-blue); }
+.profile-sync-time { margin-bottom: 8px; }
 
 /* ─── Invest Sim ─── */
 .invest-modal { max-width: 920px; }

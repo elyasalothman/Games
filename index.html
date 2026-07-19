@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -365,13 +365,19 @@
         </a>
       </div>
     </div>
-    <div class="profile-cloud-box" id="profileCloudBox">
-      <div class="profile-cloud-label">☁️ رمز الحفظ السحابي (الاستثمار)</div>
+    <div class="profile-cloud-box d-none" id="profileAccountCloudBox">
+      <div class="profile-cloud-label" id="profileCloudTitle">☁️ الحفظ السحابي لحسابك</div>
+      <div class="profile-sync-status" id="profileCloudSyncStatus">متزامن تلقائياً</div>
+      <div class="profile-sync-time text-muted text-11" id="profileCloudSyncTime"></div>
+      <p class="text-muted text-11" id="profileCloudDesc">تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.</p>
+    </div>
+    <div class="profile-cloud-box" id="profileGuestCloudBox">
+      <div class="profile-cloud-label" id="profileGuestCloudTitle">☁️ رمز الحفظ السحابي (الاستثمار)</div>
       <div class="profile-cloud-row">
         <code class="profile-cloud-code" id="profileCloudCode">—</code>
         <button type="button" class="btn btn-blue profile-cloud-copy" onclick="copyCloudCode()">📋 نسخ</button>
       </div>
-      <p class="text-muted text-11">هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز.</p>
+      <p class="text-muted text-11" id="profileGuestCloudDesc">هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز. سجّل الدخول بـ Google للحفظ التلقائي لكل تقدمك.</p>
     </div>
     <h3 class="font-bold text-blue mb-15">🏅 إنجازاتي</h3>
     <div id="achievementsList" class="achievements-grid">

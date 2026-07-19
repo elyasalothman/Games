@@ -94,6 +94,14 @@ db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
     PRIMARY KEY (cloud_id, game_id)
 )`);
 
+// حفظ سحابي كامل لحسابات Google (نقاط، إنجازات، تقدم الألعاب)
+db.run(`CREATE TABLE IF NOT EXISTS user_saves (
+    user_id INTEGER PRIMARY KEY,
+    data TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)`);
+
 // --- تسجيل الدخول بـ Google ---
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => {
@@ -171,6 +179,45 @@ app.post('/auth/logout', (req, res) => {
             res.status(200).json({ success: true });
         });
     });
+});
+
+function requireAuth(req, res, next) {
+    if (!req.user) return res.status(401).json({ error: 'يجب تسجيل الدخول' });
+    next();
+}
+
+// --- مزامنة سحابية لحسابات Google ---
+app.get('/api/user-sync', requireAuth, (req, res) => {
+    db.get(`SELECT data, updated_at FROM user_saves WHERE user_id = ?`, [req.user.id], (err, row) => {
+        if (err) return res.status(500).json({ error: 'خطأ في القراءة' });
+        if (!row) return res.status(200).json({ data: {}, updated_at: null });
+        let parsed;
+        try { parsed = JSON.parse(row.data); } catch (e) { parsed = {}; }
+        res.status(200).json({ data: parsed, updated_at: row.updated_at });
+    });
+});
+
+app.post('/api/user-sync', requireAuth, (req, res) => {
+    const { data } = req.body || {};
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return res.status(400).json({ error: 'بيانات غير صالحة' });
+    }
+    let payload;
+    try { payload = JSON.stringify(data); } catch (e) {
+        return res.status(400).json({ error: 'بيانات غير صالحة' });
+    }
+    if (payload.length > 500000) {
+        return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
+    }
+    db.run(
+        `INSERT INTO user_saves (user_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
+        [req.user.id, payload],
+        function (err) {
+            if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
+            res.status(200).json({ success: true, updated_at: new Date().toISOString() });
+        }
+    );
 });
 
 // إعداد نظام الحماية (Rate Limiting)
