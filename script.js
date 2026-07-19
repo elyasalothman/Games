@@ -594,8 +594,7 @@ function openGame(id) {
 function runGameInit(id) {
   if (['agar', 'baloot', 'uno'].includes(id)) {
     setStore('quest_online', 1); // تسجيل إنجاز الدخول للعبة أونلاين
-    const nameInput = document.getElementById(id + 'Name');
-    if (nameInput && !nameInput.value) nameInput.value = getStore('globalPlayerName', '');
+    restorePlayerNames();
   }
 
   if (gameInitializers[id]) {
@@ -666,6 +665,29 @@ function getPlayerName() {
   return currentUser?.name || getStore('globalPlayerName', '') || (currentLang === 'ar' ? 'لاعب مجهول' : 'Anonymous');
 }
 
+function hasPlayerIdentity() {
+  if (currentUser?.name) return true;
+  const name = getStore('globalPlayerName', '');
+  return typeof name === 'string' && name.trim().length > 0;
+}
+
+function savePlayerName(name) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return;
+  setStore('globalPlayerName', trimmed);
+  setStore('welcomeSeen', true);
+  restorePlayerNames(trimmed);
+}
+
+function restorePlayerNames(name) {
+  const saved = name || getStore('globalPlayerName', '');
+  if (!saved) return;
+  ['welcomeName', 'profileName', 'agarName', 'balootName', 'unoName'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = saved;
+  });
+}
+
 // ─── GOOGLE AUTH ───
 async function checkAuth() {
   try {
@@ -689,7 +711,7 @@ async function checkAuth() {
 
 function applyAuthUser(user) {
   if (!user) return;
-  setStore('globalPlayerName', user.name);
+  savePlayerName(user.name);
   const profileName = document.getElementById('profileName');
   if (profileName) profileName.value = user.name;
 }
@@ -753,8 +775,17 @@ function handleAuthRedirect() {
   }
 }
 
+async function initAuthAndWelcome() {
+  await checkAuth();
+  restorePlayerNames();
+  if (hasPlayerIdentity()) setStore('welcomeSeen', true);
+  else setTimeout(showWelcome, 800);
+}
+
 function showWelcome() {
-  if (getStore('welcomeSeen', false)) return;
+  if (getStore('welcomeSeen', false) || hasPlayerIdentity()) return;
+  const welcomeName = document.getElementById('welcomeName');
+  if (welcomeName) welcomeName.value = getStore('globalPlayerName', '');
   document.getElementById('welcomeOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -767,10 +798,7 @@ function closeWelcome() {
 
 function startFromWelcome() {
   const name = document.getElementById('welcomeName').value.trim();
-  if (name) {
-    setStore('globalPlayerName', name);
-    document.getElementById('profileName').value = name;
-  }
+  if (name) savePlayerName(name);
   closeWelcome();
   playSound('levelup');
   showToast(currentLang === 'ar' ? `مرحباً ${name || 'بك'}! 🎮` : `Welcome ${name || ''}! 🎮`);
@@ -807,11 +835,11 @@ function submitScore(game_id, score, isLowerBetter = false) {
   if (isNewRecord || currentBest === 0 || currentBest === 9999) {
     setTimeout(async () => {
       let playerName = getPlayerName();
-      if (!currentUser) {
+      if (!hasPlayerIdentity()) {
         const prompted = prompt('🎉 رقم قياسي جديد! أدخل اسمك للوحة الصدارة:', playerName);
         if (!prompted) return;
         playerName = prompted;
-        setStore('globalPlayerName', playerName);
+        savePlayerName(playerName);
       }
       try {
         await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ game_id, player_name: playerName, score }) });
@@ -959,7 +987,7 @@ function copyCloudCode() {
 function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
 function saveProfile() {
   if (currentUser) return;
-  setStore('globalPlayerName', document.getElementById('profileName').value.trim());
+  savePlayerName(document.getElementById('profileName').value);
   setStore('globalPlayerAvatar', document.getElementById('profileAvatar').value);
   showToast('✅ تم حفظ الملف الشخصي');
 }
@@ -1119,14 +1147,13 @@ function closeActiveOverlay() {
   setupInstallPrompt();
   handleDeepLink();
   handleAuthRedirect();
-  checkAuth();
-  setTimeout(showWelcome, 1200);
+  initAuthAndWelcome();
 
   // تصدير الدوال للـ HTML onclick
   const api = {
     filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
     closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode, signOut,
-    playRandomGame, showWelcome, closeWelcome, startFromWelcome,
+    playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
     submitScore, showToast, getStore, setStore, playSound
   };

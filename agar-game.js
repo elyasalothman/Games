@@ -35,7 +35,9 @@ function joinAgarGame(mode) {
     const skinEl = document.getElementById('agarSkin');
     const lowGraphicsEl = document.getElementById('agarLowGraphics');
     agarLowGraphics = lowGraphicsEl ? lowGraphicsEl.checked : false;
-    const name = (nameEl && nameEl.value) ? nameEl.value : 'لاعب';
+    const name = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
+    const playerName = name || (typeof getStore === 'function' ? getStore('globalPlayerName', '') : '') || 'لاعب';
+    if (name && typeof savePlayerName === 'function') savePlayerName(name);
     const color = (colorEl && colorEl.value) ? colorEl.value : '#007aff';
     const skin = (skinEl && skinEl.value) ? skinEl.value : '';
     let room = 'public';
@@ -86,7 +88,7 @@ function joinAgarGame(mode) {
         ctx.fillText('❌ فشل الاتصال بالخادم! يرجى تحديث الصفحة.', cvs.width / 2, cvs.height / 2);
     });
 
-    socket.emit('joinGame', { name, room, mode, color, skin });
+    socket.emit('joinGame', { name: playerName, room, mode, color, skin });
     
     socket.on('init', (data) => {
         myAgarId = data.id;

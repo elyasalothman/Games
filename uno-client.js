@@ -8,7 +8,9 @@ function initUno() {
 }
 
 function joinUnoGame(mode) {
-    const name = document.getElementById('unoName').value || 'لاعب';
+    const name = (document.getElementById('unoName').value || '').trim();
+    const playerName = name || (typeof getStore === 'function' ? getStore('globalPlayerName', '') : '') || 'لاعب';
+    if (name && typeof savePlayerName === 'function') savePlayerName(name);
     let room = 'public_uno';
     
     if (mode === 'private') {
@@ -22,7 +24,7 @@ function joinUnoGame(mode) {
     document.getElementById('unoGameScreen').style.display = 'flex';
     
     unoSocket = io();
-    unoSocket.emit('joinUno', { name, room, mode });
+    unoSocket.emit('joinUno', { name: playerName, room, mode });
     
     unoSocket.on('unoGameState', (state) => {
         myUnoState = state;
