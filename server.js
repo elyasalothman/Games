@@ -5,6 +5,9 @@ const sqlite3 = require('sqlite3').verbose();
 const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +18,8 @@ const io = new Server(server, {
     }
 });
 const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const GOOGLE_ENABLED = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 // 4. تفعيل دعم الوكلاء لمعرفة IP المستخدم الحقيقي وتفعيل حظر الـ RateLimit بدقة
 app.set('trust proxy', 1);
@@ -27,6 +32,20 @@ app.use(compression());
 
 // Middleware لقراءة البيانات المرسلة بصيغة JSON
 app.use(express.json());
+
+// جلسات المستخدم وتسجيل الدخول بـ Google
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000
+    }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // إعداد قاعدة بيانات SQLite
 const db = new sqlite3.Database('./leaderboard.db', (err) => {
@@ -53,6 +72,16 @@ db.run(`CREATE TABLE IF NOT EXISTS leaderboard (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
 
+// جدول المستخدمين (تسجيل الدخول بـ Google)
+db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    google_id TEXT UNIQUE NOT NULL,
+    email TEXT,
+    name TEXT,
+    avatar_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
 // جدول الحفظ السحابي (للتقدم طويل الأمد مثل لعبة الاستثمار)
 db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
     cloud_id TEXT NOT NULL,
@@ -62,6 +91,85 @@ db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (cloud_id, game_id)
 )`);
+
+// --- تسجيل الدخول بـ Google ---
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => {
+    db.get(`SELECT id, google_id, email, name, avatar_url FROM users WHERE id = ?`, [id], (err, row) => done(err, row));
+});
+
+function findOrCreateGoogleUser(profile, done) {
+    const googleId = profile.id;
+    const email = profile.emails?.[0]?.value || '';
+    const name = (profile.displayName || profile.name?.givenName || 'لاعب').substring(0, 30);
+    const avatarUrl = profile.photos?.[0]?.value || '';
+
+    db.get(`SELECT id, google_id, email, name, avatar_url FROM users WHERE google_id = ?`, [googleId], (err, row) => {
+        if (err) return done(err);
+        if (row) {
+            db.run(
+                `UPDATE users SET email = ?, name = ?, avatar_url = ? WHERE id = ?`,
+                [email, name, avatarUrl, row.id],
+                (updateErr) => {
+                    if (updateErr) return done(updateErr);
+                    done(null, { ...row, email, name, avatar_url: avatarUrl });
+                }
+            );
+            return;
+        }
+        db.run(
+            `INSERT INTO users (google_id, email, name, avatar_url) VALUES (?, ?, ?, ?)`,
+            [googleId, email, name, avatarUrl],
+            function (insertErr) {
+                if (insertErr) return done(insertErr);
+                done(null, { id: this.lastID, google_id: googleId, email, name, avatar_url: avatarUrl });
+            }
+        );
+    });
+}
+
+if (GOOGLE_ENABLED) {
+    passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: `${BASE_URL}/auth/google/callback`
+    }, findOrCreateGoogleUser));
+    console.log('✅ Google Sign-In enabled');
+} else {
+    console.log('ℹ️ Google Sign-In disabled — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable');
+}
+
+app.get('/auth/status', (req, res) => {
+    res.status(200).json({ googleEnabled: GOOGLE_ENABLED, authenticated: !!req.user });
+});
+
+app.get('/auth/me', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'غير مسجل الدخول' });
+    res.status(200).json({
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        avatar_url: req.user.avatar_url
+    });
+});
+
+if (GOOGLE_ENABLED) {
+    app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+    app.get('/auth/google/callback',
+        passport.authenticate('google', { failureRedirect: '/?auth=failed' }),
+        (req, res) => res.redirect('/?auth=success')
+    );
+}
+
+app.post('/auth/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) return res.status(500).json({ error: 'فشل تسجيل الخروج' });
+        req.session.destroy(() => {
+            res.clearCookie('connect.sid');
+            res.status(200).json({ success: true });
+        });
+    });
+});
 
 // إعداد نظام الحماية (Rate Limiting)
 const limiter = rateLimit({

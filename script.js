@@ -191,6 +191,8 @@ function checkStreak(){
 // ─── THEME & LANGUAGE SYSTEM ───
 let currentTheme = getStore('theme', 'light');
 let currentLang = getStore('lang', 'ar');
+let currentUser = null;
+let googleAuthEnabled = false;
 
 if (currentLang !== 'ar' && currentLang !== 'en') currentLang = 'ar';
 
@@ -226,6 +228,11 @@ const DICT = {
     welcomeName: "أدخل اسمك",
     welcomeStart: "🚀 ابدأ اللعب",
     welcomeSkip: "تخطي",
+    welcomeOr: "أو",
+    googleSignIn: "تسجيل الدخول بـ Google",
+    googleSignOut: "تسجيل الخروج",
+    authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
+    authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
     searchPlaceholder: "🔍 ابحث عن لعبة...",
     emptyGames: "لا توجد ألعاب مطابقة للبحث",
     loadingGame: "جاري تحميل اللعبة...",
@@ -277,6 +284,11 @@ const DICT = {
     welcomeName: "Enter your name",
     welcomeStart: "🚀 Start Playing",
     welcomeSkip: "Skip",
+    welcomeOr: "or",
+    googleSignIn: "Sign in with Google",
+    googleSignOut: "Sign out",
+    authSuccess: "Signed in successfully! 🎉",
+    authFailed: "Sign-in failed. Please try again.",
     searchPlaceholder: "🔍 Search for a game...",
     emptyGames: "No games match your search",
     loadingGame: "Loading game...",
@@ -360,6 +372,14 @@ function applyLang() {
     document.getElementById('welcomeName').placeholder = dict.welcomeName;
     document.getElementById('welcomeStartBtn').textContent = dict.welcomeStart;
     document.getElementById('welcomeSkipBtn').textContent = dict.welcomeSkip;
+    const welcomeOr = document.getElementById('welcomeOrText');
+    if (welcomeOr) welcomeOr.textContent = dict.welcomeOr;
+    const welcomeGoogleText = document.getElementById('welcomeGoogleText');
+    if (welcomeGoogleText) welcomeGoogleText.textContent = dict.googleSignIn;
+    const profileGoogleText = document.getElementById('profileGoogleText');
+    if (profileGoogleText) profileGoogleText.textContent = dict.googleSignIn;
+    const signOutBtn = document.getElementById('profileSignOutBtn');
+    if (signOutBtn) signOutBtn.textContent = dict.googleSignOut;
     document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
     const recentTitle = document.getElementById('recentTitle');
@@ -642,6 +662,97 @@ function playRandomGame() {
   openGame(random.id);
 }
 
+function getPlayerName() {
+  return currentUser?.name || getStore('globalPlayerName', '') || (currentLang === 'ar' ? 'لاعب مجهول' : 'Anonymous');
+}
+
+// ─── GOOGLE AUTH ───
+async function checkAuth() {
+  try {
+    const statusRes = await fetch('/auth/status', { credentials: 'include' });
+    if (statusRes.ok) {
+      const status = await statusRes.json();
+      googleAuthEnabled = !!status.googleEnabled;
+    }
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      currentUser = await res.json();
+      applyAuthUser(currentUser);
+    } else {
+      currentUser = null;
+    }
+  } catch (e) {
+    currentUser = null;
+  }
+  updateAuthUI();
+}
+
+function applyAuthUser(user) {
+  if (!user) return;
+  setStore('globalPlayerName', user.name);
+  const profileName = document.getElementById('profileName');
+  if (profileName) profileName.value = user.name;
+}
+
+function updateAuthUI() {
+  const signedIn = !!currentUser;
+  const showGoogle = googleAuthEnabled && !signedIn;
+
+  ['welcomeGoogleBtn', 'profileGoogleBtn'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('d-none', !showGoogle);
+  });
+  const divider = document.getElementById('welcomeAuthDivider');
+  if (divider) divider.classList.toggle('d-none', !showGoogle);
+
+  const guestUser = document.getElementById('profileGuestUser');
+  const googleUser = document.getElementById('profileGoogleUser');
+  if (guestUser) guestUser.classList.toggle('d-none', signedIn);
+  if (googleUser) googleUser.classList.toggle('d-none', !signedIn);
+
+  if (signedIn) {
+    const avatar = document.getElementById('profileGoogleAvatar');
+    const nameEl = document.getElementById('profileGoogleName');
+    const emailEl = document.getElementById('profileGoogleEmail');
+    if (avatar && currentUser.avatar_url) {
+      avatar.src = currentUser.avatar_url;
+      avatar.alt = currentUser.name;
+    }
+    if (nameEl) nameEl.textContent = currentUser.name;
+    if (emailEl) emailEl.textContent = currentUser.email || '';
+  }
+
+  const profileBtn = document.getElementById('profileBtn');
+  if (profileBtn) {
+    profileBtn.classList.toggle('profile-btn-signed-in', signedIn);
+    profileBtn.title = signedIn ? currentUser.name : (currentLang === 'ar' ? 'الملف الشخصي' : 'Profile');
+  }
+}
+
+async function signOut() {
+  try {
+    await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch (e) { /* ignore */ }
+  currentUser = null;
+  updateAuthUI();
+  showToast(currentLang === 'ar' ? 'تم تسجيل الخروج' : 'Signed out');
+  closeProfile();
+}
+
+function handleAuthRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const auth = params.get('auth');
+  if (!auth) return;
+  params.delete('auth');
+  const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+  window.history.replaceState({}, '', newUrl);
+  if (auth === 'success') {
+    checkAuth().then(() => showToast(DICT[currentLang].authSuccess));
+  } else if (auth === 'failed') {
+    showToast(DICT[currentLang].authFailed);
+  }
+}
+
 function showWelcome() {
   if (getStore('welcomeSeen', false)) return;
   document.getElementById('welcomeOverlay').classList.add('active');
@@ -695,14 +806,17 @@ function submitScore(game_id, score, isLowerBetter = false) {
   
   if (isNewRecord || currentBest === 0 || currentBest === 9999) {
     setTimeout(async () => {
-      const playerName = prompt('🎉 رقم قياسي جديد! أدخل اسمك للوحة الصدارة:', getStore('globalPlayerName', 'لاعب مجهول'));
-      if (playerName) {
+      let playerName = getPlayerName();
+      if (!currentUser) {
+        const prompted = prompt('🎉 رقم قياسي جديد! أدخل اسمك للوحة الصدارة:', playerName);
+        if (!prompted) return;
+        playerName = prompted;
         setStore('globalPlayerName', playerName);
-        try {
-          await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game_id, player_name: playerName, score }) });
-          showToast('تم حفظ نتيجتك في لوحة الصدارة 🏆');
-        } catch(e) { console.error(e); }
       }
+      try {
+        await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ game_id, player_name: playerName, score }) });
+        showToast('تم حفظ نتيجتك في لوحة الصدارة 🏆');
+      } catch(e) { console.error(e); }
     }, 600); // ننتظر قليلاً حتى تظهر شاشة نهاية اللعبة أولاً
   }
 }
@@ -814,11 +928,15 @@ function claimQuest(id, reward) {
 function openProfile() {
   playSound('blip');
   document.getElementById('profileOverlay').classList.add('active');
-  document.getElementById('profileName').value = getStore('globalPlayerName', '');
-  
-  const avatarSelect = document.getElementById('profileAvatar');
-  avatarSelect.innerHTML = AVATARS.map(a => `<option value="${a}">${a}</option>`).join('');
-  avatarSelect.value = getStore('globalPlayerAvatar', '👤');
+
+  if (!currentUser) {
+    document.getElementById('profileName').value = getStore('globalPlayerName', '');
+    const avatarSelect = document.getElementById('profileAvatar');
+    avatarSelect.innerHTML = AVATARS.map(a => `<option value="${a}">${a}</option>`).join('');
+    avatarSelect.value = getStore('globalPlayerAvatar', '👤');
+  }
+
+  updateAuthUI();
 
   const cloudId = getStore('investCloudId', '');
   const codeEl = document.getElementById('profileCloudCode');
@@ -840,6 +958,7 @@ function copyCloudCode() {
 }
 function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
 function saveProfile() {
+  if (currentUser) return;
   setStore('globalPlayerName', document.getElementById('profileName').value.trim());
   setStore('globalPlayerAvatar', document.getElementById('profileAvatar').value);
   showToast('✅ تم حفظ الملف الشخصي');
@@ -948,6 +1067,9 @@ function closeActiveOverlay() {
     if (installBtn) installBtn.addEventListener('click', promptInstall);
     if (installDismiss) installDismiss.addEventListener('click', dismissInstall);
 
+    const signOutBtn = document.getElementById('profileSignOutBtn');
+    if (signOutBtn) signOutBtn.addEventListener('click', signOut);
+
     document.getElementById('recentGames').addEventListener('click', (e) => {
       const card = e.target.closest('.recent-card');
       if (card) openGame(card.dataset.gameId);
@@ -996,12 +1118,14 @@ function closeActiveOverlay() {
   registerServiceWorker();
   setupInstallPrompt();
   handleDeepLink();
+  handleAuthRedirect();
+  checkAuth();
   setTimeout(showWelcome, 1200);
 
   // تصدير الدوال للـ HTML onclick
   const api = {
     filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
-    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode,
+    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
     submitScore, showToast, getStore, setStore, playSound
