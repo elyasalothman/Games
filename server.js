@@ -9,6 +9,7 @@ const { Server } = require('socket.io');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const { createGoogleVerify } = require('./auth');
 const { createStorage } = require('./storage');
 
 const app = express();
@@ -65,34 +66,17 @@ passport.deserializeUser((id, done) => {
     storage.getUserById(id).then((user) => done(null, user)).catch(done);
 });
 
-async function findOrCreateGoogleUser(profile, done) {
-    const googleId = profile.id;
-    const email = profile.emails?.[0]?.value || '';
-    const name = (profile.displayName || profile.name?.givenName || 'لاعب').substring(0, 30);
-    const avatarUrl = profile.photos?.[0]?.value || '';
-
-    try {
-        const user = await storage.upsertGoogleUser({
-            google_id: googleId,
-            email,
-            name,
-            avatar_url: avatarUrl
-        });
-        done(null, user);
-    } catch (err) {
-        done(err);
+function configureGoogleAuth() {
+    if (GOOGLE_ENABLED) {
+        passport.use(new GoogleStrategy({
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: `${BASE_URL}/auth/google/callback`
+        }, createGoogleVerify(storage)));
+        console.log('✅ Google Sign-In enabled');
+    } else {
+        console.log('ℹ️ Google Sign-In disabled — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable');
     }
-}
-
-if (GOOGLE_ENABLED) {
-    passport.use(new GoogleStrategy({
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: `${BASE_URL}/auth/google/callback`
-    }, findOrCreateGoogleUser));
-    console.log('✅ Google Sign-In enabled');
-} else {
-    console.log('ℹ️ Google Sign-In disabled — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable');
 }
 
 app.get('/auth/status', (req, res) => {
@@ -1097,6 +1081,7 @@ setInterval(() => {
 
 async function startServer() {
     storage = await createStorage();
+    configureGoogleAuth();
     console.log(`✅ تم تفعيل مخزن البيانات: ${storage.type}`);
     server.listen(PORT, () => {
         console.log(`🚀 الخادم يعمل بنجاح على الرابط: http://localhost:${PORT}`);
