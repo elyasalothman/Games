@@ -2,6 +2,7 @@
 // 🔨 اضرب الخُلد — لعبة سرعة وردة فعل للعائلة
 // ─────────────────────────────────────────────
 let moleState = { score: 0, time: 30, running: false, spawnTimer: null, clockTimer: null, activeCells: {} };
+let moleSpawnSeq = 0;
 
 function initMole() {
   stopMole();
@@ -57,12 +58,16 @@ function spawnMole() {
   // 15% قنبلة تخصم نقاطاً، والباقي خُلد عادي أو ذهبي نادر
   const roll = Math.random();
   const kind = roll < 0.15 ? 'bomb' : roll < 0.25 ? 'gold' : 'mole';
-  moleState.activeCells[i] = kind;
+  const seq = ++moleSpawnSeq;
+  moleState.activeCells[i] = { kind, seq };
   cell.classList.add('up', kind);
   cell.querySelector('.mole-face').textContent = kind === 'bomb' ? '💣' : kind === 'gold' ? '👑' : '🐹';
 
-  const hideAfter = kind === 'gold' ? 620 : 900;
-  setTimeout(() => hideMole(i), hideAfter);
+  const hideAfter = kind === 'gold' ? 1000 : 1500;
+  setTimeout(() => {
+    // لا تُخفِ خُلداً جديداً ظهر في نفس الحفرة بعد ضرب القديم
+    if (moleState.activeCells[i] && moleState.activeCells[i].seq === seq) hideMole(i);
+  }, hideAfter);
 }
 
 function hideMole(i) {
@@ -78,8 +83,9 @@ function hideMole(i) {
 
 function whackMole(i) {
   if (!moleState.running) return;
-  const kind = moleState.activeCells[i];
-  if (!kind) return;
+  const active = moleState.activeCells[i];
+  if (!active) return;
+  const kind = active.kind;
   const cell = document.querySelector(`#moleGrid .mole-hole[data-i="${i}"]`);
   if (kind === 'bomb') {
     moleState.score = Math.max(0, moleState.score - 20);
