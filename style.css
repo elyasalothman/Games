@@ -106,6 +106,21 @@ input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
 }
+button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: 3px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 body {
   background: var(--bg-color);
@@ -1243,7 +1258,29 @@ body.dark-mode {
   background: rgba(0, 210, 255, 0.06); border: 1px solid rgba(0, 210, 255, 0.25);
   border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; text-align: center;
 }
-.profile-cloud-label { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.profile-account-sync {
+  padding: 16px;
+  text-align: start;
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.12), rgba(0, 255, 136, 0.06));
+}
+.profile-cloud-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.profile-cloud-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(0, 210, 255, 0.15);
+  font-size: 20px;
+}
+.profile-cloud-label { font-size: 15px; font-weight: 700; margin: 0; }
+.profile-cloud-summary { margin-top: 2px; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
 .profile-cloud-row { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 .profile-cloud-code {
   background: var(--bg-color); border: 1px dashed var(--accent-blue);
@@ -1257,6 +1294,7 @@ body.dark-mode {
   font-size: 13px; font-weight: 700; margin-bottom: 6px;
 }
 .profile-sync-status.syncing { background: rgba(0, 122, 255, 0.15); color: var(--accent-blue); }
+.profile-sync-status.error { background: rgba(255, 51, 102, 0.15); color: #ff7a9a; }
 .profile-sync-time { margin-bottom: 8px; }
 
 /* ─── Invest Sim ─── */
@@ -1707,4 +1745,13 @@ body.dark-mode {
   .empire-tap-btn { width: 150px; height: 150px; }
   .empire-tap-core { font-size: 56px; line-height: 150px; }
   .empire-biz-list { max-height: 200px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

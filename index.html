@@ -343,11 +343,11 @@
 </div>
 
 <!-- PROFILE & ACHIEVEMENTS MODAL -->
-<div class="overlay" id="profileOverlay">
-  <div class="game-modal">
+<div class="overlay" id="profileOverlay" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+  <div class="game-modal profile-modal">
     <div class="modal-header">
-      <h2 class="modal-title">👤 الملف الشخصي والأوسمة</h2>
-      <button type="button" class="close-btn" onclick="closeProfile()">✕</button>
+      <h2 class="modal-title" id="profileTitle">👤 الملف الشخصي والأوسمة</h2>
+      <button type="button" class="close-btn" onclick="closeProfile()" aria-label="إغلاق الملف الشخصي">✕</button>
     </div>
     <div class="profile-header text-center mb-16">
       <div id="profileGoogleUser" class="profile-google-user d-none">
@@ -358,19 +358,26 @@
       </div>
       <div id="profileGuestUser">
         <select id="profileAvatar" class="avatar-select" title="اختر صورتك الرمزية" onchange="saveProfile()"></select>
-        <input type="text" id="profileName" class="name-input mt-8" placeholder="أدخل اسمك هنا" onchange="saveProfile()">
+        <label class="sr-only" for="profileName">اسم اللاعب</label>
+        <input type="text" id="profileName" class="name-input mt-8" placeholder="أدخل اسمك هنا" autocomplete="nickname" maxlength="40" onchange="saveProfile()">
         <a href="/auth/google" class="btn google-signin-btn d-none mt-8" id="profileGoogleBtn" aria-label="تسجيل الدخول بـ Google">
           <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           <span id="profileGoogleText">تسجيل الدخول بـ Google</span>
         </a>
       </div>
     </div>
-    <div class="profile-cloud-box d-none" id="profileAccountCloudBox">
-      <div class="profile-cloud-label" id="profileCloudTitle">☁️ الحفظ السحابي لحسابك</div>
-      <div class="profile-sync-status" id="profileCloudSyncStatus">متزامن تلقائياً</div>
+    <section class="profile-cloud-box profile-account-sync d-none" id="profileAccountCloudBox" aria-labelledby="profileCloudTitle">
+      <div class="profile-cloud-heading">
+        <span class="profile-cloud-icon" aria-hidden="true">☁️</span>
+        <div>
+          <h3 class="profile-cloud-label" id="profileCloudTitle">مزامنة الحساب</h3>
+          <p class="profile-cloud-summary" id="profileCloudSummary">تقدمك محفوظ تلقائياً عبر أجهزتك.</p>
+        </div>
+      </div>
+      <div class="profile-sync-status" id="profileCloudSyncStatus" role="status" aria-live="polite">المزامنة التلقائية مفعّلة</div>
       <div class="profile-sync-time text-muted text-11" id="profileCloudSyncTime"></div>
-      <p class="text-muted text-11" id="profileCloudDesc">تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.</p>
-    </div>
+      <p class="text-muted text-11" id="profileCloudDesc">عند تسجيل الدخول، يُحفظ تقدمك في حسابك ويُستعاد عند فتح ألعاب اليوم من جهاز آخر.</p>
+    </section>
     <div class="profile-cloud-box" id="profileGuestCloudBox">
       <div class="profile-cloud-label" id="profileGuestCloudTitle">☁️ رمز الحفظ السحابي (الاستثمار)</div>
       <div class="profile-cloud-row">
@@ -382,10 +389,6 @@
     <h3 class="font-bold text-blue mb-15">🏅 إنجازاتي</h3>
     <div id="achievementsList" class="achievements-grid">
       <!-- سيتم تحميل الإنجازات هنا -->
-    </div>
-    <div class="flex-center-gap mt-15">
-      <button type="button" class="btn btn-blue" onclick="exportSave()">💾 تصدير التقدم</button>
-      <button type="button" class="btn btn-orange" onclick="importSave()">📂 استيراد</button>
     </div>
   </div>
 </div>

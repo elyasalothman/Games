@@ -163,6 +163,7 @@ const ALL_GAMES = [
 // ─── STORAGE & CORE ───
 let cloudSyncTimer = null;
 let lastCloudSyncAt = null;
+let cloudSyncState = 'idle';
 const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
@@ -255,10 +256,12 @@ const DICT = {
     googleSignOut: "تسجيل الخروج",
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
-    cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
-    cloudSyncDesc: "تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
-    cloudSyncActive: "متزامن تلقائياً",
+    cloudSyncTitle: "مزامنة الحساب",
+    cloudSyncSummary: "تقدمك محفوظ تلقائياً عبر أجهزتك.",
+    cloudSyncDesc: "عند تسجيل الدخول، يُحفظ تقدمك في حسابك ويُستعاد عند فتح ألعاب اليوم من جهاز آخر.",
+    cloudSyncActive: "المزامنة التلقائية مفعّلة",
     cloudSyncPending: "جاري المزامنة...",
+    cloudSyncError: "تعذرت المزامنة الآن — سنحاول مجدداً عند تغيير التقدم.",
     cloudSyncSaved: "آخر حفظ:",
     cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
     cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز. سجّل الدخول بـ Google للحفظ التلقائي لكل تقدمك.",
@@ -319,10 +322,12 @@ const DICT = {
     googleSignOut: "Sign out",
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
-    cloudSyncTitle: "☁️ Your account cloud save",
-    cloudSyncDesc: "Your progress is saved on the Today Games server and linked to your Google account — restored automatically on any device.",
-    cloudSyncActive: "Auto-synced",
+    cloudSyncTitle: "Account sync",
+    cloudSyncSummary: "Your progress is automatically saved across devices.",
+    cloudSyncDesc: "When signed in, your progress is saved to your account and restored when you open Today Games on another device.",
+    cloudSyncActive: "Automatic sync is on",
     cloudSyncPending: "Syncing...",
+    cloudSyncError: "Couldn't sync right now — we'll retry when your progress changes.",
     cloudSyncSaved: "Last saved:",
     cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
     cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device. Sign in with Google for automatic sync of all progress.",
@@ -420,6 +425,8 @@ function applyLang() {
     if (signOutBtn) signOutBtn.textContent = dict.googleSignOut;
     const cloudTitle = document.getElementById('profileCloudTitle');
     if (cloudTitle) cloudTitle.textContent = dict.cloudSyncTitle;
+    const cloudSummary = document.getElementById('profileCloudSummary');
+    if (cloudSummary) cloudSummary.textContent = dict.cloudSyncSummary;
     const cloudDesc = document.getElementById('profileCloudDesc');
     if (cloudDesc) cloudDesc.textContent = dict.cloudSyncDesc;
     const guestCloudTitle = document.getElementById('profileGuestCloudTitle');
@@ -833,7 +840,8 @@ function scheduleCloudSync() {
 
 async function pushCloudSync() {
   if (!currentUser) return;
-  updateCloudSyncUI(true);
+  cloudSyncState = 'syncing';
+  updateCloudSyncUI();
   try {
     const res = await fetch('/api/user-sync', {
       method: 'POST',
@@ -841,44 +849,49 @@ async function pushCloudSync() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: collectSyncData() })
     });
-    if (res.ok) {
-      const json = await res.json();
-      lastCloudSyncAt = json.updated_at ? new Date(json.updated_at) : new Date();
-    }
+    if (!res.ok) throw new Error(`Cloud sync failed: ${res.status}`);
+    const json = await res.json();
+    lastCloudSyncAt = json.updated_at ? new Date(json.updated_at) : new Date();
+    cloudSyncState = 'synced';
   } catch (e) {
     console.error('Cloud sync failed', e);
+    cloudSyncState = 'error';
   }
-  updateCloudSyncUI(false);
+  updateCloudSyncUI();
 }
 
 async function pullAndMergeCloudSync(localSnapshot) {
   if (!currentUser) return;
-  updateCloudSyncUI(true);
+  cloudSyncState = 'syncing';
+  updateCloudSyncUI();
   const hadLocalProgress = localSnapshot && Object.keys(localSnapshot).length > 0;
   try {
     const res = await fetch('/api/user-sync', { credentials: 'include' });
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`Cloud sync pull failed: ${res.status}`);
     const { data: cloudData, updated_at } = await res.json();
     const merged = mergeSyncData(localSnapshot || collectSyncData(), cloudData || {});
     applySyncData(merged);
     refreshAfterCloudSync();
-    await fetch('/api/user-sync', {
+    const saveRes = await fetch('/api/user-sync', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: merged })
     });
+    if (!saveRes.ok) throw new Error(`Cloud sync merge failed: ${saveRes.status}`);
     lastCloudSyncAt = updated_at ? new Date(updated_at) : new Date();
+    cloudSyncState = 'synced';
     if (hadLocalProgress) {
       showToast(DICT[currentLang].cloudMerged || '☁️ تم دمج تقدمك السابق مع حسابك!');
     }
   } catch (e) {
     console.error('Cloud pull failed', e);
+    cloudSyncState = 'error';
   }
-  updateCloudSyncUI(false);
+  updateCloudSyncUI();
 }
 
-function updateCloudSyncUI(syncing) {
+function updateCloudSyncUI() {
   const dict = DICT[currentLang];
   const accountBox = document.getElementById('profileAccountCloudBox');
   const guestBox = document.getElementById('profileGuestCloudBox');
@@ -890,8 +903,11 @@ function updateCloudSyncUI(syncing) {
   if (guestBox) guestBox.classList.toggle('d-none', signedIn);
 
   if (statusEl) {
-    statusEl.textContent = syncing ? dict.cloudSyncPending : dict.cloudSyncActive;
-    statusEl.classList.toggle('syncing', !!syncing);
+    const statusKey = cloudSyncState === 'syncing' ? 'cloudSyncPending' : cloudSyncState === 'error' ? 'cloudSyncError' : 'cloudSyncActive';
+    statusEl.textContent = dict[statusKey];
+    statusEl.classList.toggle('syncing', cloudSyncState === 'syncing');
+    statusEl.classList.toggle('error', cloudSyncState === 'error');
+    statusEl.setAttribute('aria-busy', String(cloudSyncState === 'syncing'));
   }
   if (timeEl) {
     if (lastCloudSyncAt) {
@@ -982,9 +998,10 @@ async function signOut() {
   } catch (e) { /* ignore */ }
   currentUser = null;
   lastCloudSyncAt = null;
+  cloudSyncState = 'idle';
   clearTimeout(cloudSyncTimer);
   updateAuthUI();
-  updateCloudSyncUI(false);
+  updateCloudSyncUI();
   showToast(currentLang === 'ar' ? 'تم تسجيل الخروج' : 'Signed out');
   closeProfile();
 }
@@ -1138,28 +1155,6 @@ function toggleFullscreen() {
   else if (document.exitFullscreen) document.exitFullscreen();
 }
 
-function exportSave() {
-  playSound('blip');
-  const data = JSON.stringify(localStorage);
-  const base64 = btoa(unescape(encodeURIComponent(data)));
-  navigator.clipboard.writeText(base64);
-  showToast('تم نسخ كود التقدم! احتفظ به بمكان آمن 💾');
-}
-
-function importSave() {
-  playSound('blip');
-  const code = prompt('أدخل كود النسخ الاحتياطي لاستعادة حسابك والتقدم:');
-  if (code) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(escape(atob(code))));
-      Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
-      showToast('تمت استعادة التقدم بنجاح! 🔄');
-      if (currentUser) scheduleCloudSync();
-      setTimeout(() => location.reload(), 1500);
-    } catch(e) { showToast('❌ الكود غير صحيح أو تالف!'); }
-  }
-}
-
 function openQuests() {
   playSound('blip'); document.getElementById('questsOverlay').classList.add('active');
   const list = document.getElementById('questsList');
@@ -1203,7 +1198,7 @@ function openProfile() {
   const guestBox = document.getElementById('profileGuestCloudBox');
   if (codeEl) codeEl.textContent = cloudId || '—';
   if (guestBox) guestBox.classList.toggle('d-none', !!currentUser);
-  updateCloudSyncUI(false);
+  updateCloudSyncUI();
 
   renderAchievements();
 }
@@ -1383,7 +1378,7 @@ function closeActiveOverlay() {
   // تصدير الدوال للـ HTML onclick
   const api = {
     filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
-    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode, signOut,
+    closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
     submitScore, showToast, getStore, setStore, playSound
