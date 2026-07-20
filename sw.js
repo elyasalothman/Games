@@ -34,9 +34,11 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((cached) => {
       const network = fetch(e.request).then((res) => {
-        if (res.ok && url.origin === self.location.origin) {
+        if (res.status === 200 && url.origin === self.location.origin) {
           const clone = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(e.request, clone));
+          caches.open(CACHE)
+            .then((cache) => cache.put(e.request, clone))
+            .catch(() => {});
         }
         return res;
       }).catch(() => cached);
