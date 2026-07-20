@@ -324,8 +324,23 @@ module.exports = function(io, options = {}) {
             r.discardPile.push(firstCard);
             r.currentColor = firstCard.color;
             r.state = 'playing';
+            r.currentTurn = 0;
+            r.direction = 1;
             r.hasDrawnThisTurn = false;
             r.pendingChallenge = null;
+
+            if (firstCard.value === 'Skip') {
+                emitRoomMessage(socket.unoRoomId, `⏭ أول بطاقة Skip! يبدأ ${r.players[r.turnOrder[1 % r.turnOrder.length]].name}.`);
+                nextTurn(r, 1);
+            } else if (firstCard.value === 'Reverse') {
+                r.direction = -1;
+                if (r.turnOrder.length === 2) nextTurn(r, 1);
+            } else if (firstCard.value === '+2') {
+                const firstToken = r.turnOrder[0];
+                drawCards(r, r.players[firstToken], 2);
+                emitRoomMessage(socket.unoRoomId, `📥 أول بطاقة +2! يسحب ${r.players[firstToken].name} بطاقتين ويبدأ من بعده.`);
+                nextTurn(r, 1);
+            }
             touch(r);
             emitRoomState(socket.unoRoomId);
         });

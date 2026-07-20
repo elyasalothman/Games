@@ -10,7 +10,7 @@ function startServer() {
         const httpServer = http.createServer();
         const io = new Server(httpServer, { cors: { origin: '*' } });
         const game = attachUno(io, { startBotLoop: false });
-        httpServer.listen(0, () => resolve({ httpServer, game, port: httpServer.address().port }));
+        httpServer.listen(0, () => resolve({ httpServer, io, game, port: httpServer.address().port }));
     });
 }
 
@@ -27,7 +27,7 @@ function waitForEvent(socket, event) {
 }
 
 test('two real socket.io clients join a private room over the wire and never see each other\'s hidden cards', async () => {
-    const { httpServer, port } = await startServer();
+    const { io, game, port } = await startServer();
     try {
         const host = await connectClient(port);
         const guest = await connectClient(port);
@@ -40,6 +40,13 @@ test('two real socket.io clients join a private room over the wire and never see
         guest.emit('joinUno', { name: 'Guest', room: 'integration_room_1', mode: 'private', token: 'itest_guest_token_12' });
         const guestJoinState = await guestJoined;
         assert.equal(guestJoinState.maxPlayers, 8);
+
+        // Use plain number cards only, so the random "opening action card" official
+        // rule (which can force the first seat to draw extra cards) doesn't make
+        // this particular assertion about a plain 7-card deal flaky.
+        game.rooms.integration_room_1.deck = Array.from({ length: 40 }, (_, i) => (
+            { color: ['red', 'blue', 'green', 'yellow'][i % 4], value: String((i % 9) + 1) }
+        ));
 
         const bothStart = Promise.all([waitForEvent(host, 'unoGameState'), waitForEvent(guest, 'unoGameState')]);
         host.emit('startUno');
@@ -55,12 +62,12 @@ test('two real socket.io clients join a private room over the wire and never see
         host.close();
         guest.close();
     } finally {
-        httpServer.close();
+        io.close();
     }
 });
 
 test('drawing then passing over the wire correctly advances the turn to the other real client', async () => {
-    const { httpServer, game, port } = await startServer();
+    const { io, game, port } = await startServer();
     try {
         const host = await connectClient(port);
         const guest = await connectClient(port);
@@ -100,12 +107,12 @@ test('drawing then passing over the wire correctly advances the turn to the othe
         host.close();
         guest.close();
     } finally {
-        httpServer.close();
+        io.close();
     }
 });
 
 test('a real client that disconnects mid-round and reconnects with the same token gets its hand back, not a reset room', async () => {
-    const { httpServer, game, port } = await startServer();
+    const { io, game, port } = await startServer();
     try {
         const host = await connectClient(port);
         const guest = await connectClient(port);
@@ -135,6 +142,6 @@ test('a real client that disconnects mid-round and reconnects with the same toke
         hostAgain.close();
         guest.close();
     } finally {
-        httpServer.close();
+        io.close();
     }
 });

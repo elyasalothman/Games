@@ -281,6 +281,54 @@ test('reconnecting with the same token restores the hand instead of resetting th
     assert.equal(room.state, 'playing');
 });
 
+// Builds a deck array where `.pop()` (drawing from the end) yields, in order:
+// `dealCount` filler cards (for dealing), then `topCard` (the opening flip),
+// then `penaltyCount` filler cards (for any forced draw the opening card causes).
+function buildDeckForOpening(topCard, dealCount, penaltyCount = 0) {
+    const dealFiller = Array.from({ length: dealCount }, () => ({ color: 'blue', value: '1' }));
+    const penaltyFiller = Array.from({ length: penaltyCount }, () => ({ color: 'green', value: '2' }));
+    return [...penaltyFiller, topCard, ...dealFiller];
+}
+
+test('an opening action card applies its effect before the first turn (official rule)', () => {
+    const { game, connect } = createGame();
+    const p1 = new FakeSocket('p1');
+    const p2 = new FakeSocket('p2');
+    const p3 = new FakeSocket('p3');
+    join(p1, connect, { name: 'A', room: 'uno_open_1', mode: 'private', token: 'p1_token_723456789a' });
+    join(p2, connect, { name: 'B', room: 'uno_open_1', mode: 'private', token: 'p2_token_723456789b' });
+    join(p3, connect, { name: 'C', room: 'uno_open_1', mode: 'private', token: 'p3_token_723456789c' });
+
+    const room = game.rooms.uno_open_1;
+    // Seating is randomized at start, so assert relative to whichever seating actually resulted.
+    room.deck = buildDeckForOpening({ color: 'red', value: 'Skip' }, 21);
+    room.state = 'waiting';
+    p1.trigger('startUno');
+
+    assert.equal(room.discardPile.at(-1).value, 'Skip');
+    assert.equal(room.turnOrder.length, 3);
+    assert.equal(room.turnOrder[room.currentTurn], room.turnOrder[1], 'opening Skip must skip seat 0 and start at seat 1');
+});
+
+test('an opening +2 forces the first player to draw and lose their turn', () => {
+    const { game, connect } = createGame();
+    const p1 = new FakeSocket('p1');
+    const p2 = new FakeSocket('p2');
+    join(p1, connect, { name: 'A', room: 'uno_open_2', mode: 'private', token: 'p1_token_823456789a' });
+    join(p2, connect, { name: 'B', room: 'uno_open_2', mode: 'private', token: 'p2_token_823456789b' });
+
+    const room = game.rooms.uno_open_2;
+    room.deck = buildDeckForOpening({ color: 'red', value: '+2' }, 14, 2);
+    room.state = 'waiting';
+    p1.trigger('startUno');
+
+    assert.equal(room.discardPile.at(-1).value, '+2');
+    const firstSeat = room.turnOrder[0];
+    const secondSeat = room.turnOrder[1];
+    assert.equal(room.players[firstSeat].cards.length, 7 + 2, 'first seat draws 2 from an opening +2');
+    assert.equal(room.turnOrder[room.currentTurn], secondSeat);
+});
+
 test('a full round trip through the bot loop keeps the deck at exactly 108 cards', () => {
     const { game, connect } = createGame();
     const host = new FakeSocket('bothost');
