@@ -309,6 +309,11 @@ const DICT = {
     newBadge: "جديد",
     installBanner: "📲 ثبّت لُمعة على جهازك للوصول السريع!",
     installBtn: "تثبيت",
+    updateBanner: "✨ يتوفر تحديث جديد للمنصة",
+    updateBtn: "تحديث الآن",
+    updateDone: "تم التحديث لأحدث نسخة ✅",
+    profileUpdateLabel: "🔄 تحديث التطبيق",
+    profileUpdateDesc: "إذا لم تظهر آخر التغييرات، اضغط لتحديث الصفحة ومسح الكاش.",
     questPlay: "العب 5 ألعاب مختلفة",
     questScore: "اجمع 500 نقطة إجمالية",
     questOnline: "العب جولة واحدة أونلاين",
@@ -395,6 +400,11 @@ const DICT = {
     newBadge: "NEW",
     installBanner: "📲 Install Luma'a on your device for quick access!",
     installBtn: "Install",
+    updateBanner: "✨ A new update is available",
+    updateBtn: "Update now",
+    updateDone: "You're on the latest version ✅",
+    profileUpdateLabel: "🔄 App update",
+    profileUpdateDesc: "If the latest changes are missing, tap to refresh and clear cache.",
     questPlay: "Play 5 different games",
     questScore: "Collect 500 total points",
     questOnline: "Play one online game",
@@ -538,6 +548,16 @@ function applyLang() {
     if (installText) installText.textContent = dict.installBanner;
     const installBtn = document.getElementById('installBtn');
     if (installBtn) installBtn.textContent = dict.installBtn;
+    const updateText = document.getElementById('updateBannerText');
+    if (updateText) updateText.textContent = dict.updateBanner;
+    const updateBtn = document.getElementById('updateReloadBtn');
+    if (updateBtn) updateBtn.textContent = dict.updateBtn;
+    const profileUpdateLabel = document.getElementById('profileUpdateLabel');
+    if (profileUpdateLabel) profileUpdateLabel.textContent = dict.profileUpdateLabel;
+    const profileUpdateDesc = document.getElementById('profileUpdateDesc');
+    if (profileUpdateDesc) profileUpdateDesc.textContent = dict.profileUpdateDesc;
+    const profileForceUpdateBtn = document.getElementById('profileForceUpdateBtn');
+    if (profileForceUpdateBtn) profileForceUpdateBtn.textContent = dict.updateBtn;
     const tabs = document.querySelectorAll('.tab-btn');
     const tabKeys = ['tabAll', 'tabPuzzle', 'tabCard', 'tabOnline', 'tabFav'];
     tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = dict[tabKeys[i]]; });
@@ -1408,13 +1428,155 @@ function closeAd() {
     document.body.style.paddingBottom = '0';
 }
 
-// ─── PWA (Service Worker + Install) ───
+// ─── PWA (Service Worker + Install + Auto Update) ───
+const APP_VERSION = '3.5.0';
+const UPDATE_CHECK_MS = 5 * 60 * 1000;
 let deferredInstallPrompt = null;
+let waitingWorker = null;
+let updateReloadArmed = false;
+let updateCheckTimer = null;
+
+async function clearSiteCaches() {
+  if (!('caches' in window)) return;
+  try {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+  } catch (_) {}
+}
+
+function showUpdateBanner() {
+  const banner = document.getElementById('updateBanner');
+  if (!banner) return;
+  banner.classList.remove('d-none');
+  const install = document.getElementById('installBanner');
+  if (install) install.classList.add('d-none');
+}
+
+function hideUpdateBanner() {
+  const banner = document.getElementById('updateBanner');
+  if (banner) banner.classList.add('d-none');
+}
+
+function hardReloadToLatest() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('_v', APP_VERSION);
+  url.searchParams.set('_r', String(Date.now()));
+  window.location.replace(url.toString());
+}
+
+function applyWaitingWorker() {
+  if (waitingWorker) {
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    waitingWorker = null;
+    return;
+  }
+  hardReloadToLatest();
+}
+
+async function forceAppUpdate() {
+  showUpdateBanner();
+  await clearSiteCaches();
+  if ('serviceWorker' in navigator) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((reg) => {
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return reg.update().catch(() => {});
+      }));
+    } catch (_) {}
+  }
+  // Give SW a moment to claim, then always reload
+  setTimeout(hardReloadToLatest, 400);
+}
+
+function armControllerReload() {
+  if (updateReloadArmed || !('serviceWorker' in navigator)) return;
+  updateReloadArmed = true;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    hardReloadToLatest();
+  });
+}
+
+function watchWorkerForUpdate(worker, registration) {
+  if (!worker) return;
+  worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+      waitingWorker = registration.waiting || worker;
+      armControllerReload();
+      showUpdateBanner();
+    }
+  });
+}
+
+async function checkServerVersion() {
+  try {
+    const res = await fetch('/api/version?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    const remote = data && data.version;
+    if (!remote) return;
+
+    const footer = document.getElementById('footerVersion');
+    if (footer) footer.textContent = 'v' + remote.replace(/^v/, '');
+
+    if (remote !== APP_VERSION) {
+      armControllerReload();
+      showUpdateBanner();
+      // Auto-apply shortly so users don't stay stuck on old UI
+      setTimeout(() => { forceAppUpdate(); }, 2500);
+    }
+  } catch (_) {}
+}
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  // Clean one-time cache-bust query params from the address bar
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('_v') || url.searchParams.has('_r')) {
+      url.searchParams.delete('_v');
+      url.searchParams.delete('_r');
+      const clean = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '') + url.hash;
+      history.replaceState(null, '', clean);
+    }
+  } catch (_) {}
+
+  if (!('serviceWorker' in navigator)) {
+    checkServerVersion();
+    return;
   }
+
+  navigator.serviceWorker.register('/sw.js')
+    .then((registration) => {
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        waitingWorker = registration.waiting;
+        armControllerReload();
+        showUpdateBanner();
+      }
+
+      registration.addEventListener('updatefound', () => {
+        watchWorkerForUpdate(registration.installing, registration);
+      });
+
+      const requestUpdate = () => registration.update().catch(() => {});
+      requestUpdate();
+      if (updateCheckTimer) clearInterval(updateCheckTimer);
+      updateCheckTimer = setInterval(requestUpdate, UPDATE_CHECK_MS);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          requestUpdate();
+          checkServerVersion();
+        }
+      });
+
+      window.addEventListener('online', () => {
+        requestUpdate();
+        checkServerVersion();
+      });
+    })
+    .catch(() => {});
+
+  checkServerVersion();
 }
 
 function setupInstallPrompt() {
@@ -1424,6 +1586,8 @@ function setupInstallPrompt() {
     e.preventDefault();
     deferredInstallPrompt = e;
     const banner = document.getElementById('installBanner');
+    const update = document.getElementById('updateBanner');
+    if (update && !update.classList.contains('d-none')) return;
     if (banner) banner.classList.remove('d-none');
   });
 }
@@ -1485,6 +1649,22 @@ function closeActiveOverlay() {
     const installDismiss = document.getElementById('installDismiss');
     if (installBtn) installBtn.addEventListener('click', promptInstall);
     if (installDismiss) installDismiss.addEventListener('click', dismissInstall);
+
+    const updateReloadBtn = document.getElementById('updateReloadBtn');
+    if (updateReloadBtn) {
+      updateReloadBtn.addEventListener('click', () => {
+        armControllerReload();
+        applyWaitingWorker();
+        setTimeout(hardReloadToLatest, 500);
+      });
+    }
+
+    const profileForceUpdateBtn = document.getElementById('profileForceUpdateBtn');
+    if (profileForceUpdateBtn) {
+      profileForceUpdateBtn.addEventListener('click', () => {
+        forceAppUpdate();
+      });
+    }
 
     const signOutBtn = document.getElementById('profileSignOutBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', signOut);
@@ -1570,7 +1750,7 @@ function closeActiveOverlay() {
     closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
-    submitScore, showToast, getStore, setStore, playSound
+    submitScore, showToast, getStore, setStore, playSound, forceAppUpdate
   };
   Object.assign(window, api);
 
