@@ -1439,7 +1439,7 @@ function closeAd() {
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
 const APP_VERSION = '3.6.0';
-const UPDATE_CHECK_MS = 5 * 60 * 1000;
+const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
 let updateReloadArmed = false;
@@ -1551,6 +1551,8 @@ function registerServiceWorker() {
 
   if (!('serviceWorker' in navigator)) {
     checkServerVersion();
+    if (updateCheckTimer) clearInterval(updateCheckTimer);
+    updateCheckTimer = setInterval(checkServerVersion, UPDATE_CHECK_MS);
     return;
   }
 
@@ -1566,22 +1568,19 @@ function registerServiceWorker() {
         watchWorkerForUpdate(registration.installing, registration);
       });
 
-      const requestUpdate = () => registration.update().catch(() => {});
+      const requestUpdate = () => {
+        registration.update().catch(() => {});
+        checkServerVersion();
+      };
       requestUpdate();
       if (updateCheckTimer) clearInterval(updateCheckTimer);
       updateCheckTimer = setInterval(requestUpdate, UPDATE_CHECK_MS);
 
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          requestUpdate();
-          checkServerVersion();
-        }
+        if (document.visibilityState === 'visible') requestUpdate();
       });
-
-      window.addEventListener('online', () => {
-        requestUpdate();
-        checkServerVersion();
-      });
+      window.addEventListener('focus', requestUpdate);
+      window.addEventListener('online', requestUpdate);
     })
     .catch(() => {});
 
