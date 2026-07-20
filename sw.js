@@ -1,4 +1,4 @@
-const CACHE = 'games-v5';
+const CACHE = 'games-v6';
 const ASSETS = [
   '/',
   '/index.html',
