@@ -178,7 +178,7 @@ const AUDIENCE_FILTERS = [
 // ─── STORAGE & CORE ───
 let cloudSyncTimer = null;
 let lastCloudSyncAt = null;
-const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess'];
+const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess', 'garden'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
   'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
