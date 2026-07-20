@@ -161,7 +161,9 @@ const ALL_GAMES = [
   {id:'bubble',  category: 'puzzle', audiences:['kids','girls'], name:{ar:'فقاعات الألوان', en:'Color Bubbles'}, icon:'🫧', desc:{ar:'العبة خفيفة للأطفال — انقر الفقاعات قبل أن تطير!', en:'A light kids game — pop bubbles before they float away!'}, isNew: true},
   {id:'garden',  category: 'puzzle', audiences:['girls','family','seniors'], name:{ar:'حديقة الورود', en:'Rose Garden'}, icon:'🌸', desc:{ar:'طابق الورود بهدوء — مناسبة للبنات والعائلة.', en:'Match roses calmly — great for girls and families.'}, isNew: true},
   {id:'xo',      category: 'puzzle', audiences:['kids','family','seniors','boys','girls'], name:{ar:'إكس أو', en:'Tic-Tac-Toe'}, icon:'⭕', desc:{ar:'اللعبة الكلاسيكية للعائلة — ضد صديق أو الكمبيوتر.', en:'The classic family game — vs friend or computer.'}, isNew: true},
-  {id:'quiz',    category: 'puzzle', audiences:['teens','adults','seniors'], name:{ar:'ثقافة عامة', en:'Trivia Quiz'}, icon:'📚', desc:{ar:'أسئلة عامة للمراهقين والكبار — ثقف نفسك والعب.', en:'General trivia for teens and adults — learn while you play.'}, isNew: true}
+  {id:'quiz',    category: 'puzzle', audiences:['teens','adults','seniors'], name:{ar:'ثقافة عامة', en:'Trivia Quiz'}, icon:'📚', desc:{ar:'أسئلة عامة للمراهقين والكبار — ثقف نفسك والعب.', en:'General trivia for teens and adults — learn while you play.'}, isNew: true},
+  {id:'g2048',   category: 'puzzle', audiences:['teens','adults','family','seniors'], name:{ar:'2048', en:'2048'}, icon:'🔲', desc:{ar:'ادمج الأرقام المتشابهة لتصل إلى 2048 — اللغز الشهير!', en:'Merge matching numbers to reach 2048 — the famous puzzle!'}, isNew: true},
+  {id:'mole',    category: 'puzzle', audiences:['kids','family','boys','girls'], name:{ar:'اضرب الخُلد', en:'Whack-a-Mole'}, icon:'🔨', desc:{ar:'اضرب الخُلد قبل أن يختبئ — واحذر القنابل!', en:'Whack the mole before it hides — watch out for bombs!'}, isNew: true}
 ];
 
 const AUDIENCE_FILTERS = [
@@ -256,7 +258,7 @@ const DICT = {
     catCard: "ورق",
     catOnline: "أونلاين",
     heroTitle: "أضِف لُمعة ليومك — العب وتنافس!",
-    heroDesc: "١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.",
+    heroDesc: "٢٢ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.",
     randomPlay: "🎲 العب عشوائياً",
     dailyQuests: "📋 المهام اليومية",
     heroGames: "لعبة",
@@ -347,7 +349,7 @@ const DICT = {
     catCard: "Cards",
     catOnline: "Online",
     heroTitle: "Spark joy in your day — play and compete!",
-    heroDesc: "16 puzzle, card, and online games — free, vibrant, and no signup needed.",
+    heroDesc: "22 puzzle, card, and online games — free, vibrant, and no signup needed.",
     randomPlay: "🎲 Random Game",
     dailyQuests: "📋 Daily Quests",
     heroGames: "Games",
@@ -431,7 +433,9 @@ const ACHIEVEMENTS = [
   { id: 'anime_fan', icon: '🎌', name: { ar: 'أوتاكو', en: 'Otaku' }, desc: { ar: 'أجب على 3 أسئلة أنمي صح', en: 'Answer 3 anime questions correctly' }, check: () => getStore('best_anime', 0) >= 60 },
   { id: 'money_rich', icon: '💰', name: { ar: 'ثري', en: 'Tycoon' }, desc: { ar: 'اجمع 500$ في صائد الأموال', en: 'Collect $500 in Money Catcher' }, check: () => getStore('best_money', 0) >= 500 },
   { id: 'empire_builder', icon: '👑', name: { ar: 'ملك اللمس', en: 'Tap King' }, desc: { ar: 'اجمع 10,000$ في ملوك اللمس', en: 'Earn $10,000 in Tap Kings' }, check: () => getStore('best_empire', 0) >= 10000 },
-  { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 }
+  { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 },
+  { id: 'tile_512', icon: '🔲', name: { ar: 'دمج ذكي', en: 'Merge Master' }, desc: { ar: 'اجمع 2000 نقطة في 2048', en: 'Score 2000 points in 2048' }, check: () => getStore('best_g2048', 0) >= 2000 },
+  { id: 'mole_hunter', icon: '🔨', name: { ar: 'صائد الخُلد', en: 'Mole Hunter' }, desc: { ar: 'اجمع 200 نقطة في اضرب الخُلد', en: 'Score 200 points in Whack-a-Mole' }, check: () => getStore('best_mole', 0) >= 200 }
 ];
 const AVATARS = ['👤', '👦', '👧', '👨', '👩', '🤖', '👽', '👻', '🤡', '🐯', '🦁', '😎', '🤓', '🤠', '👑'];
 
@@ -766,7 +770,9 @@ const gameFiles = {
   'garden': 'garden-game.js',
   'xo': 'xo-game.js',
   'quiz': 'quiz-game.js',
-  'invest': 'invest-game.js'
+  'invest': 'invest-game.js',
+  'g2048': 'g2048-game.js',
+  'mole': 'mole-game.js'
 };
 
 const gameInitializers = {
@@ -789,7 +795,9 @@ const gameInitializers = {
   'garden': () => typeof initGarden === 'function' && initGarden(),
   'xo': () => typeof initXO === 'function' && initXO(),
   'quiz': () => typeof initQuiz === 'function' && initQuiz(),
-  'invest': () => typeof initInvest === 'function' && initInvest()
+  'invest': () => typeof initInvest === 'function' && initInvest(),
+  'g2048': () => typeof initG2048 === 'function' && initG2048(),
+  'mole': () => typeof initMole === 'function' && initMole()
 };
 
 function openGame(id) {
@@ -839,7 +847,8 @@ const gameClosers = {
   'empire': () => typeof closeEmpire === 'function' && closeEmpire(),
   'domino': () => typeof closeDomino === 'function' && closeDomino(),
   'bubble': () => typeof stopBubble === 'function' && stopBubble(),
-  'invest': () => typeof closeInvest === 'function' && closeInvest()
+  'invest': () => typeof closeInvest === 'function' && closeInvest(),
+  'mole': () => typeof stopMole === 'function' && stopMole()
 };
 
 function closeGame(id){
@@ -1429,7 +1438,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.5.0';
+const APP_VERSION = '3.6.0';
 const UPDATE_CHECK_MS = 5 * 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="لُمعة — 20 لعبة مجانية لكل الأعمار: أطفال، عائلة، بنات، أولاد، وكبار. ذكاء، ورق، وأونلاين.">
+<meta name="description" content="لُمعة — 22 لعبة مجانية لكل الأعمار: أطفال، عائلة، بنات، أولاد، وكبار. ذكاء، ورق، وأونلاين.">
 <meta name="keywords" content="لُمعة, Luma, ألعاب ذكاء, ألعاب متصفح, تنشيط الذاكرة, games, alhajda">
 <meta name="author" content="الياس العثمان">
 <meta name="color-scheme" content="dark light">
 <meta name="robots" content="index, follow">
 
-<meta property="og:title" content="لُمعة | 20 لعبة لكل الأعمار">
+<meta property="og:title" content="لُمعة | 22 لعبة لكل الأعمار">
 <meta property="og:description" content="منصة لُمعة — ألعاب مناسبة للأطفال والعائلة والبنات والأولاد والكبار.">
 <meta property="og:url" content="https://games.alhajda.com/">
 <meta property="og:type" content="website">
@@ -23,13 +23,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="لُمعة">
   <meta name="theme-color" content="#1a1438">
-  <meta name="app-version" content="3.5.0">
+  <meta name="app-version" content="3.6.0">
   <link rel="manifest" href="manifest.json">
 <title>لُمعة | ألعاب ذكاء وترفيه مجانية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 
@@ -65,14 +65,14 @@
     <section class="hero-section" aria-label="مقدمة الموقع">
       <div class="hero-content">
         <h2 class="hero-title" id="heroTitle">أضِف لُمعة ليومك — العب وتنافس!</h2>
-        <p class="hero-desc" id="heroDesc">١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.</p>
+        <p class="hero-desc" id="heroDesc">٢٢ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.</p>
         <div class="hero-actions">
           <button type="button" class="btn primary hero-btn" id="randomGameBtn">🎲 العب عشوائياً</button>
           <button type="button" class="btn hero-btn-secondary" id="heroQuestsBtn">📋 المهام اليومية</button>
         </div>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><span class="hero-stat-num" id="heroGameCount">20</span><span class="hero-stat-label" id="heroGamesLabel">لعبة</span></div>
+        <div class="hero-stat"><span class="hero-stat-num" id="heroGameCount">22</span><span class="hero-stat-label" id="heroGamesLabel">لعبة</span></div>
         <div class="hero-stat"><span class="hero-stat-num">🌐</span><span class="hero-stat-label" id="heroOnlineLabel">أونلاين</span></div>
         <div class="hero-stat"><span class="hero-stat-num">🏆</span><span class="hero-stat-label" id="heroLeaderLabel">صدارة</span></div>
       </div>
@@ -141,7 +141,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version" id="footerVersion">v3.5</span>
+        <span class="footer-version" id="footerVersion">v3.6</span>
       </div>
     </footer>
 
@@ -979,6 +979,42 @@
   </div>
 </div>
 
+<!-- 2048 MODAL — لغز الدمج -->
+<div class="overlay" id="g2048Overlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🔲 2048</h2>
+      <button type="button" class="close-btn" onclick="closeGame('g2048')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="g2048Score">0</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="g2048Best">0</div></div>
+    </div>
+    <div id="g2048Board" class="g2048-board" aria-label="لوحة 2048"></div>
+    <p id="g2048Message" class="text-center font-bold mt-8"></p>
+    <div class="text-center mt-8"><button type="button" class="btn primary" onclick="g2048NewGame()">▶ جولة جديدة</button></div>
+    <p class="text-center text-11 text-muted mt-8">اسحب بإصبعك أو استخدم الأسهم / WASD للدمج</p>
+  </div>
+</div>
+
+<!-- MOLE MODAL — اضرب الخُلد -->
+<div class="overlay" id="moleOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🔨 اضرب الخُلد</h2>
+      <button type="button" class="close-btn" onclick="closeGame('mole')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="moleScore">0</div></div>
+      <div class="score-box"><div class="score-label">الوقت</div><div class="score-value" id="moleTime">30</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="moleBest">0</div></div>
+    </div>
+    <div id="moleGrid" class="mole-grid" aria-label="حفر الخُلد"></div>
+    <div class="text-center mt-8"><button type="button" class="btn primary" id="moleStartBtn" onclick="startMole()">▶ ابدأ اللعب</button></div>
+    <p class="text-center text-11 text-muted mt-8">اضرب 🐹 والذهبي 👑 — واحذر القنابل 💣!</p>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
   // Early version check: if HTML is stale vs server, clear caches and reload once
@@ -1007,7 +1043,7 @@
       .catch(function () {});
   })();
 </script>
-<script src="script.js?v=12"></script>
+<script src="script.js?v=13"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {
