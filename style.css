@@ -1228,14 +1228,16 @@ body.dark-mode::after {
 #agarStatus { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 8px; }
 
 /* Hiding elements is now done via the .d-none utility class */
-#unoGameScreen { flex-direction: column; flex-grow: 1; position: relative; }
+#unoGameScreen { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; position: relative; }
 #unoOpponents { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
 .uno-table-center { flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 20px; }
 .draw-pile { cursor: pointer; display: flex; align-items: center; justify-content: center; }
 #unoCenter { width: 80px; height: 120px; }
 #unoCurrentColor { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; }
 /* 6. إصلاح التمرير لأوراق الأونو لتجنب التداخل والتكدس */
-#unoMyHand { display: flex; gap: -20px; overflow-x: auto; padding: 20px 10px; justify-content: flex-start; scroll-behavior: smooth; }
+#unoMyHand { display: flex; align-items: flex-end; overflow-x: auto; min-height: 130px; padding: 20px 20px 8px; justify-content: flex-start; scroll-behavior: smooth; }
+#unoMyHand .uno-card { flex: 0 0 70px; margin-inline-start: -20px; }
+#unoMyHand .uno-card:first-child { margin-inline-start: 0; }
 #unoMyHand::-webkit-scrollbar { height: 6px; }
 
 .color-opt-btn.answered-wrong {

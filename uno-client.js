@@ -11,6 +11,7 @@ function initUno() {
     const roomInfo = document.getElementById('unoRoomInfo');
     roomInfo.classList.toggle('d-none', !room);
     if (room) roomInfo.textContent = `🔒 تمت دعوتك إلى الغرفة الخاصة: ${room}`;
+    document.getElementById('unoPrivateAction').textContent = room ? 'انضم للغرفة المدعوة' : 'أنشئ غرفة خاصة (8 لاعبين)';
 }
 
 function getUnoRoomFromUrl() {
