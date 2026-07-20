@@ -20,7 +20,7 @@ let currentStationIdx = getStore('radioStation', 0);
 
 // قائمة محطات الراديو (أضف ملفات الـ mp3 الخاصة بك في مجلد المشروع)
 const RADIO_STATIONS = [
-  { name: 'راديو بهجة', src: 'bg-music.mp3' },
+  { name: 'راديو لُمعة', src: 'bg-music.mp3' },
   { name: 'محطة الرواق (Lofi)', src: 'lofi.mp3' },
   { name: 'محطة الحماس (Action)', src: 'action.mp3' },
   { name: 'الراديو مغلق (Off)', src: '' } // خيار لإيقاف موسيقى الخلفية فقط
@@ -218,13 +218,13 @@ let googleAuthEnabled = false;
 
 if (currentLang !== 'ar' && currentLang !== 'en') currentLang = 'ar';
 
-const SITE_BRAND = { ar: 'بهجة', en: 'Bahja' };
+const SITE_BRAND = { ar: 'لُمعة', en: "Luma'a" };
 
 const DICT = {
   ar: {
-    brandName: 'بهجة',
+    brandName: 'لُمعة',
     pageTitle: 'ألعاب ذكاء وترفيه مجانية',
-    subtitle: "ألعاب سريعة تُضفي البهجة على يومك",
+    subtitle: "ألعاب سريعة بلمسة لامعة",
     level: "المستوى:",
     streak: "سلسلة الأيام:",
     totalScore: "إجمالي النقاط:",
@@ -238,7 +238,7 @@ const DICT = {
     catPuzzle: "ذكاء",
     catCard: "ورق",
     catOnline: "أونلاين",
-    heroTitle: "أضِف بهجة ليومك — العب وتنافس!",
+    heroTitle: "أضِف لُمعة ليومك — العب وتنافس!",
     heroDesc: "١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.",
     randomPlay: "🎲 العب عشوائياً",
     dailyQuests: "📋 المهام اليومية",
@@ -247,9 +247,9 @@ const DICT = {
     heroLeader: "صدارة",
     featured: "⭐ ألعاب مميزة",
     hot: "رائج",
-    footerTagline: "منصة بهجة — ألعاب عربية مجانية لتنشيط الذهن وإضفاء المرح",
+    footerTagline: "منصة لُمعة — ألعاب عربية مجانية لتنشيط الذهن وإضفاء المرح",
     footerCopy: "© 2026 الياس العثمان",
-    welcomeTitle: "مرحباً بك في بهجة!",
+    welcomeTitle: "مرحباً بك في لُمعة!",
     welcomeText: "اختر اسمك، العب الألعاب، اجمع النقاط، ونافس على لوحة الصدارة.",
     welcomeName: "أدخل اسمك",
     welcomeStart: "🚀 ابدأ اللعب",
@@ -260,7 +260,7 @@ const DICT = {
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
     cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
-    cloudSyncDesc: "تقدمك محفوظ على خادم بهجة ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
+    cloudSyncDesc: "تقدمك محفوظ على خادم لُمعة ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
     cloudSyncActive: "متزامن تلقائياً",
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
@@ -287,7 +287,7 @@ const DICT = {
     loadingGame: "جاري تحميل اللعبة...",
     recent: "🕐 آخر ما لعبت",
     newBadge: "جديد",
-    installBanner: "📲 ثبّت بهجة على جهازك للوصول السريع!",
+    installBanner: "📲 ثبّت لُمعة على جهازك للوصول السريع!",
     installBtn: "تثبيت",
     questPlay: "العب 5 ألعاب مختلفة",
     questScore: "اجمع 500 نقطة إجمالية",
@@ -303,7 +303,7 @@ const DICT = {
     levelUp: "مبروك! وصلت للمستوى"
   },
   en: {
-    brandName: 'Bahja',
+    brandName: "Luma'a",
     pageTitle: 'Free Brain & Fun Games',
     subtitle: "Quick games that spark joy in your day",
     level: "Level:",
@@ -328,9 +328,9 @@ const DICT = {
     heroLeader: "Leaderboard",
     featured: "⭐ Featured Games",
     hot: "Hot",
-    footerTagline: "Bahja — free Arabic games for brain training and pure fun",
+    footerTagline: "Luma'a — free Arabic games for brain training and pure fun",
     footerCopy: "© 2026 Elyas Al-Othman",
-    welcomeTitle: "Welcome to Bahja!",
+    welcomeTitle: "Welcome to Luma'a!",
     welcomeText: "Pick your name, play games, earn points, and compete on the leaderboard.",
     welcomeName: "Enter your name",
     welcomeStart: "🚀 Start Playing",
@@ -341,7 +341,7 @@ const DICT = {
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
     cloudSyncTitle: "☁️ Your account cloud save",
-    cloudSyncDesc: "Your progress is saved on Bahja and linked to your Google account — restored automatically on any device.",
+    cloudSyncDesc: "Your progress is saved on Luma'a and linked to your Google account — restored automatically on any device.",
     cloudSyncActive: "Auto-synced",
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
@@ -368,7 +368,7 @@ const DICT = {
     loadingGame: "Loading game...",
     recent: "🕐 Recently Played",
     newBadge: "NEW",
-    installBanner: "📲 Install Bahja on your device for quick access!",
+    installBanner: "📲 Install Luma'a on your device for quick access!",
     installBtn: "Install",
     questPlay: "Play 5 different games",
     questScore: "Collect 500 total points",
