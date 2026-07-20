@@ -599,13 +599,19 @@
     </div>
     <div id="unoStartScreen" class="start-screen">
         <input type="text" id="unoName" placeholder="أدخل اسمك" class="dark-name-input">
+        <p id="unoRoomInfo" class="uno-room-info d-none"></p>
         <div class="flex-center-wrap mt-15">
             <button type="button" class="btn primary live-badge" onclick="joinUnoGame('public')">🌐 أونلاين (5 لاعبين)</button>
-            <button type="button" class="btn btn-purple" onclick="joinUnoGame('private')">🔒 غرفة خاصة (8 لاعبين)</button>
+            <button type="button" class="btn btn-purple" onclick="joinUnoGame(getUnoRoomFromUrl() ? 'invited' : 'private')">🔒 <span id="unoPrivateAction">غرفة خاصة (8 لاعبين)</span></button>
             <button type="button" class="btn btn-orange" onclick="joinUnoGame('computer')">🤖 ضد الكمبيوتر</button>
      </div>
     </div>
     <div id="unoGameScreen" class="d-none">
+        <div class="uno-toolbar">
+            <span id="unoRoomLabel" class="uno-room-label"></span>
+            <button type="button" id="unoShareBtn" class="btn btn-purple d-none" onclick="shareUnoRoom()">🔗 مشاركة الرابط</button>
+        </div>
+        <p id="unoStatus" class="uno-status" role="status"></p>
         <div id="unoOpponents"></div>
         <div class="uno-table-center">
             <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>
@@ -613,6 +619,12 @@
             <div id="unoCurrentColor"></div>
         </div>
         <button type="button" id="unoStartBtn" class="btn primary uno-start-btn" onclick="startUno()">▶ ابدأ اللعب</button>
+        <div id="unoColorPicker" class="uno-color-picker d-none" aria-label="اختر لون الورقة">
+            <button type="button" class="uno-color red" onclick="chooseUnoColor('red')" aria-label="أحمر"></button>
+            <button type="button" class="uno-color blue" onclick="chooseUnoColor('blue')" aria-label="أزرق"></button>
+            <button type="button" class="uno-color green" onclick="chooseUnoColor('green')" aria-label="أخضر"></button>
+            <button type="button" class="uno-color yellow" onclick="chooseUnoColor('yellow')" aria-label="أصفر"></button>
+        </div>
         <div id="unoMyHand"></div>
     </div>
   </div>

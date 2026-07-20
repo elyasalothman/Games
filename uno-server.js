@@ -1,4 +1,4 @@
-module.exports = function(io) {
+module.exports = function(io, options = {}) {
     const unoRooms = {};
     const COLORS = ['red', 'blue', 'green', 'yellow'];
     const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', '+2'];
@@ -26,26 +26,152 @@ module.exports = function(io) {
         return false;
     }
 
+    function validRoomId(room) {
+        return typeof room === 'string' && /^[a-zA-Z0-9_-]{3,48}$/.test(room);
+    }
+
+    function nextTurn(room, steps = 1) {
+        room.currentTurn = (room.currentTurn + (room.direction * steps) + room.turnOrder.length * steps) % room.turnOrder.length;
+    }
+
+    function drawCard(room) {
+        if (room.deck.length === 0 && room.discardPile.length > 1) {
+            const topCard = room.discardPile.pop();
+            room.deck = room.discardPile.sort(() => Math.random() - 0.5);
+            room.discardPile = [topCard];
+        }
+        return room.deck.pop() || null;
+    }
+
+    function drawCards(room, player, count) {
+        for (let i = 0; i < count; i++) {
+            const card = drawCard(room);
+            if (card) player.cards.push(card);
+        }
+    }
+
+    function resetRound(room) {
+        room.turnOrder = [];
+        room.currentTurn = 0;
+        room.direction = 1;
+        room.deck = createUnoDeck();
+        room.discardPile = [];
+        room.currentColor = '';
+        room.state = 'waiting';
+    }
+
+    function stateForPlayer(room, playerId) {
+        const players = {};
+        Object.values(room.players).forEach((player) => {
+            players[player.id] = {
+                id: player.id,
+                name: player.name,
+                isBot: player.isBot,
+                cardCount: player.cards.length,
+                cards: player.id === playerId ? player.cards : []
+            };
+        });
+        return {
+            players,
+            turnOrder: room.turnOrder,
+            currentTurn: room.currentTurn,
+            direction: room.direction,
+            discardPile: room.discardPile,
+            currentColor: room.currentColor,
+            state: room.state,
+            hostId: room.hostId,
+            maxPlayers: room.maxPlayers
+        };
+    }
+
+    function emitRoomState(roomId) {
+        const room = unoRooms[roomId];
+        if (!room) return;
+        Object.values(room.players)
+            .filter((player) => !player.isBot)
+            .forEach((player) => io.to(player.id).emit('unoGameState', stateForPlayer(room, player.id)));
+    }
+
+    function emitRoomMessage(roomId, message) {
+        const room = unoRooms[roomId];
+        if (!room) return;
+        Object.values(room.players)
+            .filter((player) => !player.isBot)
+            .forEach((player) => io.to(player.id).emit('unoMessage', message));
+    }
+
+    function finishRound(roomId, winner) {
+        const room = unoRooms[roomId];
+        if (!room) return;
+        room.lastWinner = winner.name;
+        resetRound(room);
+        emitRoomMessage(roomId, `🎉 فاز ${winner.name} بالجولة! اضغط ابدأ لجولة جديدة.`);
+        emitRoomState(roomId);
+    }
+
+    function applyCard(room, player, card, selectedColor) {
+        room.discardPile.push(card);
+        room.currentColor = card.color === 'wild' ? selectedColor : card.color;
+
+        if (card.value === 'Reverse') {
+            room.direction *= -1;
+            nextTurn(room, room.turnOrder.length === 2 ? 2 : 1);
+        } else if (card.value === 'Skip') {
+            nextTurn(room, 2);
+        } else if (card.value === '+2' || card.value === '+4') {
+            const nextPlayerId = room.turnOrder[(room.currentTurn + room.direction + room.turnOrder.length) % room.turnOrder.length];
+            drawCards(room, room.players[nextPlayerId], card.value === '+2' ? 2 : 4);
+            nextTurn(room, 2);
+        } else {
+            nextTurn(room);
+        }
+    }
+
+    function playCard(roomId, playerId, cardIndex, selectedColor) {
+        const room = unoRooms[roomId];
+        if (!room || room.state !== 'playing' || room.turnOrder[room.currentTurn] !== playerId) return false;
+        const player = room.players[playerId];
+        const card = player && player.cards[cardIndex];
+        const topCard = room.discardPile[room.discardPile.length - 1];
+        if (!card || !isValidPlay(card, topCard, room.currentColor)) return false;
+        if (card.color === 'wild' && !COLORS.includes(selectedColor)) return false;
+
+        player.cards.splice(cardIndex, 1);
+        applyCard(room, player, card, selectedColor);
+        if (player.cards.length === 0) finishRound(roomId, player);
+        else emitRoomState(roomId);
+        return true;
+    }
+
     io.on('connection', (socket) => {
         socket.on('joinUno', ({ name, room, mode }) => {
-            const roomId = room || 'uno_public';
-            socket.join(roomId);
-            socket.unoRoomId = roomId;
+            const roomId = room || 'public_uno';
+            if (!validRoomId(roomId)) {
+                socket.emit('unoMessage', 'اسم الغرفة غير صالح.');
+                return;
+            }
 
             if (!unoRooms[roomId]) {
                 unoRooms[roomId] = {
                     players: {}, turnOrder: [], currentTurn: 0, direction: 1,
                     deck: createUnoDeck(), discardPile: [], currentColor: '',
-                    state: 'waiting', maxPlayers: mode === 'private' ? 8 : 5
+                    state: 'waiting', maxPlayers: mode === 'private' ? 8 : 5,
+                    hostId: socket.id
                 };
             }
 
             const r = unoRooms[roomId];
             if (Object.keys(r.players).length >= r.maxPlayers && !r.players[socket.id]) {
-                socket.emit('chatMessage', { name: 'نظام', msg: 'الغرفة ممتلئة!' });
+                socket.emit('unoMessage', 'الغرفة ممتلئة، جرّب غرفة أخرى.');
+                return;
+            }
+            if (r.state === 'playing' && !r.players[socket.id]) {
+                socket.emit('unoMessage', 'الجولة بدأت بالفعل. انتظر الجولة التالية أو أنشئ غرفة جديدة.');
                 return;
             }
 
+            socket.join(roomId);
+            socket.unoRoomId = roomId;
             r.players[socket.id] = { id: socket.id, name: name || 'لاعب', cards: [], isBot: false };
 
             if (mode === 'computer' && Object.keys(r.players).length === 1) {
@@ -54,69 +180,34 @@ module.exports = function(io) {
                     r.players[botId] = { id: botId, name: '🤖 بوت ' + i, cards: [], isBot: true };
                 }
             }
-            io.to(roomId).emit('unoGameState', r);
+            emitRoomState(roomId);
         });
 
         socket.on('startUno', () => {
             const r = unoRooms[socket.unoRoomId];
-            if (!r || r.state !== 'waiting') return;
+            if (!r || r.state !== 'waiting' || r.hostId !== socket.id) return;
 
             r.turnOrder = Object.keys(r.players);
             r.turnOrder.forEach(id => {
-                r.players[id].cards = r.deck.splice(0, 7); // توزيع 7 أوراق
+                r.players[id].cards = [];
+                drawCards(r, r.players[id], 7);
             });
 
-            // سحب أول ورقة (يجب ألا تكون +4 أو Wild مبدئياً لتبسيط اللعب)
             let firstCard;
             do {
-                firstCard = r.deck.splice(0, 1)[0];
+                firstCard = drawCard(r);
                 if (firstCard.color === 'wild') r.deck.push(firstCard);
             } while (firstCard.color === 'wild');
             
             r.discardPile.push(firstCard);
             r.currentColor = firstCard.color;
             r.state = 'playing';
-            io.to(socket.unoRoomId).emit('unoGameState', r);
+            emitRoomState(socket.unoRoomId);
         });
 
         socket.on('playUnoCard', ({ cardIndex, selectedColor }) => {
-            const r = unoRooms[socket.unoRoomId];
-            if (!r || r.state !== 'playing' || r.turnOrder[r.currentTurn] !== socket.id) return;
-
-            const player = r.players[socket.id];
-            const card = player.cards[cardIndex];
-            if (!card) return;
-            const topCard = r.discardPile[r.discardPile.length - 1];
-
-            if (isValidPlay(card, topCard, r.currentColor)) {
-                player.cards.splice(cardIndex, 1);
-                r.discardPile.push(card);
-                r.currentColor = card.color === 'wild' ? selectedColor : card.color;
-
-                // تطبيق تأثير الأوراق
-                if (card.value === 'Reverse') {
-                    r.direction *= -1;
-                    if (r.turnOrder.length === 2) r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length; // كأنها تخطي في لاعبين
-                } else if (card.value === 'Skip') {
-                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                } else if (card.value === '+2') {
-                    const nextPlayer = r.turnOrder[(r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length];
-                    r.players[nextPlayer].cards.push(...r.deck.splice(0, 2));
-                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length; // تخطي بعد السحب
-                } else if (card.value === '+4') {
-                    const nextPlayer = r.turnOrder[(r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length];
-                    r.players[nextPlayer].cards.push(...r.deck.splice(0, 4));
-                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length; // تخطي بعد السحب
-                }
-
-                // التحقق من الفوز
-                if (player.cards.length === 0) {
-                    r.state = 'waiting';
-                    io.to(socket.unoRoomId).emit('chatMessage', { name: 'نظام', msg: `🎉 فاز ${player.name} باللعبة!` });
-                } else {
-                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                }
-                io.to(socket.unoRoomId).emit('unoGameState', r);
+            if (!playCard(socket.unoRoomId, socket.id, cardIndex, selectedColor)) {
+                socket.emit('unoMessage', 'هذه الحركة غير مسموحة الآن.');
             }
         });
 
@@ -124,33 +215,30 @@ module.exports = function(io) {
             const r = unoRooms[socket.unoRoomId];
             if (!r || r.state !== 'playing' || r.turnOrder[r.currentTurn] !== socket.id) return;
 
-            if (r.deck.length === 0) {
-                const top = r.discardPile.pop();
-                r.deck = r.discardPile.sort(() => Math.random() - 0.5);
-                r.discardPile = [top];
-            }
-            
-            r.players[socket.id].cards.push(r.deck.pop());
-            r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-            io.to(socket.unoRoomId).emit('unoGameState', r);
+            drawCards(r, r.players[socket.id], 1);
+            nextTurn(r);
+            emitRoomState(socket.unoRoomId);
         });
 
         socket.on('disconnect', () => {
             if (socket.unoRoomId && unoRooms[socket.unoRoomId]) {
-                delete unoRooms[socket.unoRoomId].players[socket.id];
+                const r = unoRooms[socket.unoRoomId];
+                delete r.players[socket.id];
                 
-                const hasReal = Object.values(unoRooms[socket.unoRoomId].players).some(p => !p.isBot);
+                const hasReal = Object.values(r.players).some(p => !p.isBot);
                 if (!hasReal) {
                     delete unoRooms[socket.unoRoomId];
                 } else {
-                    io.to(socket.unoRoomId).emit('unoGameState', unoRooms[socket.unoRoomId]);
+                    r.hostId = r.hostId === socket.id ? Object.values(r.players).find(p => !p.isBot)?.id : r.hostId;
+                    if (r.state === 'playing') resetRound(r);
+                    emitRoomMessage(socket.unoRoomId, 'غادر لاعب الغرفة؛ تم إرجاعكم إلى غرفة الانتظار.');
+                    emitRoomState(socket.unoRoomId);
                 }
             }
         });
     });
 
-    // ذكاء اصطناعي لبوتات الأونو
-    setInterval(() => {
+    const botLoop = () => {
         for (let roomId in unoRooms) {
             const r = unoRooms[roomId];
             if (r.state === 'playing') {
@@ -173,49 +261,24 @@ module.exports = function(io) {
                                 if (player.cards[i].color === 'wild') {
                                     selectedColor = ['red', 'blue', 'green', 'yellow'][Math.floor(Math.random() * 4)];
                                 }
-                                const card = player.cards.splice(i, 1)[0];
-                                r.discardPile.push(card);
-                                r.currentColor = card.color === 'wild' ? selectedColor : card.color;
-                                
-                                // تطبيق تأثير الأوراق الخاصة بالبوت
-                                if (card.value === 'Reverse') {
-                                    r.direction *= -1;
-                                    if (r.turnOrder.length === 2) r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                                } else if (card.value === 'Skip') {
-                                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                                } else if (card.value === '+2') {
-                                    const nextPlayer = r.turnOrder[(r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length];
-                                    r.players[nextPlayer].cards.push(...r.deck.splice(0, 2));
-                                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                                } else if (card.value === '+4') {
-                                    const nextPlayer = r.turnOrder[(r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length];
-                                    r.players[nextPlayer].cards.push(...r.deck.splice(0, 4));
-                                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                                }
-
-                                // التحقق من فوز البوت
-                                if (player.cards.length === 0) {
-                                    r.state = 'waiting';
-                                    io.to(roomId).emit('chatMessage', { name: 'نظام', msg: `🤖 فاز ${player.name} باللعبة!` });
-                                } else {
-                                    r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                                }
-                                
+                                playCard(roomId, player.id, i, selectedColor);
                                 played = true;
-                                io.to(roomId).emit('unoGameState', r);
                                 break;
                             }
                         }
                         
                         if (!played) {
-                            player.cards.push(r.deck.pop());
-                            r.currentTurn = (r.currentTurn + r.direction + r.turnOrder.length) % r.turnOrder.length;
-                            io.to(roomId).emit('unoGameState', r);
+                            drawCards(r, player, 1);
+                            nextTurn(r);
+                            emitRoomState(roomId);
                         }
                         r.botThinking = false;
                     }, 1500);
                 }
             }
         }
-    }, 1000);
+    };
+
+    if (options.startBotLoop !== false) setInterval(botLoop, 1000);
+    return { rooms: unoRooms, botLoop };
 };
