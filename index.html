@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 
@@ -133,7 +133,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version">v3.2</span>
+        <span class="footer-version">v3.3</span>
       </div>
     </footer>
 
@@ -427,6 +427,12 @@
         <p class="agar-subtitle">جهز خليتك، اختر شكلك، واستعد للالتهام!</p>
 
         <div class="agar-setup-box">
+            <div class="agar-preview-wrap" aria-hidden="true">
+              <div class="agar-preview-cell" id="agarPreviewCell">
+                <span id="agarPreviewSkin"></span>
+              </div>
+              <div class="agar-preview-label" id="agarPreviewName">خليتك</div>
+            </div>
             <input type="text" id="agarName" placeholder="أدخل اسمك هنا" class="agar-name-input">
             <div class="agar-options">
                 <div class="color-wrap flex-center-gap">
@@ -447,6 +453,12 @@
                         <option value="😎">😎 رائع</option>
                     </select>
                 </div>
+            </div>
+            <div class="agar-controls-hint">
+              <span>🖱️ حرّك للاتجاه</span>
+              <span>␣ وقوف</span>
+              <span>W تقسيم</span>
+              <span>S قذف</span>
             </div>
         </div>
 
@@ -473,6 +485,20 @@
         </div>
     </div>
     <canvas id="agarCanvas" width="1200" height="800" class="agar-canvas d-none"></canvas>
+    <div id="agarDeathScreen" class="agar-death-screen d-none">
+      <div class="agar-death-card">
+        <h3>💀 انتهت الجولة</h3>
+        <p id="agarDeathMsg">لقد تم ابتلاعك!</p>
+        <div class="agar-death-stats">
+          <div><span>أفضل كتلة</span><strong id="agarDeathMass">0</strong></div>
+          <div><span>المدة</span><strong id="agarDeathTime">0ث</strong></div>
+        </div>
+        <div class="agar-death-actions">
+          <button type="button" class="btn primary" onclick="agarPlayAgain()">▶ العب مجدداً</button>
+          <button type="button" class="btn" onclick="agarBackToLobby()">اللوبي</button>
+        </div>
+      </div>
+    </div>
     <p id="agarStatus" class="d-none">وجه الماوس للتحرك. التهم النقاط والخلايا الأصغر لتكبر!</p>
     
     <!-- زر التحريك الدائري للجوال -->
@@ -604,12 +630,19 @@
 
     <div id="investStartScreen" class="invest-start">
       <div class="signature-modal-badge invest-badge">أسواق واستراتيجية</div>
-      <p class="invest-intro">ابنِ ثروتك عبر أسهم وسندات وذهب وعقارات. الأسواق تتقلب، الفواتير تضغط، والتقدم يُحفظ في السحابة.</p>
+      <p class="invest-intro">تعلّم الاستثمار كما في الأنظمة الحقيقية: محفظة، تكلفة شراء، رسوم، أكاديمية باختبارات، وأنظمة سوق (صاعد/هابط/تضخم). يمكن تهيئة الأسعار من بيانات حية لبيتكوين.</p>
       <div class="score-display">
         <div class="score-box"><div class="score-label">أفضل صافي ثروة</div><div class="score-value" id="investBest">0</div></div>
       </div>
+      <div class="invest-live-badge" id="investLiveBadge">جاري فحص السوق…</div>
+      <h4 class="invest-col-title">اختر بيئة السوق</h4>
+      <div class="invest-regime-picker" id="investRegimePicker"></div>
+      <label class="invest-live-toggle">
+        <input type="checkbox" id="investLiveSeed" checked>
+        <span>📡 ابدأ ببذرة أسعار حية (بيتكوين/ذهب إن توفر)</span>
+      </label>
       <div class="invest-start-actions">
-        <button type="button" class="btn primary" onclick="investNewGame()">▶ لعبة جديدة (10,000)</button>
+        <button type="button" class="btn primary" onclick="investNewGame()">▶ ابدأ الأكاديمية (10,000)</button>
         <button type="button" class="btn btn-blue d-none" id="investContinueBtn" onclick="investContinueLocal()">📂 متابعة محلي</button>
       </div>
       <div class="invest-cloud-box">
@@ -629,23 +662,46 @@
         <div class="invest-stat"><span>اليوم</span><strong id="investDay">1</strong></div>
         <div class="invest-stat"><span>الهدف</span><strong id="investGoal">25000</strong></div>
       </div>
+      <div class="invest-hud invest-hud-secondary">
+        <div class="invest-stat"><span>الرتبة</span><strong id="investRank">مبتدئ</strong></div>
+        <div class="invest-stat"><span>XP</span><strong id="investXp">0</strong></div>
+        <div class="invest-stat"><span>P&L غير محقق</span><strong id="investUPnL">0</strong></div>
+        <div class="invest-stat"><span>P&L محقق</span><strong id="investRealized">0</strong></div>
+      </div>
       <div class="invest-goal-bar"><div class="invest-goal-fill" id="investGoalFill"></div></div>
+      <div class="invest-meta-row">
+        <span id="investRegimeLabel">⚖️ سوق متوازن</span>
+        <span>عمولات: <strong id="investFees">0</strong></span>
+        <span class="invest-live-note d-none" id="investLiveNote"></span>
+      </div>
       <div class="invest-stress-row">
         <span>ضغط السوق</span>
         <div class="invest-stress-track"><div class="invest-stress-fill" id="investStressFill"></div></div>
         <strong id="investStressVal">0%</strong>
       </div>
+      <div class="invest-emergency-row">
+        <span>صندوق الطوارئ</span>
+        <div class="invest-emergency-track"><div class="invest-emergency-fill" id="investEmergencyFill"></div></div>
+        <strong><span id="investEmergency">0</span> شهر</strong>
+      </div>
       <div class="invest-lesson" id="investLesson">💡 نصيحة استثمارية تظهر هنا</div>
+
+      <div id="investAcademyPanel" class="invest-academy-panel"></div>
 
       <div class="invest-main">
         <div class="invest-col">
-          <h4 class="invest-col-title">الأصول</h4>
+          <h4 class="invest-col-title">الأصول والرسوم البيانية</h4>
           <div id="investAssetList" class="invest-asset-list"></div>
+          <h4 class="invest-col-title mt-12">توزيع المحفظة vs الهدف</h4>
+          <div id="investAllocBars" class="invest-alloc-bars"></div>
         </div>
         <div class="invest-col invest-trade">
           <h4 class="invest-col-title" id="investSelectedName">🚀 أسهم نمو</h4>
           <p class="invest-tip" id="investSelectedTip"></p>
+          <p class="invest-proxy" id="investSelectedProxy"></p>
           <div class="invest-price-line">السعر: <strong id="investSelectedPrice">0</strong></div>
+          <div id="investSelectedSpark" class="invest-selected-spark"></div>
+          <div id="investSelectedBasis" class="invest-basis-line text-muted text-11"></div>
           <select id="investAmountMode" title="مبلغ الشراء">
             <option value="pct25">25% من النقد</option>
             <option value="pct50">50% من النقد</option>
@@ -662,6 +718,8 @@
           <div class="invest-util-btns">
             <button type="button" class="btn" id="investPauseBtn" onclick="investTogglePause()">⏸ إيقاف</button>
             <button type="button" class="btn btn-purple" onclick="investBreathe()">😌 تهدئة</button>
+            <button type="button" class="btn btn-blue" onclick="investRebalance()">⚖️ إعادة توازن</button>
+            <button type="button" class="btn" id="investDcaBtn" onclick="investToggleDca()">📅 DCA: إيقاف</button>
             <button type="button" class="btn btn-blue" onclick="investCloudSave(true)">☁️ حفظ سحابي</button>
           </div>
           <div class="invest-cloud-status">
@@ -746,6 +804,14 @@
           👑 ولادة جديدة
         </button>
       </div>
+      <div id="empirePrestigeConfirm" class="empire-prestige-confirm d-none">
+        <p>إعادة ولادة؟ يُصفَّر الرصيد والأعمال ويزيد المضاعف الدائم.</p>
+        <div class="flex-center-gap">
+          <button type="button" class="btn btn-purple" onclick="empireConfirmPrestige()">تأكيد</button>
+          <button type="button" class="btn" onclick="empireCancelPrestige()">إلغاء</button>
+        </div>
+      </div>
+      <div id="empireEventBanner" class="empire-event-banner d-none"></div>
       <p class="empire-prestige-hint" id="empirePrestigeHint">تحتاج $1.00M إجمالي</p>
 
       <h4 class="empire-shop-title">أعمالك</h4>
@@ -814,7 +880,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js?v=9"></script>
+<script src="script.js?v=10"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {

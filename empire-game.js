@@ -18,11 +18,21 @@ const EMPIRE_BIZ = [
 ];
 
 const EMPIRE_PRESTIGE_COST = 1000000;
+const EMPIRE_EVENTS = [
+  { id: 'boom', ar: '📈 ازدهار اقتصادي! دخل أعمالك ×1.5 لدقيقة.', en: '📈 Economic boom! Business income ×1.5 for a minute.', mul: 1.5, secs: 60 },
+  { id: 'tax', ar: '🧾 ضريبة مفاجئة — خسرت 8% من الرصيد.', en: '🧾 Surprise tax — lost 8% of cash.', tax: 0.08 },
+  { id: 'viral', ar: '📱 منتجك انتشر! +مكافأة نقدية.', en: '📱 Your product went viral! Cash bonus.', bonusPct: 0.12 },
+  { id: 'strike', ar: '⏸ إضراب عمال — الدخل يتباطأ قليلاً.', en: '⏸ Worker strike — income slows briefly.', mul: 0.6, secs: 40 }
+];
+const EMPIRE_MILESTONES = [100, 1000, 10000, 100000, 1000000];
 
 let empireState = null;
 let empireTickTimer = null;
 let empireSaveTimer = null;
 let empireFloatId = 0;
+let empireEventMul = 1;
+let empireEventUntil = 0;
+let empireMilestoneHit = {};
 
 function empireLang() {
   return document.documentElement.lang === 'en' ? 'en' : 'ar';
@@ -112,7 +122,8 @@ function empireCps() {
   EMPIRE_BIZ.forEach(b => {
     cps += b.baseCps * (empireState.owned[b.id] || 0);
   });
-  return cps * (empireState.prestigeMult || 1);
+  const eventActive = Date.now() < empireEventUntil ? empireEventMul : 1;
+  return cps * (empireState.prestigeMult || 1) * eventActive;
 }
 
 function empireTapGain() {
@@ -216,6 +227,8 @@ function startEmpireLoop() {
       empireState.lifetimeEarned += gain;
       updateEmpireHud();
     }
+    empireMaybeEvent();
+    empireCheckMilestones();
   }, 100);
   empireSaveTimer = setInterval(saveEmpireState, 8000);
 }
@@ -352,11 +365,17 @@ function updateEmpirePrestige() {
 
 function doEmpirePrestige() {
   if (!empireState || empireState.totalEarned < EMPIRE_PRESTIGE_COST) return;
-  const ok = confirm(empireLang() === 'en'
-    ? 'Prestige? Cash & businesses reset. Permanent multiplier increases.'
-    : 'إعادة ولادة؟ يُصفَّر الرصيد والأعمال، ويزيد المضاعف الدائم.');
-  if (!ok) return;
+  const panel = document.getElementById('empirePrestigeConfirm');
+  if (panel && panel.classList.contains('d-none')) {
+    panel.classList.remove('d-none');
+    return;
+  }
+  empireConfirmPrestige();
+}
 
+function empireConfirmPrestige() {
+  if (!empireState || empireState.totalEarned < EMPIRE_PRESTIGE_COST) return;
+  document.getElementById('empirePrestigeConfirm')?.classList.add('d-none');
   empireState.prestige += 1;
   empireState.prestigeMult = 1 + empireState.prestige * 0.5;
   empireState.cash = 0;
@@ -364,6 +383,8 @@ function doEmpirePrestige() {
   empireState.tapLevel = 0;
   EMPIRE_BIZ.forEach(b => { empireState.owned[b.id] = 0; });
   empireState.totalEarned = 0;
+  empireEventMul = 1;
+  empireEventUntil = 0;
 
   if (typeof playSound === 'function') playSound('levelup');
   if (typeof showToast === 'function') {
@@ -373,6 +394,50 @@ function doEmpirePrestige() {
   }
   renderEmpireAll();
   saveEmpireState();
+}
+
+function empireCancelPrestige() {
+  document.getElementById('empirePrestigeConfirm')?.classList.add('d-none');
+}
+
+function empireMaybeEvent() {
+  if (!empireState?.started || Math.random() > 0.002) return;
+  const ev = EMPIRE_EVENTS[Math.floor(Math.random() * EMPIRE_EVENTS.length)];
+  if (ev.mul) {
+    empireEventMul = ev.mul;
+    empireEventUntil = Date.now() + (ev.secs || 40) * 1000;
+  }
+  if (ev.tax) {
+    const lost = Math.floor(empireState.cash * ev.tax);
+    empireState.cash = Math.max(0, empireState.cash - lost);
+  }
+  if (ev.bonusPct) {
+    empireState.cash += Math.floor(Math.max(50, empireState.cash * ev.bonusPct));
+  }
+  const msg = empireLang() === 'en' ? ev.en : ev.ar;
+  if (typeof showToast === 'function') showToast(msg);
+  const banner = document.getElementById('empireEventBanner');
+  if (banner) {
+    banner.textContent = msg;
+    banner.classList.remove('d-none');
+    setTimeout(() => banner.classList.add('d-none'), 4500);
+  }
+}
+
+function empireCheckMilestones() {
+  if (!empireState) return;
+  EMPIRE_MILESTONES.forEach(m => {
+    if (empireState.lifetimeEarned >= m && !empireMilestoneHit[m]) {
+      empireMilestoneHit[m] = true;
+      if (typeof showToast === 'function') {
+        showToast(empireLang() === 'en'
+          ? `🏆 Milestone: $${empireFmt(m)} lifetime!`
+          : `🏆 إنجاز: $${empireFmt(m)} إجمالي العمر!`);
+      }
+      if (typeof playSound === 'function') playSound('levelup');
+      if (typeof addScore === 'function') addScore(20);
+    }
+  });
 }
 
 function empireTap(event) {
@@ -458,7 +523,7 @@ function bindEmpireTap() {
     empireTap(point);
   };
   btn.addEventListener('pointerdown', handler);
-  btn.addEventListener('click', handler);
+  // لا نربط click لتجنب الضغط المزدوج مع pointerdown
 }
 
 // expose for HTML onclick + openGame init
@@ -468,6 +533,8 @@ window.continueEmpireGame = continueEmpireGame;
 window.closeEmpire = closeEmpire;
 window.upgradeEmpireTap = upgradeEmpireTap;
 window.doEmpirePrestige = doEmpirePrestige;
+window.empireConfirmPrestige = empireConfirmPrestige;
+window.empireCancelPrestige = empireCancelPrestige;
 
 document.addEventListener('DOMContentLoaded', bindEmpireTap);
 // also bind when script loads late

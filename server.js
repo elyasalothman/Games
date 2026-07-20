@@ -194,6 +194,35 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// بذرة أسعار حية لمحاكاة الاستثمار (CoinGecko — بدون مفتاح)
+let marketSeedCache = { at: 0, data: null };
+app.get('/api/market-seed', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (marketSeedCache.data && now - marketSeedCache.at < 5 * 60 * 1000) {
+            return res.json(marketSeedCache.data);
+        }
+        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true';
+        const upstream = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!upstream.ok) throw new Error('upstream ' + upstream.status);
+        const json = await upstream.json();
+        const payload = {
+            ok: true,
+            source: 'coingecko',
+            fetchedAt: new Date().toISOString(),
+            btcUsd: json.bitcoin?.usd ?? null,
+            btcChange24h: json.bitcoin?.usd_24h_change ?? null,
+            goldUsd: json['pax-gold']?.usd ?? null,
+            goldChange24h: json['pax-gold']?.usd_24h_change ?? null
+        };
+        marketSeedCache = { at: now, data: payload };
+        res.json(payload);
+    } catch (err) {
+        console.warn('market-seed failed:', err.message);
+        res.json({ ok: false, error: 'live_unavailable' });
+    }
+});
+
 // --- نقاط نهاية (APIs) لوحة الصدارة ---
 
 // حفظ نتيجة جديدة

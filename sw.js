@@ -1,4 +1,4 @@
-const CACHE = 'lumaa-v9';
+const CACHE = 'lumaa-v10';
 const ASSETS = [
   '/',
   '/index.html',
