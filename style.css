@@ -1339,6 +1339,203 @@ body.dark-mode::after {
 }
 .hero-stat-label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
 
+/* ─── Signature Games Showcase ─── */
+.signature-section {
+  margin-bottom: 36px;
+}
+.signature-sub {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  margin: -8px 0 18px;
+  line-height: 1.5;
+}
+.signature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.signature-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 22px 20px;
+  min-height: 200px;
+  cursor: pointer;
+  border: 1px solid var(--border-bright);
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  isolation: isolate;
+}
+.signature-panel:hover,
+.signature-panel:focus-visible {
+  transform: translateY(-6px) scale(1.01);
+  outline: none;
+}
+.signature-panel-glow {
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+}
+.signature-panel:hover .signature-panel-glow { opacity: 0.85; }
+.signature-panel-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35));
+  line-height: 1;
+}
+.signature-panel-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+.signature-panel-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+.signature-panel-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.signature-panel-cta {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+/* Empire — gold royalty */
+.signature-empire, .signature-panel.signature-empire {
+  background: linear-gradient(160deg, #3a2a12 0%, #2a2452 55%, #1e1840 100%);
+  border-color: rgba(255, 200, 87, 0.35);
+}
+.signature-empire .signature-panel-glow,
+.signature-panel.signature-empire .signature-panel-glow {
+  background: radial-gradient(circle at 30% 20%, rgba(255, 200, 87, 0.45), transparent 55%),
+              radial-gradient(circle at 80% 80%, rgba(255, 123, 107, 0.25), transparent 50%);
+}
+.signature-empire .signature-panel-tag,
+.signature-card.signature-empire .signature-badge,
+.empire-badge {
+  background: rgba(255, 200, 87, 0.18);
+  color: var(--accent-gold);
+  border: 1px solid rgba(255, 200, 87, 0.4);
+}
+.signature-panel.signature-empire:hover {
+  box-shadow: 0 16px 40px rgba(255, 200, 87, 0.28);
+  border-color: var(--accent-gold);
+}
+
+/* Agar — living cyan/green arena */
+.signature-agar, .signature-panel.signature-agar {
+  background: linear-gradient(160deg, #0d2f2a 0%, #1a2a48 55%, #1e1840 100%);
+  border-color: rgba(94, 234, 160, 0.35);
+}
+.signature-agar .signature-panel-glow,
+.signature-panel.signature-agar .signature-panel-glow {
+  background: radial-gradient(circle at 25% 25%, rgba(94, 234, 160, 0.4), transparent 50%),
+              radial-gradient(circle at 85% 70%, rgba(110, 200, 255, 0.35), transparent 50%);
+}
+.signature-agar .signature-panel-tag,
+.signature-card.signature-agar .signature-badge,
+.agar-badge {
+  background: rgba(94, 234, 160, 0.16);
+  color: var(--accent-green);
+  border: 1px solid rgba(94, 234, 160, 0.4);
+}
+.signature-panel.signature-agar:hover {
+  box-shadow: 0 16px 40px rgba(94, 234, 160, 0.25);
+  border-color: var(--accent-green);
+}
+
+/* Invest — market blue/purple */
+.signature-invest, .signature-panel.signature-invest {
+  background: linear-gradient(160deg, #142a4a 0%, #2a2452 55%, #1e1840 100%);
+  border-color: rgba(110, 200, 255, 0.35);
+}
+.signature-invest .signature-panel-glow,
+.signature-panel.signature-invest .signature-panel-glow {
+  background: radial-gradient(circle at 20% 30%, rgba(110, 200, 255, 0.4), transparent 50%),
+              radial-gradient(circle at 80% 75%, rgba(199, 125, 255, 0.35), transparent 50%);
+}
+.signature-invest .signature-panel-tag,
+.signature-card.signature-invest .signature-badge,
+.invest-badge {
+  background: rgba(110, 200, 255, 0.16);
+  color: var(--accent-blue);
+  border: 1px solid rgba(110, 200, 255, 0.4);
+}
+.signature-panel.signature-invest:hover {
+  box-shadow: 0 16px 40px rgba(110, 200, 255, 0.25);
+  border-color: var(--accent-blue);
+}
+
+.signature-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  z-index: 2;
+}
+.signature-card {
+  border-width: 1.5px;
+}
+.signature-card.signature-empire {
+  border-color: rgba(255, 200, 87, 0.4);
+  box-shadow: 0 6px 0 rgba(255, 200, 87, 0.25), var(--shadow-sm);
+}
+.signature-card.signature-agar {
+  border-color: rgba(94, 234, 160, 0.4);
+  box-shadow: 0 6px 0 rgba(94, 234, 160, 0.25), var(--shadow-sm);
+}
+.signature-card.signature-invest {
+  border-color: rgba(110, 200, 255, 0.4);
+  box-shadow: 0 6px 0 rgba(110, 200, 255, 0.25), var(--shadow-sm);
+}
+
+.signature-modal-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+.signature-modal .modal-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 800px) {
+  .signature-grid {
+    grid-template-columns: 1fr;
+  }
+  .signature-panel {
+    min-height: 160px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+  .signature-panel-icon { margin-bottom: 0; font-size: 40px; flex-shrink: 0; }
+  .signature-panel-body { flex: 1; }
+  .signature-panel-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+
 /* ─── Featured Games ─── */
 .featured-section { margin-bottom: 32px; }
 .section-title {
@@ -1636,7 +1833,6 @@ body.dark-mode::after {
 .profile-invest-cloud .profile-cloud-row { margin-top: var(--space-sm); }
 
 /* ─── Invest Sim ─── */
-.invest-modal { max-width: 920px; }
 .invest-start { text-align: center; padding: 8px 4px 16px; }
 .invest-intro { color: var(--text-muted); line-height: 1.7; margin-bottom: 16px; font-size: 15px; }
 .invest-start-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
@@ -1774,12 +1970,28 @@ body.dark-mode::after {
   .install-banner { padding: 12px 16px; font-size: 13px; }
 }
 
-/* ─── Tap Empire — إمبراطورية الضغط ─── */
+/* ─── ملوك اللمس — Tap Kings ─── */
 .empire-modal {
   max-width: 440px;
   background:
-    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(255, 196, 60, 0.18), transparent 55%),
-    radial-gradient(ellipse 80% 50% at 100% 100%, rgba(255, 140, 66, 0.08), transparent 50%),
+    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(255, 196, 60, 0.22), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 100%, rgba(255, 140, 66, 0.1), transparent 50%),
+    var(--card-bg);
+  border: 1px solid rgba(255, 200, 87, 0.25);
+}
+.agar-modal {
+  border: 1px solid rgba(94, 234, 160, 0.25);
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -5%, rgba(94, 234, 160, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(110, 200, 255, 0.1), transparent 45%),
+    var(--card-bg);
+}
+.invest-modal {
+  max-width: 920px;
+  border: 1px solid rgba(110, 200, 255, 0.25);
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -5%, rgba(110, 200, 255, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(199, 125, 255, 0.1), transparent 45%),
     var(--card-bg);
 }
 .empire-gold { color: #ffc43c !important; }

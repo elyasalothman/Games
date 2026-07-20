@@ -151,13 +151,13 @@ const ALL_GAMES = [
   {id:'guesser', category: 'puzzle', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
   {id:'sequence',category: 'puzzle', name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
   {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
-  {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
+  {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'أونلاين! كُل لتكبر وسيطر على الساحة الحية.', en:'Online! Eat to grow and rule the living arena.'}, isSignature: true, signatureTag:{ar:'أونلاين مباشر', en:'Live Online'}},
   {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
   {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
   {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
   {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
-  {id:'empire',  category: 'puzzle', name:{ar:'إمبراطورية الضغط', en:'Tap Empire'}, icon:'👑', desc:{ar:'اضغط واجمع الثروة وابنِ إمبراطوريتك على الجوال!', en:'Tap to earn and build your mobile money empire!'}, isNew: true},
-  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true}
+  {id:'empire',  category: 'puzzle', name:{ar:'ملوك اللمس', en:'Tap Kings'}, icon:'👑', desc:{ar:'اضغط وابنِ مملكتك من كشك الليمون إلى عرش الملوك!', en:'Tap to build from a lemonade stand to a royal throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'بناء وثروة', en:'Build & Wealth'}},
+  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true, isSignature: true, signatureTag:{ar:'أسواق واستراتيجية', en:'Markets & Strategy'}}
 ];
 
 // ─── STORAGE & CORE ───
@@ -245,7 +245,10 @@ const DICT = {
     heroGames: "لعبة",
     heroOnline: "أونلاين",
     heroLeader: "صدارة",
-    featured: "⭐ ألعاب مميزة",
+    featured: "⭐ رائج الآن",
+    signatureTitle: "✨ ألعاب التوقيع",
+    signatureSub: "ثلاث تجارب مميزة — الثروة، الالتهام، والأسواق",
+    signaturePlay: "العب الآن",
     hot: "رائج",
     footerTagline: "منصة لُمعة — ألعاب عربية مجانية لتنشيط الذهن وإضفاء المرح",
     footerCopy: "© 2026 الياس العثمان",
@@ -326,7 +329,10 @@ const DICT = {
     heroGames: "Games",
     heroOnline: "Online",
     heroLeader: "Leaderboard",
-    featured: "⭐ Featured Games",
+    featured: "⭐ Trending Now",
+    signatureTitle: "✨ Signature Games",
+    signatureSub: "Three standout experiences — wealth, battle, and markets",
+    signaturePlay: "Play Now",
     hot: "Hot",
     footerTagline: "Luma'a — free Arabic games for brain training and pure fun",
     footerCopy: "© 2026 Elyas Al-Othman",
@@ -395,7 +401,7 @@ const ACHIEVEMENTS = [
   { id: 'domino_win', icon: '🀄', name: { ar: 'سيد الدومينو', en: 'Domino Master' }, desc: { ar: 'افز في جولة دومينو', en: 'Win a domino round' }, check: () => getStore('domino_player_wins', 0) >= 1 },
   { id: 'anime_fan', icon: '🎌', name: { ar: 'أوتاكو', en: 'Otaku' }, desc: { ar: 'أجب على 3 أسئلة أنمي صح', en: 'Answer 3 anime questions correctly' }, check: () => getStore('best_anime', 0) >= 60 },
   { id: 'money_rich', icon: '💰', name: { ar: 'ثري', en: 'Tycoon' }, desc: { ar: 'اجمع 500$ في صائد الأموال', en: 'Collect $500 in Money Catcher' }, check: () => getStore('best_money', 0) >= 500 },
-  { id: 'empire_builder', icon: '👑', name: { ar: 'إمبراطور', en: 'Emperor' }, desc: { ar: 'اجمع 10,000$ في إمبراطورية الضغط', en: 'Earn $10,000 in Tap Empire' }, check: () => getStore('best_empire', 0) >= 10000 },
+  { id: 'empire_builder', icon: '👑', name: { ar: 'ملك اللمس', en: 'Tap King' }, desc: { ar: 'اجمع 10,000$ في ملوك اللمس', en: 'Earn $10,000 in Tap Kings' }, check: () => getStore('best_empire', 0) >= 10000 },
   { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 }
 ];
 const AVATARS = ['👤', '👦', '👧', '👨', '👩', '🤖', '👽', '👻', '🤡', '🐯', '🦁', '😎', '🤓', '🤠', '👑'];
@@ -417,6 +423,7 @@ function toggleTheme() {
 }
 
 const FEATURED_IDS = ['empire', 'invest', 'agar', 'baloot', 'anime'];
+const SIGNATURE_IDS = ['empire', 'agar', 'invest'];
 const CAT_LABELS = { puzzle: 'catPuzzle', card: 'catCard', online: 'catOnline' };
 
 function applyLang() {
@@ -444,6 +451,23 @@ function applyLang() {
     document.getElementById('heroOnlineLabel').textContent = dict.heroOnline;
     document.getElementById('heroLeaderLabel').textContent = dict.heroLeader;
     document.getElementById('featuredTitle').textContent = dict.featured;
+    const sigTitle = document.getElementById('signatureTitle');
+    if (sigTitle) sigTitle.textContent = dict.signatureTitle;
+    const sigSub = document.getElementById('signatureSub');
+    if (sigSub) sigSub.textContent = dict.signatureSub;
+    const empireModalTitle = document.getElementById('empireModalTitle');
+    if (empireModalTitle) {
+      const empireGame = ALL_GAMES.find(g => g.id === 'empire');
+      if (empireGame) empireModalTitle.textContent = `${empireGame.icon} ${empireGame.name[currentLang]}`;
+    }
+    const empireIntro = document.getElementById('empireIntro');
+    if (empireIntro) {
+      empireIntro.textContent = currentLang === 'ar'
+        ? 'اضغط، ابنِ أعمالك، واصعد من كشك الليمون إلى عرش الملوك.'
+        : 'Tap, build businesses, and rise from a lemonade stand to the royal throne.';
+    }
+    const empireStartBtn = document.getElementById('empireStartBtn');
+    if (empireStartBtn) empireStartBtn.textContent = currentLang === 'ar' ? '▶ ابدأ الحكم' : '▶ Begin Reign';
     document.getElementById('footerTagline').textContent = dict.footerTagline;
     document.getElementById('footerCopy').textContent = dict.footerCopy;
     document.getElementById('welcomeTitle').textContent = dict.welcomeTitle;
@@ -495,6 +519,7 @@ function applyLang() {
     tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = dict[tabKeys[i]]; });
   } catch(e) {}
   if (document.getElementById('gameSearchInput')) document.getElementById('gameSearchInput').placeholder = dict.searchPlaceholder;
+  renderSignature();
   renderFeatured();
   renderRecent();
   init();
@@ -546,12 +571,13 @@ function renderGames() {
     const catKey = CAT_LABELS[g.category];
     const catLabel = catKey ? dict[catKey] : '';
     const catClass = g.category === 'card' ? 'cat-card' : g.category === 'online' ? 'cat-online' : '';
-    return `<div class="game-card" data-game-id="${g.id}">
+    return `<div class="game-card${g.isSignature ? ' signature-card signature-' + g.id : ''}" data-game-id="${g.id}">
       <div class="card-actions">
         <button class="card-action-btn ${isFav ? 'active-fav' : ''}" data-action="favorite" data-game-id="${g.id}" title="المفضلة">⭐</button>
         <button class="card-action-btn" data-action="share" data-game-id="${g.id}" data-game-name="${g.name[currentLang]}" title="مشاركة">🔗</button>
       </div>
-      ${g.isNew ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
+      ${g.isSignature ? `<span class="signature-badge">${g.signatureTag ? g.signatureTag[currentLang] : '✨'}</span>` : ''}
+      ${g.isNew && !g.isSignature ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
       <div class="game-desc">${g.desc[currentLang]}</div>
@@ -590,6 +616,27 @@ function renderRecent() {
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
     </div>`;
+  }).join('');
+}
+
+function renderSignature() {
+  const container = document.getElementById('signatureGames');
+  if (!container) return;
+  const dict = DICT[currentLang];
+  container.innerHTML = SIGNATURE_IDS.map(id => {
+    const g = ALL_GAMES.find(x => x.id === id);
+    if (!g) return '';
+    const tag = g.signatureTag ? g.signatureTag[currentLang] : '';
+    return `<article class="signature-panel signature-${g.id}" data-game-id="${g.id}" role="button" tabindex="0">
+      <div class="signature-panel-glow" aria-hidden="true"></div>
+      <div class="signature-panel-icon">${g.icon}</div>
+      <div class="signature-panel-body">
+        <span class="signature-panel-tag">${tag}</span>
+        <h4 class="signature-panel-name">${g.name[currentLang]}</h4>
+        <p class="signature-panel-desc">${g.desc[currentLang]}</p>
+        <span class="signature-panel-cta">${dict.signaturePlay} →</span>
+      </div>
+    </article>`;
   }).join('');
 }
 
@@ -1400,6 +1447,21 @@ function closeActiveOverlay() {
       const card = e.target.closest('.featured-card');
       if (card) openGame(card.dataset.gameId);
     });
+
+    const signatureGames = document.getElementById('signatureGames');
+    if (signatureGames) {
+      signatureGames.addEventListener('click', (e) => {
+        const panel = e.target.closest('.signature-panel');
+        if (panel) openGame(panel.dataset.gameId);
+      });
+      signatureGames.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const panel = e.target.closest('.signature-panel');
+        if (!panel) return;
+        e.preventDefault();
+        openGame(panel.dataset.gameId);
+      });
+    }
 
     document.getElementById('gamesGrid').addEventListener('click', (e) => {
       const card = e.target.closest('.game-card');

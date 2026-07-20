@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
@@ -63,8 +63,8 @@
     <!-- قسم البطل (Hero) -->
     <section class="hero-section" aria-label="مقدمة الموقع">
       <div class="hero-content">
-        <h2 class="hero-title" id="heroTitle">العب، تنافس، وطوّر مهاراتك!</h2>
-        <p class="hero-desc" id="heroDesc">مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.</p>
+        <h2 class="hero-title" id="heroTitle">أضِف لُمعة ليومك — العب وتنافس!</h2>
+        <p class="hero-desc" id="heroDesc">١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.</p>
         <div class="hero-actions">
           <button type="button" class="btn primary hero-btn" id="randomGameBtn">🎲 العب عشوائياً</button>
           <button type="button" class="btn hero-btn-secondary" id="heroQuestsBtn">📋 المهام اليومية</button>
@@ -77,9 +77,16 @@
       </div>
     </section>
 
+    <!-- ألعاب التوقيع المميزة -->
+    <section class="signature-section" aria-label="ألعاب مميزة">
+      <h3 class="section-title" id="signatureTitle">✨ ألعاب التوقيع</h3>
+      <p class="signature-sub" id="signatureSub">ثلاث تجارب مميزة — الثروة، الالتهام، والأسواق</p>
+      <div class="signature-grid" id="signatureGames"></div>
+    </section>
+
     <!-- ألعاب مميزة -->
-    <section class="featured-section" aria-label="ألعاب مميزة">
-      <h3 class="section-title" id="featuredTitle">⭐ ألعاب مميزة</h3>
+    <section class="featured-section" aria-label="ألعاب رائجة">
+      <h3 class="section-title" id="featuredTitle">⭐ رائج الآن</h3>
       <div class="featured-scroll" id="featuredGames"></div>
     </section>
 
@@ -126,7 +133,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version">v3.1</span>
+        <span class="footer-version">v3.2</span>
       </div>
     </footer>
 
@@ -407,14 +414,15 @@
 
 <!-- AGAR.IO CLONE MODAL -->
 <div class="overlay" id="agarOverlay">
-  <div class="game-modal large-modal">
+  <div class="game-modal large-modal agar-modal signature-modal">
     <div class="modal-header">
-      <h2 class="modal-title">🌐 معركة الخلايا (أونلاين)</h2>
+      <h2 class="modal-title" id="agarModalTitle">🦠 معركة الخلايا</h2>
       <button type="button" class="close-btn" onclick="closeGame('agar')">✕</button>
     </div>
     <div id="agarStartScreen" class="agar-start-container">
         <div class="agar-decor"></div>
         <div class="agar-decor-2"></div>
+        <div class="signature-modal-badge agar-badge">أونلاين مباشر</div>
         <h2 class="agar-title">🦠 معركة الخلايا</h2>
         <p class="agar-subtitle">جهز خليتك، اختر شكلك، واستعد للالتهام!</p>
 
@@ -588,13 +596,14 @@
 
 <!-- INVEST MODAL -->
 <div class="overlay" id="investOverlay">
-  <div class="game-modal large-modal invest-modal">
+  <div class="game-modal large-modal invest-modal signature-modal">
     <div class="modal-header">
-      <h2 class="modal-title">📈 محاكاة الاستثمار</h2>
+      <h2 class="modal-title" id="investModalTitle">📈 محاكاة الاستثمار</h2>
       <button type="button" class="close-btn" onclick="closeGame('invest')">✕</button>
     </div>
 
     <div id="investStartScreen" class="invest-start">
+      <div class="signature-modal-badge invest-badge">أسواق واستراتيجية</div>
       <p class="invest-intro">ابنِ ثروتك عبر أسهم وسندات وذهب وعقارات. الأسواق تتقلب، الفواتير تضغط، والتقدم يُحفظ في السحابة.</p>
       <div class="score-display">
         <div class="score-box"><div class="score-label">أفضل صافي ثروة</div><div class="score-value" id="investBest">0</div></div>
@@ -666,11 +675,11 @@
   </div>
 </div>
 
-<!-- EMPIRE MODAL — إمبراطورية الضغط -->
+<!-- EMPIRE MODAL — ملوك اللمس -->
 <div class="overlay" id="empireOverlay">
-  <div class="game-modal empire-modal">
+  <div class="game-modal empire-modal signature-modal">
     <div class="modal-header">
-      <h2 class="modal-title">👑 إمبراطورية الضغط</h2>
+      <h2 class="modal-title" id="empireModalTitle">👑 ملوك اللمس</h2>
       <button type="button" class="close-btn" onclick="closeGame('empire')">✕</button>
     </div>
 
@@ -681,15 +690,16 @@
         <span class="empire-orbit empire-orbit-c">🚀</span>
         <div class="empire-hero-coin">👑</div>
       </div>
-      <p class="empire-intro">اضغط، ابنِ أعمالك، وحوّل كشك الليمون إلى إمبراطورية عالمية.</p>
+      <div class="signature-modal-badge empire-badge">بناء وثروة</div>
+      <p class="empire-intro" id="empireIntro">اضغط، ابنِ أعمالك، واصعد من كشك الليمون إلى عرش الملوك.</p>
       <div class="score-display">
         <div class="score-box">
-          <div class="score-label">أفضل إجمالي</div>
+          <div class="score-label" id="empireBestLabel">أفضل إجمالي</div>
           <div class="score-value empire-gold" id="empireBestLobby">$0</div>
         </div>
       </div>
       <div class="empire-lobby-actions">
-        <button type="button" class="btn primary empire-start-btn" onclick="startEmpireGame()">▶ ابدأ الإمبراطورية</button>
+        <button type="button" class="btn primary empire-start-btn" id="empireStartBtn" onclick="startEmpireGame()">▶ ابدأ الحكم</button>
         <button type="button" class="btn btn-blue d-none" id="empireContinueBtn" onclick="continueEmpireGame()">📂 متابعة</button>
       </div>
     </div>
@@ -804,7 +814,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js?v=8"></script>
+<script src="script.js?v=9"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {

@@ -1,9 +1,7 @@
-const CACHE = 'games-v8';
+const CACHE = 'lumaa-v9';
 const ASSETS = [
   '/',
   '/index.html',
-  '/style.css',
-  '/script.js',
   '/manifest.json',
   '/logo.svg'
 ];
@@ -30,6 +28,23 @@ self.addEventListener('fetch', (e) => {
     url.pathname.startsWith('/auth/') ||
     url.pathname.startsWith('/socket.io')
   ) return;
+
+  // Network-first for HTML and versioned CSS/JS so updates always show
+  const isHtml = url.pathname === '/' || url.pathname.endsWith('.html');
+  const isAppShell = url.pathname.endsWith('.css') || url.pathname.endsWith('.js') || url.pathname.endsWith('sw.js');
+
+  if (isHtml || isAppShell) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        if (res.status === 200 && url.origin === self.location.origin) {
+          const clone = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(e.request, clone)).catch(() => {});
+        }
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
 
   e.respondWith(
     caches.match(e.request).then((cached) => {
