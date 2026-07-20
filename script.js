@@ -907,10 +907,15 @@ function updateCloudSyncUI(syncing) {
 async function checkAuth() {
   try {
     const statusRes = await fetch('/auth/status', { credentials: 'include' });
-    if (statusRes.ok) {
-      const status = await statusRes.json();
-      googleAuthEnabled = !!status.googleEnabled;
+    if (!statusRes.ok) throw new Error('Auth status unavailable');
+    const status = await statusRes.json();
+    googleAuthEnabled = !!status.googleEnabled;
+    if (!status.authenticated) {
+      currentUser = null;
+      updateAuthUI();
+      return;
     }
+
     const res = await fetch('/auth/me', { credentials: 'include' });
     if (res.ok) {
       const localSnapshot = collectSyncData();
