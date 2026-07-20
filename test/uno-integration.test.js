@@ -26,6 +26,26 @@ function waitForEvent(socket, event) {
     return new Promise((resolve) => socket.once(event, resolve));
 }
 
+// Waiting for a generic event like 'unoMessage' is racy here: broadcasts unrelated
+// to what we're testing (e.g. the opening-card announcement) can arrive first.
+// Wait for a specific, meaningful state condition instead.
+function waitForState(socket, predicate, timeoutMs = 3000) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            socket.off('unoGameState', handler);
+            reject(new Error('timed out waiting for expected uno state'));
+        }, timeoutMs);
+        function handler(state) {
+            if (predicate(state)) {
+                clearTimeout(timer);
+                socket.off('unoGameState', handler);
+                resolve(state);
+            }
+        }
+        socket.on('unoGameState', handler);
+    });
+}
+
 test('two real socket.io clients join a private room over the wire and never see each other\'s hidden cards', async () => {
     const { io, game, port } = await startServer();
     try {
@@ -126,7 +146,7 @@ test('a real client that disconnects mid-round and reconnects with the same toke
         const room = game.rooms.integration_room_3;
         const handBefore = room.players.itest3_host_token_12.cards.length;
 
-        const guestSeesDisconnect = waitForEvent(guest, 'unoMessage');
+        const guestSeesDisconnect = waitForState(guest, (s) => s.players.itest3_host_token_12 && s.players.itest3_host_token_12.connected === false);
         host.close();
         await guestSeesDisconnect;
         assert.equal(room.players.itest3_host_token_12.connected, false);
@@ -140,6 +160,40 @@ test('a real client that disconnects mid-round and reconnects with the same toke
         assert.equal(state.state, 'playing');
 
         hostAgain.close();
+        guest.close();
+    } finally {
+        io.close();
+    }
+});
+
+test('a client that re-emits joinUno on every connect event (mirroring the real UI fix) recovers automatically after a transport blip', async () => {
+    const { io, game, port } = await startServer();
+    try {
+        const host = await connectClient(port);
+        const guest = await connectClient(port);
+        const joinPayload = { name: 'Host', room: 'integration_room_4', mode: 'private', token: 'itest4_host_token_12' };
+        // Mirror uno-client.js: always (re-)emit joinUno whenever the socket (re)connects,
+        // not just on the very first connection.
+        host.on('connect', () => host.emit('joinUno', joinPayload));
+        host.emit('joinUno', joinPayload);
+        await waitForEvent(host, 'unoGameState');
+
+        guest.emit('joinUno', { name: 'Guest', room: 'integration_room_4', mode: 'private', token: 'itest4_guest_token_1' });
+        await waitForEvent(guest, 'unoGameState');
+        host.emit('startUno');
+        await waitForEvent(host, 'unoGameState');
+
+        const guestSeesDrop = waitForState(guest, (s) => s.players.itest4_host_token_12 && s.players.itest4_host_token_12.connected === false);
+        host.disconnect(); // simulates a WiFi blip / backgrounded tab dropping the transport
+        await guestSeesDrop;
+        assert.equal(game.rooms.integration_room_4.players.itest4_host_token_12.connected, false);
+
+        const hostRejoined = waitForEvent(host, 'unoGameState');
+        host.connect(); // the automatic-reconnect path; the 'connect' listener above re-sends joinUno
+        const hostStateAfterReconnect = await hostRejoined;
+        assert.equal(hostStateAfterReconnect.players.itest4_host_token_12.connected, true);
+
+        host.close();
         guest.close();
     } finally {
         io.close();

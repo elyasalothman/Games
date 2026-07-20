@@ -71,7 +71,16 @@ function joinUnoGame(mode) {
     setUnoStatus('جاري الاتصال بالغرفة...');
 
     unoSocket = io();
-    unoSocket.emit('joinUno', { name: playerName, room, mode, token: getUnoToken() });
+
+    // A WiFi blip or a backgrounded phone tab makes socket.io transparently
+    // reconnect with a brand-new connection on the server. Without re-sending
+    // joinUno on every 'connect' (not just the first one), that reconnected
+    // socket would sit in limbo: never (re)registered in the room, so the
+    // player silently stops receiving updates and looks "stuck" to everyone.
+    unoSocket.on('connect', () => {
+        setUnoStatus('جاري الاتصال بالغرفة...');
+        unoSocket.emit('joinUno', { name: playerName, room, mode, token: getUnoToken() });
+    });
 
     unoSocket.on('unoGameState', (state) => {
         myUnoState = state;
@@ -91,6 +100,7 @@ function joinUnoGame(mode) {
             }
         }
     });
+    unoSocket.on('disconnect', () => setUnoStatus('انقطع الاتصال — نحاول العودة تلقائياً...'));
     unoSocket.on('connect_error', () => setUnoStatus('تعذر الاتصال بالخادم. حاول مرة أخرى.'));
 }
 
