@@ -11,6 +11,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { createGoogleVerify } = require('./auth');
 const { createStorage } = require('./storage');
+const { APP_VERSION, CACHE_NAME } = require('./app-version');
 
 const app = express();
 const server = http.createServer(app);
@@ -190,7 +191,18 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ 
         status: 'success', 
         message: 'الخادم يعمل بكفاءة وجاهز للتوسع!',
-        storage: storage?.type || 'initializing'
+        storage: storage?.type || 'initializing',
+        version: APP_VERSION
+    });
+});
+
+// إصدار التطبيق — يستخدمه المتصفح لكشف التحديثات وكسر الكاش
+app.get('/api/version', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.status(200).json({
+        version: APP_VERSION,
+        cache: CACHE_NAME,
+        builtAt: process.env.BUILD_TIME || null
     });
 });
 

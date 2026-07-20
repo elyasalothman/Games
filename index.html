@@ -23,12 +23,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="لُمعة">
   <meta name="theme-color" content="#1a1438">
+  <meta name="app-version" content="3.5.0">
   <link rel="manifest" href="manifest.json">
 <title>لُمعة | ألعاب ذكاء وترفيه مجانية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -140,7 +141,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version">v3.4</span>
+        <span class="footer-version" id="footerVersion">v3.5</span>
       </div>
     </footer>
 
@@ -151,6 +152,12 @@
     <span id="installBannerText">📲 ثبّت لُمعة على جهازك للوصول السريع!</span>
     <button type="button" class="btn primary install-btn" id="installBtn">تثبيت</button>
     <button type="button" class="install-dismiss" id="installDismiss" aria-label="إغلاق">✕</button>
+  </div>
+
+  <!-- شريط تحديث التطبيق — يظهر عند توفر نسخة جديدة -->
+  <div class="update-banner d-none" id="updateBanner" role="status" aria-live="polite">
+    <span id="updateBannerText">✨ يتوفر تحديث جديد للمنصة</span>
+    <button type="button" class="btn primary update-btn" id="updateReloadBtn">تحديث الآن</button>
   </div>
 
 <!-- WELCOME MODAL -->
@@ -412,6 +419,11 @@
       </div>
       <p class="text-muted text-11" id="profileGuestCloudDesc">رمز خاص بلعبة الاستثمار فقط. للمزامنة الكاملة لكل تقدمك، استخدم تسجيل الدخول بـ Google أعلاه.</p>
     </details>
+    <div class="profile-update-box">
+      <div class="profile-update-label" id="profileUpdateLabel">🔄 تحديث التطبيق</div>
+      <p class="text-muted text-11" id="profileUpdateDesc">إذا لم تظهر آخر التغييرات، اضغط لتحديث الصفحة ومسح الكاش.</p>
+      <button type="button" class="btn btn-blue" id="profileForceUpdateBtn">تحديث الآن</button>
+    </div>
     <h3 class="profile-section-title" id="achievementsTitle">🏅 إنجازاتي</h3>
     <div id="achievementsList" class="achievements-grid" role="list">
       <!-- سيتم تحميل الإنجازات هنا -->
@@ -968,7 +980,34 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js?v=11"></script>
+<script>
+  // Early version check: if HTML is stale vs server, clear caches and reload once
+  (function () {
+    var meta = document.querySelector('meta[name="app-version"]');
+    var localVersion = meta && meta.content;
+    if (!localVersion || !('fetch' in window)) return;
+    var flagKey = 'lumaa_reload_' + localVersion;
+    fetch('/api/version?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.version || data.version === localVersion) return;
+        if (sessionStorage.getItem(flagKey)) return;
+        sessionStorage.setItem(flagKey, '1');
+        var clear = ('caches' in window)
+          ? caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            })
+          : Promise.resolve();
+        clear.finally(function () {
+          var url = new URL(window.location.href);
+          url.searchParams.set('_v', data.version);
+          window.location.replace(url.toString());
+        });
+      })
+      .catch(function () {});
+  })();
+</script>
+<script src="script.js?v=12"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {
