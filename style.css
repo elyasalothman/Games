@@ -1,15 +1,27 @@
 :root {
-  --bg-color: #121220;
-  --glass-bg: rgba(18, 18, 32, 0.75);
-  --card-bg: #1c1c2e;
-  --border-color: #2d2d44;
-  --text-main: #ffffff;
-  --text-muted: #8b8baf;
-  --accent-blue: #00d2ff;
-  --accent-green: #00ff88;
-  --accent-red: #ff3366;
-  --accent-orange: #ffaa00;
-  --accent-purple: #b800ff;
+  --bg-color: #14102b;
+  --bg-surface: #1e1840;
+  --glass-bg: rgba(36, 30, 72, 0.78);
+  --card-bg: #2a2452;
+  --card-bg-hover: #322a60;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-bright: rgba(255, 255, 255, 0.22);
+  --text-main: #f8f6ff;
+  --text-muted: #c4bddf;
+  --text-subtle: #9b93b8;
+  --accent-blue: #6ec8ff;
+  --accent-coral: #ff7b6b;
+  --accent-gold: #ffc857;
+  --accent-green: #5eeaa0;
+  --accent-red: #ff5c8a;
+  --accent-orange: #ffb347;
+  --accent-purple: #c77dff;
+  --gradient-brand: linear-gradient(120deg, #6ec8ff 0%, #c77dff 50%, #ffc857 100%);
+  --gradient-hero: linear-gradient(145deg, rgba(110, 200, 255, 0.14) 0%, rgba(199, 125, 255, 0.12) 45%, rgba(255, 200, 87, 0.1) 100%);
+  --gradient-btn: linear-gradient(135deg, #5eb0ff 0%, #9b6dff 100%);
+  --gradient-btn-hover: linear-gradient(135deg, #7ec4ff 0%, #b088ff 100%);
+  --shadow-glow-blue: 0 8px 32px rgba(94, 176, 255, 0.28);
+  --shadow-glow-purple: 0 8px 32px rgba(155, 109, 255, 0.22);
   /* Design tokens */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -79,11 +91,11 @@ html { scroll-behavior: smooth; }
 
 /* 2. تأثير الزجاج (Glassmorphism) للشريط العلوي والإحصائيات */
 .top-controls, .stats-bar {
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  backdrop-filter: blur(12px) saturate(180%);
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  backdrop-filter: blur(16px) saturate(200%);
+  background-color: rgba(36, 30, 72, 0.65);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
 /* 3. تأثير التمويه والخلفية للنوافذ المنبثقة (Modals Backdrop Blur) */
@@ -98,24 +110,30 @@ html { scroll-behavior: smooth; }
   border: 1px solid rgba(128, 128, 128, 0.2);
 }
 
-/* 4. حركة طفو لطيفة لشعار الموقع (Floating Logo) */
-header h1.logo-icon {
-  display: inline-block;
+/* 4. شعار الموقع */
+header h1.site-logo, header h1.logo-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   animation: floatLogo 4s ease-in-out infinite;
-  /* 5. توهج نيون جذاب للشعار */
-  text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+.logo-mark {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 200, 87, 0.5));
+}
+.logo-text {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 16px rgba(199, 125, 255, 0.35));
 }
 
-/* 6. توهج وتأثير صعود للأزرار الرئيسية عند التمرير */
-.btn.primary {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-.btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-}
+/* 6. توهج وتأثير صعود للأزرار الرئيسية عند التمرير — see .btn.primary below */
 
 /* 7. حركة تكبير لأزرار التبويبات (Category Tabs) */
 .tab-btn {
@@ -181,11 +199,28 @@ body {
   padding-bottom: var(--safe-bottom);
 }
 
-/* 1. Animated Glow Background (خلفية مضيئة متحركة) */
+/* 1. Animated Aurora Background */
 body::before {
-  content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.05), transparent 50%);
-  z-index: -1; pointer-events: none; animation: bgGlow 15s ease-in-out infinite alternate;
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 8%, rgba(110, 200, 255, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 12%, rgba(199, 125, 255, 0.12), transparent 50%),
+    radial-gradient(ellipse 45% 35% at 50% 90%, rgba(255, 200, 87, 0.09), transparent 50%),
+    radial-gradient(ellipse 30% 25% at 70% 60%, rgba(255, 123, 107, 0.07), transparent 45%);
+  z-index: -1;
+  pointer-events: none;
+  animation: bgGlow 18s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(20, 16, 43, 0.6) 100%);
+  z-index: -1;
+  pointer-events: none;
 }
 @keyframes bgGlow {
   0% { transform: scale(0.8) translate(0, 0); }
@@ -210,62 +245,67 @@ body::before {
   visibility: hidden;
 }
 .loader-spinner {
-  width: 50px; height: 50px;
+  width: 54px; height: 54px;
   border: 4px solid var(--border-color);
   border-top-color: var(--accent-blue);
-  border-right-color: var(--accent-purple); /* 8. Modern Loader (عجلة تحميل عصرية) */
+  border-right-color: var(--accent-purple);
+  border-bottom-color: var(--accent-gold);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 16px rgba(199, 125, 255, 0.5));
 }
 .loader-text {
-  color: var(--text-main); font-size: 18px; font-weight: bold;
+  color: var(--text-main);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Header */
-header {
+header, .site-header {
   text-align: center;
-  padding: calc(85px + var(--safe-top)) 16px 20px;
+  padding: calc(90px + var(--safe-top)) 16px 28px;
 }
-.logo-icon { 
-  font-size: 32px; margin-bottom: 8px; display: inline-block; 
-  background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple)); /* 2. Gradient Logo (شعار متدرج) */
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: floatLogo 3s ease-in-out infinite;
+.sub-logo {
+  font-size: 17px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 6px;
+  letter-spacing: 0.2px;
 }
+
 @keyframes floatLogo {
-  0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.2)); }
-  50% { transform: translateY(-6px); filter: drop-shadow(0 8px 20px rgba(0, 210, 255, 0.6)); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
-.sub-logo { font-size: 15px; color: var(--text-muted); font-weight: 500; }
 
 /* Stats bar */
 .stats-bar {
-  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
-  padding: 16px 0; margin: 0 auto;
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  padding: 18px 0; margin: 0 auto;
 }
 .stat-pill {
-  background: var(--glass-bg); /* 3. Glassmorphism Stats (إحصائيات زجاجية) */
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
+  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  font-size: 15px;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
 }
-.stat-pill span { color: var(--accent-blue); font-weight: 700; }
+.stat-pill span { color: var(--accent-gold); font-weight: 800; }
 
 /* Date banner */
 .date-banner {
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
-  margin: 8px 0 24px;
-  font-weight: 500;
+  margin: 10px 0 28px;
+  font-weight: 600;
 }
 
 /* Game Grid */
@@ -278,12 +318,12 @@ header {
 .game-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: var(--radius-xl);
+  padding: 26px;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  transition: transform var(--transition-fast), background-color var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
   position: relative;
-  box-shadow: 0 8px 0 var(--border-color);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25), var(--shadow-sm);
   animation: fadeInUp 0.5s ease backwards;
   overflow: hidden;
 } 
@@ -311,8 +351,7 @@ header {
 .game-card:nth-child(13) { animation-delay: 0.65s; }
 .game-card:nth-child(14) { animation-delay: 0.7s; }
 
-/* 13. توهج الشاشة الافتتاحية ونبض النص (Loader Enhancements) */
-.loader-spinner { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)); }
+/* 13. نبض نص التحميل */
 .loader-text { animation: pulseText 1.5s infinite alternate; }
 @keyframes pulseText { from { opacity: 0.6; transform: scale(0.98); } to { opacity: 1; transform: scale(1.02); } }
 
@@ -323,26 +362,50 @@ header {
 
 /* Search Bar */
 .search-input {
-  width: 100%; max-width: 400px; padding: 12px 20px;
-  border-radius: 20px; border: 1px solid var(--border-color);
-  background: var(--glass-bg); color: var(--text-main);
-  font-size: 15px; font-family: 'Tajawal', sans-serif;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05); outline: none;
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
+  width: 100%; max-width: 440px;
+  padding: 16px 22px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--glass-bg);
+  color: var(--text-main);
+  font-size: 16px;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: var(--shadow-sm);
+  outline: none;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+  min-height: 52px;
 }
-/* 9. تأثير النبض لشريط البحث عند التركيز */
 .search-input:focus {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 20px rgba(0,210,255,0.15);
-  transform: scale(1.02);
+  box-shadow: 0 0 0 4px rgba(110, 200, 255, 0.2), var(--shadow-glow-blue);
 }
 
 /* Category Tabs */
-.category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.tab-btn { background: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: Tajawal; font-weight: bold; transition: 0.2s; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-.tab-btn:hover { color: var(--text-main); border-color: var(--accent-blue); }
-.tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+.tab-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 13px 22px;
+  min-height: 48px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-family: Tajawal, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  transition: all var(--transition-base);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.tab-btn:hover { color: var(--text-main); border-color: var(--accent-blue); background: rgba(110, 200, 255, 0.08); }
+.tab-btn.active {
+  background: var(--gradient-btn);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow-blue);
+}
 
 /* Card Actions (Fav, Share) */
 .card-actions { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; z-index: 10; }
@@ -362,15 +425,20 @@ header {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.game-card:hover { transform: translateY(-5px); border-color: var(--accent-blue); box-shadow: 0 8px 0 var(--accent-blue), 0 15px 25px rgba(0, 210, 255, 0.3); }
-.game-icon { font-size: 32px; margin-bottom: 12px; display: block; }
-.game-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-.game-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.game-card:hover {
+  transform: translateY(-6px);
+  background: var(--card-bg-hover);
+  border-color: var(--accent-purple);
+  box-shadow: 0 6px 0 rgba(155, 109, 255, 0.4), var(--shadow-glow-purple);
+}
+.game-icon { font-size: 38px; margin-bottom: 14px; display: block; }
+.game-name { font-size: 19px; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
+.game-desc { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
 .game-best {
   margin-top: 16px;
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-subtle);
+  font-weight: 600;
 }
 
 /* Modal */
@@ -450,29 +518,44 @@ header {
 
 /* Generic Elements */
 .btn {
-  background: var(--bg-color);
-  border: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   color: var(--text-main);
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  padding: 14px 28px;
+  min-height: 48px;
+  font-size: 16px;
   font-family: 'Tajawal', sans-serif;
   cursor: pointer;
-  transition: all 0.1s;
+  transition: all var(--transition-fast);
   font-weight: 700;
-  box-shadow: 0 5px 0 rgba(0,0,0,0.5);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
-.btn:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0,0,0,0.5); }
-.btn.primary { 
-  background: var(--accent-blue); color: #fff; 
-  animation: pulsePrimary 2s infinite; 
+.btn:active { transform: translateY(4px); box-shadow: none; }
+.btn.primary {
+  position: relative;
+  overflow: hidden;
+  background: var(--gradient-btn);
+  color: #fff;
+  border: none;
+  box-shadow: var(--shadow-glow-blue), 0 4px 0 rgba(60, 100, 180, 0.4);
+  animation: pulsePrimary 2.5s infinite;
+}
+.btn.primary:hover {
+  background: var(--gradient-btn-hover);
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(94, 176, 255, 0.4);
 }
 @keyframes pulsePrimary {
-  0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4), 0 5px 0 rgba(0,0,0,0.5); }
-  70% { box-shadow: 0 0 0 12px rgba(0, 210, 255, 0), 0 5px 0 rgba(0,0,0,0.5); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0), 0 5px 0 rgba(0,0,0,0.5); }
+  0% { box-shadow: var(--shadow-glow-blue), 0 4px 0 rgba(60, 100, 180, 0.4); }
+  70% { box-shadow: 0 0 0 14px rgba(110, 200, 255, 0), 0 4px 0 rgba(60, 100, 180, 0.4); }
+  100% { box-shadow: var(--shadow-glow-blue), 0 4px 0 rgba(60, 100, 180, 0.4); }
 }
-.btn.primary:hover { filter: brightness(1.2); }
 .btn.danger { background: var(--accent-red); color: #fff; }
 
 /* 9. تسريع استجابة اللمس للبطاقات والأزرار المتبقية */
@@ -494,22 +577,44 @@ header {
 /* Toast */
 .toast {
   position: fixed; bottom: calc(32px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
-  background: var(--glass-bg); color: var(--text-main); /* 6. Premium Toasts (إشعارات فخمة) */
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
-  border-radius: 20px; padding: 12px 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  font-size: 14px; font-weight: 500; z-index: 999;
+  background: var(--card-bg);
+  color: var(--text-main);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-full);
+  padding: 14px 28px;
+  box-shadow: var(--shadow-lg);
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 999;
   animation: toast-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: min(90vw, 420px);
+  text-align: center;
 }
 @keyframes toast-in { from{opacity:0;transform:translate(-50%, 10px)} to{opacity:1;transform:translate(-50%, 0)} }
   /* الوضع الفاتح (Light Mode) */
 body.dark-mode {
-  --bg-color: #f5f5f7;
-  --glass-bg: rgba(245, 245, 247, 0.85);
+  --bg-color: #faf8ff;
+  --bg-surface: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.9);
   --card-bg: #ffffff;
-  --border-color: rgba(0, 0, 0, 0.08);
-  --text-main: #1d1d1f;
-  --text-muted: #86868b;
+  --card-bg-hover: #f5f2ff;
+  --border-color: rgba(90, 70, 150, 0.14);
+  --border-bright: rgba(90, 70, 150, 0.22);
+  --text-main: #1a1433;
+  --text-muted: #5c5470;
+  --text-subtle: #7a728a;
   color-scheme: light;
+}
+body.dark-mode::before {
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 8%, rgba(110, 200, 255, 0.08), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 12%, rgba(199, 125, 255, 0.07), transparent 50%),
+    radial-gradient(ellipse 45% 35% at 50% 90%, rgba(255, 200, 87, 0.06), transparent 50%);
+}
+body.dark-mode::after {
+  background: linear-gradient(180deg, transparent 70%, rgba(250, 248, 255, 0.8) 100%);
 }
 
 /* أزرار التحكم باللغة والمظهر */
@@ -536,17 +641,19 @@ body.dark-mode {
   border: 1px solid var(--border-color);
   color: var(--text-main);
   border-radius: 50%;
-  width: 42px; height: 42px;
-  font-size: 16px; cursor: pointer;
+  width: 48px; height: 48px;
+  font-size: 18px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: 0.2s; font-family: 'Tajawal', sans-serif; font-weight: bold;
-  pointer-events: auto; /* تفعيل الضغط على الأزرار فقط */
+  transition: var(--transition-base);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: bold;
+  pointer-events: auto;
 }
-/* 7. Top Controls Hover (تأثير حركي لأزرار التحكم) */
-.icon-btn:hover { 
-  transform: scale(1.1) translateY(-2px); 
+.icon-btn:hover {
+  transform: scale(1.08) translateY(-2px);
   border-color: var(--accent-blue);
-  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2);
+  box-shadow: var(--shadow-glow-blue);
+  background: var(--card-bg-hover);
 }
   /* ----------------------------------- */
 /* إصلاح شبكة لعبة تطابق الذاكرة (Memory Grid) */
@@ -847,8 +954,17 @@ body.dark-mode {
 /* Button Utilities */
 .leaderboard-btn {
   width: auto;
-  padding: 0 12px;
+  padding: 0 16px;
+  min-height: 48px;
   font-size: 14px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(255, 200, 87, 0.15), rgba(255, 179, 71, 0.1));
+  border-color: rgba(255, 200, 87, 0.35);
+}
+.leaderboard-btn:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 4px 20px rgba(255, 200, 87, 0.25);
 }
 .snake-start-btn {
   font-size: 18px;
@@ -1133,40 +1249,128 @@ body.dark-mode {
 
 /* ─── Hero Section ─── */
 .hero-section {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 24px; padding: 24px; margin-bottom: 24px;
-  background: var(--glass-bg); border: 1px solid var(--border-color);
-  border-radius: 24px; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 32px 28px;
+  margin-bottom: 28px;
+  background: var(--gradient-hero);
+  border: 1px solid var(--border-bright);
+  border-radius: 28px;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
 }
-.hero-content { flex: 1; min-width: 260px; }
-.hero-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; }
-.hero-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
-.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.hero-btn { font-size: 16px; padding: 14px 28px; }
-.hero-btn-secondary { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 12px; padding: 14px 28px; font-size: 16px; font-family: Tajawal; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 0 var(--border-color); }
-.hero-btn-secondary:active { transform: translateY(5px); box-shadow: none; }
-.hero-btn-secondary:hover { border-color: var(--accent-blue); }
-.hero-stats { display: flex; gap: 16px; flex-wrap: wrap; }
-.hero-stat { text-align: center; background: var(--bg-color); border-radius: 16px; padding: 16px 20px; min-width: 80px; border: 1px solid var(--border-color); }
-.hero-stat-num { display: block; font-size: 22px; font-weight: 700; color: var(--accent-blue); margin-bottom: 4px; }
-.hero-stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(110,200,255,0.35), rgba(199,125,255,0.25), rgba(255,200,87,0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.hero-content { flex: 1; min-width: 260px; position: relative; z-index: 1; }
+.hero-title {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 800;
+  margin-bottom: 12px;
+  line-height: 1.35;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-desc {
+  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.65;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.hero-btn { font-size: 17px; padding: 16px 32px; min-height: 54px; }
+.hero-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-bright);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 16px 32px;
+  min-height: 54px;
+  font-size: 17px;
+  font-family: Tajawal, sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-base);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-btn-secondary:active { transform: translateY(4px); box-shadow: none; }
+.hero-btn-secondary:hover { border-color: var(--accent-purple); background: rgba(199, 125, 255, 0.1); box-shadow: var(--shadow-glow-purple); }
+.hero-stats { display: flex; gap: 14px; flex-wrap: wrap; position: relative; z-index: 1; }
+.hero-stat {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  min-width: 90px;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+}
+.hero-stat-num {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.hero-stat-label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
 
 /* ─── Featured Games ─── */
-.featured-section { margin-bottom: 28px; }
-.section-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--text-main); }
-.featured-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 8px 4px 16px; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+.featured-section { margin-bottom: 32px; }
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.featured-scroll { display: flex; gap: 16px; overflow-x: auto; padding: 8px 4px 16px; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
 .featured-card {
-  flex: 0 0 160px; scroll-snap-align: start;
-  background: var(--card-bg); border: 1px solid var(--border-color);
-  border-radius: 18px; padding: 18px; cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  flex: 0 0 170px;
+  scroll-snap-align: start;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
   text-align: center;
 }
-.featured-card:hover { transform: translateY(-4px); border-color: var(--accent-purple); box-shadow: 0 8px 24px rgba(184,0,255,0.2); }
-.featured-card .game-icon { font-size: 36px; margin-bottom: 8px; }
-.featured-card .game-name { font-size: 14px; font-weight: 700; }
-.featured-card .featured-badge { font-size: 10px; color: var(--accent-orange); font-weight: 700; margin-top: 6px; }
+.featured-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-gold);
+  box-shadow: 0 8px 28px rgba(255, 200, 87, 0.2);
+  background: var(--card-bg-hover);
+}
+.featured-card .game-icon { font-size: 40px; margin-bottom: 10px; }
+.featured-card .game-name { font-size: 15px; font-weight: 800; }
+.featured-card .featured-badge { font-size: 11px; color: var(--accent-gold); font-weight: 800; margin-top: 8px; }
 
 /* ─── Category Badge on Cards ─── */
 .game-card .cat-badge {
@@ -1185,20 +1389,46 @@ body.dark-mode {
   text-align: center;
 }
 .footer-brand { margin-bottom: 20px; }
-.footer-logo { font-size: 20px; font-weight: 700; display: block; margin-bottom: 8px; }
-.footer-tagline { color: var(--text-muted); font-size: 13px; }
+.footer-logo { font-size: 22px; font-weight: 800; display: block; margin-bottom: 8px; }
+.footer-logo-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.footer-tagline { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
 .footer-links { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-.footer-link { background: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 20px; padding: 8px 18px; font-family: Tajawal; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.footer-link:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
-.footer-meta { display: flex; justify-content: center; gap: 16px; color: var(--text-muted); font-size: 12px; }
-.footer-version { color: var(--accent-blue); font-weight: 700; }
+.footer-link {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: var(--radius-full);
+  padding: 12px 22px;
+  min-height: 44px;
+  font-family: Tajawal, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+.footer-link:hover { border-color: var(--accent-purple); transform: translateY(-2px); box-shadow: var(--shadow-glow-purple); }
+.footer-meta { display: flex; justify-content: center; gap: 16px; color: var(--text-muted); font-size: 13px; }
+.footer-version { color: var(--accent-gold); font-weight: 800; }
 
 /* ─── Welcome Modal ─── */
 .welcome-modal { text-align: center; max-width: 420px; }
 .welcome-icon { font-size: 56px; margin-bottom: 16px; animation: floatLogo 3s ease-in-out infinite; }
-.welcome-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
-.welcome-text { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
-.welcome-start-btn { width: 100%; font-size: 18px; padding: 16px; margin-bottom: 12px; }
+.welcome-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.welcome-text { color: var(--text-muted); font-size: 16px; line-height: 1.65; margin-bottom: 24px; }
+.welcome-start-btn { width: 100%; font-size: 18px; padding: 18px; min-height: 54px; margin-bottom: 12px; }
 .welcome-skip { background: none; border: none; color: var(--text-muted); font-family: Tajawal; font-size: 14px; cursor: pointer; text-decoration: underline; }
 .welcome-skip:hover { color: var(--text-main); }
 
@@ -1515,11 +1745,16 @@ body.dark-mode {
     font-size: 14px;
   }
   .leaderboard-btn {
-    font-size: 0; /* إخفاء النص في الجوال */
-    padding: 0; width: 36px; justify-content: center;
+    font-size: 0;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    justify-content: center;
   }
   .leaderboard-btn::before {
-    content: '🏆'; font-size: 16px;
+    content: '🏆';
+    font-size: 18px;
   }
 
   /* 3. توافقية طاولة البلوت ثلاثية الأبعاد */

@@ -20,7 +20,7 @@ let currentStationIdx = getStore('radioStation', 0);
 
 // قائمة محطات الراديو (أضف ملفات الـ mp3 الخاصة بك في مجلد المشروع)
 const RADIO_STATIONS = [
-  { name: 'راديو ألعاب اليوم', src: 'bg-music.mp3' },
+  { name: 'راديو بهجة', src: 'bg-music.mp3' },
   { name: 'محطة الرواق (Lofi)', src: 'lofi.mp3' },
   { name: 'محطة الحماس (Action)', src: 'action.mp3' },
   { name: 'الراديو مغلق (Off)', src: '' } // خيار لإيقاف موسيقى الخلفية فقط
@@ -218,13 +218,17 @@ let googleAuthEnabled = false;
 
 if (currentLang !== 'ar' && currentLang !== 'en') currentLang = 'ar';
 
+const SITE_BRAND = { ar: 'بهجة', en: 'Bahja' };
+
 const DICT = {
   ar: {
-    subtitle: "ألعاب سريعة لتنشيط ذهنك",
+    brandName: 'بهجة',
+    pageTitle: 'ألعاب ذكاء وترفيه مجانية',
+    subtitle: "ألعاب سريعة تُضفي البهجة على يومك",
     level: "المستوى:",
     streak: "سلسلة الأيام:",
     totalScore: "إجمالي النقاط:",
-    todayGames: "ألعاب اليوم:",
+    todayGames: "ألعابك اليوم:",
     best: "🏆 أفضل:",
     tabAll: "الكل",
     tabPuzzle: "🧠 ذكاء",
@@ -234,8 +238,8 @@ const DICT = {
     catPuzzle: "ذكاء",
     catCard: "ورق",
     catOnline: "أونلاين",
-    heroTitle: "العب، تنافس، وطوّر مهاراتك!",
-    heroDesc: "مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.",
+    heroTitle: "أضِف بهجة ليومك — العب وتنافس!",
+    heroDesc: "١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.",
     randomPlay: "🎲 العب عشوائياً",
     dailyQuests: "📋 المهام اليومية",
     heroGames: "لعبة",
@@ -243,9 +247,9 @@ const DICT = {
     heroLeader: "صدارة",
     featured: "⭐ ألعاب مميزة",
     hot: "رائج",
-    footerTagline: "منصة ألعاب عربية مجانية لتنشيط الذهن والترفيه",
+    footerTagline: "منصة بهجة — ألعاب عربية مجانية لتنشيط الذهن وإضفاء المرح",
     footerCopy: "© 2026 الياس العثمان",
-    welcomeTitle: "مرحباً بك في ألعاب اليوم!",
+    welcomeTitle: "مرحباً بك في بهجة!",
     welcomeText: "اختر اسمك، العب الألعاب، اجمع النقاط، ونافس على لوحة الصدارة.",
     welcomeName: "أدخل اسمك",
     welcomeStart: "🚀 ابدأ اللعب",
@@ -256,7 +260,7 @@ const DICT = {
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
     cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
-    cloudSyncDesc: "تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
+    cloudSyncDesc: "تقدمك محفوظ على خادم بهجة ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
     cloudSyncActive: "متزامن تلقائياً",
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
@@ -283,7 +287,7 @@ const DICT = {
     loadingGame: "جاري تحميل اللعبة...",
     recent: "🕐 آخر ما لعبت",
     newBadge: "جديد",
-    installBanner: "📲 ثبّت ألعاب اليوم على جهازك للوصول السريع!",
+    installBanner: "📲 ثبّت بهجة على جهازك للوصول السريع!",
     installBtn: "تثبيت",
     questPlay: "العب 5 ألعاب مختلفة",
     questScore: "اجمع 500 نقطة إجمالية",
@@ -299,7 +303,9 @@ const DICT = {
     levelUp: "مبروك! وصلت للمستوى"
   },
   en: {
-    subtitle: "Quick games to boost your mind",
+    brandName: 'Bahja',
+    pageTitle: 'Free Brain & Fun Games',
+    subtitle: "Quick games that spark joy in your day",
     level: "Level:",
     streak: "Day Streak:",
     totalScore: "Total Score:",
@@ -313,8 +319,8 @@ const DICT = {
     catPuzzle: "Puzzle",
     catCard: "Cards",
     catOnline: "Online",
-    heroTitle: "Play, Compete, and Level Up!",
-    heroDesc: "A variety of puzzle, card, and online games — completely free, no signup required.",
+    heroTitle: "Spark joy in your day — play and compete!",
+    heroDesc: "16 puzzle, card, and online games — free, vibrant, and no signup needed.",
     randomPlay: "🎲 Random Game",
     dailyQuests: "📋 Daily Quests",
     heroGames: "Games",
@@ -322,9 +328,9 @@ const DICT = {
     heroLeader: "Leaderboard",
     featured: "⭐ Featured Games",
     hot: "Hot",
-    footerTagline: "Free Arabic games platform for brain training and fun",
+    footerTagline: "Bahja — free Arabic games for brain training and pure fun",
     footerCopy: "© 2026 Elyas Al-Othman",
-    welcomeTitle: "Welcome to Today Games!",
+    welcomeTitle: "Welcome to Bahja!",
     welcomeText: "Pick your name, play games, earn points, and compete on the leaderboard.",
     welcomeName: "Enter your name",
     welcomeStart: "🚀 Start Playing",
@@ -335,7 +341,7 @@ const DICT = {
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
     cloudSyncTitle: "☁️ Your account cloud save",
-    cloudSyncDesc: "Your progress is saved on the Today Games server and linked to your Google account — restored automatically on any device.",
+    cloudSyncDesc: "Your progress is saved on Bahja and linked to your Google account — restored automatically on any device.",
     cloudSyncActive: "Auto-synced",
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
@@ -362,7 +368,7 @@ const DICT = {
     loadingGame: "Loading game...",
     recent: "🕐 Recently Played",
     newBadge: "NEW",
-    installBanner: "📲 Install Today Games on your device for quick access!",
+    installBanner: "📲 Install Bahja on your device for quick access!",
     installBtn: "Install",
     questPlay: "Play 5 different games",
     questScore: "Collect 500 total points",
@@ -419,7 +425,12 @@ function applyLang() {
   document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'EN' : 'عربي';
   
   const dict = DICT[currentLang];
+  const brand = dict.brandName || SITE_BRAND[currentLang];
   document.querySelector('.sub-logo').textContent = dict.subtitle;
+  const siteNameEl = document.getElementById('siteName');
+  if (siteNameEl) siteNameEl.textContent = brand;
+  document.querySelectorAll('.footer-logo-text').forEach(el => { el.textContent = brand; });
+  document.title = `${brand} | ${dict.pageTitle}`;
   try {
     document.getElementById('levelLabel').textContent = dict.level + ' ';
     document.getElementById('streakLabel').textContent = dict.streak + ' ';
@@ -1189,8 +1200,11 @@ function toggleFavorite(id) {
 
 function shareGame(id, name) {
   playSound('blip');
-  const text = `جرب لعبة ${name} الممتعة على ألعاب اليوم وتحداني! 🎮`;
-  if (navigator.share) { navigator.share({ title: 'ألعاب اليوم', text: text, url: window.location.href });
+  const brand = DICT[currentLang].brandName || SITE_BRAND[currentLang];
+  const text = currentLang === 'ar'
+    ? `جرب لعبة ${name} الممتعة على ${brand} وتحداني! 🎮`
+    : `Try ${name} on ${brand} and challenge me! 🎮`;
+  if (navigator.share) { navigator.share({ title: brand, text: text, url: window.location.href });
   } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast(DICT[currentLang].shareCopied); }
 }
 
