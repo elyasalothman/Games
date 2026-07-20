@@ -20,7 +20,7 @@ let currentStationIdx = getStore('radioStation', 0);
 
 // قائمة محطات الراديو (أضف ملفات الـ mp3 الخاصة بك في مجلد المشروع)
 const RADIO_STATIONS = [
-  { name: 'راديو ألعاب اليوم', src: 'bg-music.mp3' },
+  { name: 'راديو لُمعة', src: 'bg-music.mp3' },
   { name: 'محطة الرواق (Lofi)', src: 'lofi.mp3' },
   { name: 'محطة الحماس (Action)', src: 'action.mp3' },
   { name: 'الراديو مغلق (Off)', src: '' } // خيار لإيقاف موسيقى الخلفية فقط
@@ -142,32 +142,47 @@ function playSound(type) {
 
 // ─── DATA (تم توحيد الألعاب وتصنيفها) ───
 const ALL_GAMES = [
-  {id:'snake',   category: 'puzzle', name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
-  {id:'memory',  category: 'puzzle', name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
-  {id:'math',    category: 'puzzle', name:{ar:'تحدي الأرقام', en:'Math Challenge'}, icon:'🔢', desc:{ar:'أجب على الأسئلة الرياضية بسرعة.', en:'Answer math questions quickly.'}},
-  {id:'word',    category: 'puzzle', name:{ar:'فك الكلمة', en:'Word Scramble'}, icon:'📝', desc:{ar:'رتّب الحروف لتكوّن كلمة صحيحة!', en:'Rearrange letters to form a word!'}},
-  {id:'reaction',category: 'puzzle', name:{ar:'رد الفعل', en:'Reaction Time'}, icon:'⚡', desc:{ar:'اضغط بمجرد تغيّر اللون!', en:'Click as soon as the color changes!'}},
-  {id:'color',   category: 'puzzle', name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
-  {id:'guesser', category: 'puzzle', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
-  {id:'sequence',category: 'puzzle', name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
-  {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
-  {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
-  {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
-  {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
-  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
-  {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
-  {id:'empire',  category: 'puzzle', name:{ar:'إمبراطورية الضغط', en:'Tap Empire'}, icon:'👑', desc:{ar:'اضغط واجمع الثروة وابنِ إمبراطوريتك على الجوال!', en:'Tap to earn and build your mobile money empire!'}, isNew: true},
-  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true}
+  {id:'snake',   category: 'puzzle', audiences:['kids','teens','boys'], name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
+  {id:'memory',  category: 'puzzle', audiences:['kids','family','seniors'], name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
+  {id:'math',    category: 'puzzle', audiences:['kids','teens'], name:{ar:'تحدي الأرقام', en:'Math Challenge'}, icon:'🔢', desc:{ar:'أجب على الأسئلة الرياضية بسرعة.', en:'Answer math questions quickly.'}},
+  {id:'word',    category: 'puzzle', audiences:['teens','adults','family'], name:{ar:'فك الكلمة', en:'Word Scramble'}, icon:'📝', desc:{ar:'رتّب الحروف لتكوّن كلمة صحيحة!', en:'Rearrange letters to form a word!'}},
+  {id:'reaction',category: 'puzzle', audiences:['teens','boys'], name:{ar:'رد الفعل', en:'Reaction Time'}, icon:'⚡', desc:{ar:'اضغط بمجرد تغيّر اللون!', en:'Click as soon as the color changes!'}},
+  {id:'color',   category: 'puzzle', audiences:['kids','teens','girls'], name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
+  {id:'guesser', category: 'puzzle', audiences:['kids','family','seniors'], name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
+  {id:'sequence',category: 'puzzle', audiences:['kids','teens','family'], name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
+  {id:'anime',   category: 'puzzle', audiences:['teens','boys','girls'], name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
+  {id:'agar',    category: 'online', audiences:['teens','boys'], name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'أونلاين! كُل لتكبر وسيطر على الساحة الحية.', en:'Online! Eat to grow and rule the living arena.'}, isSignature: true, signatureTag:{ar:'أونلاين مباشر', en:'Live Online'}},
+  {id:'baloot',  category: 'card', audiences:['adults','family'], name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
+  {id:'uno',     category: 'card', audiences:['kids','teens','family','girls'], name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
+  {id:'domino',  category: 'card', audiences:['family','seniors','adults'], name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
+  {id:'money',   category: 'puzzle', audiences:['kids','teens'], name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
+  {id:'empire',  category: 'puzzle', audiences:['teens','adults','boys'], name:{ar:'ملوك اللمس', en:'Tap Kings'}, icon:'👑', desc:{ar:'اضغط وابنِ مملكتك من كشك الليمون إلى عرش الملوك!', en:'Tap to build from a lemonade stand to a royal throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'بناء وثروة', en:'Build & Wealth'}},
+  {id:'invest',  category: 'puzzle', audiences:['adults','teens'], name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true, isSignature: true, signatureTag:{ar:'أسواق واستراتيجية', en:'Markets & Strategy'}},
+  {id:'bubble',  category: 'puzzle', audiences:['kids','girls'], name:{ar:'فقاعات الألوان', en:'Color Bubbles'}, icon:'🫧', desc:{ar:'العبة خفيفة للأطفال — انقر الفقاعات قبل أن تطير!', en:'A light kids game — pop bubbles before they float away!'}, isNew: true},
+  {id:'garden',  category: 'puzzle', audiences:['girls','family','seniors'], name:{ar:'حديقة الورود', en:'Rose Garden'}, icon:'🌸', desc:{ar:'طابق الورود بهدوء — مناسبة للبنات والعائلة.', en:'Match roses calmly — great for girls and families.'}, isNew: true},
+  {id:'xo',      category: 'puzzle', audiences:['kids','family','seniors','boys','girls'], name:{ar:'إكس أو', en:'Tic-Tac-Toe'}, icon:'⭕', desc:{ar:'اللعبة الكلاسيكية للعائلة — ضد صديق أو الكمبيوتر.', en:'The classic family game — vs friend or computer.'}, isNew: true},
+  {id:'quiz',    category: 'puzzle', audiences:['teens','adults','seniors'], name:{ar:'ثقافة عامة', en:'Trivia Quiz'}, icon:'📚', desc:{ar:'أسئلة عامة للمراهقين والكبار — ثقف نفسك والعب.', en:'General trivia for teens and adults — learn while you play.'}, isNew: true}
+];
+
+const AUDIENCE_FILTERS = [
+  { id: 'all', icon: '✨', label: { ar: 'الكل', en: 'All' } },
+  { id: 'kids', icon: '🧒', label: { ar: 'أطفال', en: 'Kids' } },
+  { id: 'teens', icon: '🧑', label: { ar: 'مراهقون', en: 'Teens' } },
+  { id: 'adults', icon: '👔', label: { ar: 'كبار', en: 'Adults' } },
+  { id: 'family', icon: '👨‍👩‍👧‍👦', label: { ar: 'عائلة', en: 'Family' } },
+  { id: 'girls', icon: '💖', label: { ar: 'بنات', en: 'Girls' } },
+  { id: 'boys', icon: '⚡', label: { ar: 'أولاد', en: 'Boys' } },
+  { id: 'seniors', icon: '🧓', label: { ar: 'كبار السن', en: 'Seniors' } }
 ];
 
 // ─── STORAGE & CORE ───
 let cloudSyncTimer = null;
 let lastCloudSyncAt = null;
-const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess'];
+const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess', 'garden'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
   'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
-  'investCloudId', 'investGameProgress', 'domino_player_wins', 'domino_bot_wins',
+  'investCloudId', 'investGameProgress', 'empireGameProgress', 'domino_player_wins', 'domino_bot_wins',
   'quest_play', 'quest_score', 'quest_online',
   'quest_claimed_play', 'quest_claimed_score', 'quest_claimed_online'
 ]);
@@ -218,34 +233,43 @@ let googleAuthEnabled = false;
 
 if (currentLang !== 'ar' && currentLang !== 'en') currentLang = 'ar';
 
+const SITE_BRAND = { ar: 'لُمعة', en: "Luma'a" };
+
 const DICT = {
   ar: {
-    subtitle: "ألعاب سريعة لتنشيط ذهنك",
+    brandName: 'لُمعة',
+    pageTitle: 'ألعاب ذكاء وترفيه مجانية',
+    subtitle: "ألعاب سريعة بلمسة لامعة",
     level: "المستوى:",
     streak: "سلسلة الأيام:",
     totalScore: "إجمالي النقاط:",
-    todayGames: "ألعاب اليوم:",
+    todayGames: "ألعابك اليوم:",
     best: "🏆 أفضل:",
     tabAll: "الكل",
     tabPuzzle: "🧠 ذكاء",
     tabCard: "🃏 ورق",
     tabOnline: "🌐 أونلاين",
     tabFav: "⭐ المفضلة",
+    audienceTitle: "لمن تلعب؟",
+    audienceHint: "كل فئة لها ألعاب تناسبها — أطفال، عائلة، بنات، أولاد، وكبار",
     catPuzzle: "ذكاء",
     catCard: "ورق",
     catOnline: "أونلاين",
-    heroTitle: "العب، تنافس، وطوّر مهاراتك!",
-    heroDesc: "مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.",
+    heroTitle: "أضِف لُمعة ليومك — العب وتنافس!",
+    heroDesc: "١٦ لعبة من الذكاء والورق والأونلاين — مجانية، ملونة، وبدون تسجيل.",
     randomPlay: "🎲 العب عشوائياً",
     dailyQuests: "📋 المهام اليومية",
     heroGames: "لعبة",
     heroOnline: "أونلاين",
     heroLeader: "صدارة",
-    featured: "⭐ ألعاب مميزة",
+    featured: "⭐ رائج الآن",
+    signatureTitle: "✨ ألعاب التوقيع",
+    signatureSub: "ثلاث تجارب مميزة — الثروة، الالتهام، والأسواق",
+    signaturePlay: "العب الآن",
     hot: "رائج",
-    footerTagline: "منصة ألعاب عربية مجانية لتنشيط الذهن والترفيه",
+    footerTagline: "منصة لُمعة — ألعاب عربية مجانية لتنشيط الذهن وإضفاء المرح",
     footerCopy: "© 2026 الياس العثمان",
-    welcomeTitle: "مرحباً بك في ألعاب اليوم!",
+    welcomeTitle: "مرحباً بك في لُمعة!",
     welcomeText: "اختر اسمك، العب الألعاب، اجمع النقاط، ونافس على لوحة الصدارة.",
     welcomeName: "أدخل اسمك",
     welcomeStart: "🚀 ابدأ اللعب",
@@ -256,19 +280,34 @@ const DICT = {
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
     cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
-    cloudSyncDesc: "تقدمك محفوظ على خادم ألعاب اليوم ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
+    cloudSyncDesc: "تقدمك محفوظ على خادم لُمعة ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
     cloudSyncActive: "متزامن تلقائياً",
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
     cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
-    cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز. سجّل الدخول بـ Google للحفظ التلقائي لكل تقدمك.",
+    cloudSyncGuestDesc: "رمز خاص بلعبة الاستثمار فقط. للمزامنة الكاملة لكل تقدمك، استخدم تسجيل الدخول بـ Google أعلاه.",
+    syncCtaTitle: "مزامنة تقدمك على كل الأجهزة",
+    syncCtaDesc: "سجّل الدخول بـ Google لحفظ نقاطك وإنجازاتك وأفضل نتائجك تلقائياً — بدون تصدير أو استيراد يدوي.",
+    profileTitle: "👤 الملف الشخصي والأوسمة",
+    achievementsTitle: "🏅 إنجازاتي",
+    copyCode: "📋 نسخ",
+    profileSaved: "✅ تم حفظ الملف الشخصي",
+    favAdded: "تمت الإضافة للمفضلة ⭐",
+    favRemoved: "تمت الإزالة من المفضلة 💔",
+    shareCopied: "تم نسخ الرابط! 📋",
+    lbSaved: "تم حفظ نتيجتك في لوحة الصدارة 🏆",
+    newAchievement: "🏅 إنجاز جديد:",
+    questReward: "تم استلام",
+    questRewardSuffix: "نقطة بنجاح! 🎁",
+    noCloudCode: "لا يوجد رمز بعد — العب الاستثمار واحفظ سحابياً أولاً",
+    cloudCodeCopied: "📋 تم نسخ رمزك السحابي:",
     cloudMerged: "☁️ تم دمج تقدمك السابق مع حسابك — لم يُفقد شيء!",
     searchPlaceholder: "🔍 ابحث عن لعبة...",
     emptyGames: "لا توجد ألعاب مطابقة للبحث",
     loadingGame: "جاري تحميل اللعبة...",
     recent: "🕐 آخر ما لعبت",
     newBadge: "جديد",
-    installBanner: "📲 ثبّت ألعاب اليوم على جهازك للوصول السريع!",
+    installBanner: "📲 ثبّت لُمعة على جهازك للوصول السريع!",
     installBtn: "تثبيت",
     questPlay: "العب 5 ألعاب مختلفة",
     questScore: "اجمع 500 نقطة إجمالية",
@@ -284,7 +323,9 @@ const DICT = {
     levelUp: "مبروك! وصلت للمستوى"
   },
   en: {
-    subtitle: "Quick games to boost your mind",
+    brandName: "Luma'a",
+    pageTitle: 'Free Brain & Fun Games',
+    subtitle: "Quick games that spark joy in your day",
     level: "Level:",
     streak: "Day Streak:",
     totalScore: "Total Score:",
@@ -295,21 +336,26 @@ const DICT = {
     tabCard: "🃏 Cards",
     tabOnline: "🌐 Online",
     tabFav: "⭐ Favorites",
+    audienceTitle: "Who's playing?",
+    audienceHint: "Each group has games that fit — kids, family, girls, boys, and adults",
     catPuzzle: "Puzzle",
     catCard: "Cards",
     catOnline: "Online",
-    heroTitle: "Play, Compete, and Level Up!",
-    heroDesc: "A variety of puzzle, card, and online games — completely free, no signup required.",
+    heroTitle: "Spark joy in your day — play and compete!",
+    heroDesc: "16 puzzle, card, and online games — free, vibrant, and no signup needed.",
     randomPlay: "🎲 Random Game",
     dailyQuests: "📋 Daily Quests",
     heroGames: "Games",
     heroOnline: "Online",
     heroLeader: "Leaderboard",
-    featured: "⭐ Featured Games",
+    featured: "⭐ Trending Now",
+    signatureTitle: "✨ Signature Games",
+    signatureSub: "Three standout experiences — wealth, battle, and markets",
+    signaturePlay: "Play Now",
     hot: "Hot",
-    footerTagline: "Free Arabic games platform for brain training and fun",
+    footerTagline: "Luma'a — free Arabic games for brain training and pure fun",
     footerCopy: "© 2026 Elyas Al-Othman",
-    welcomeTitle: "Welcome to Today Games!",
+    welcomeTitle: "Welcome to Luma'a!",
     welcomeText: "Pick your name, play games, earn points, and compete on the leaderboard.",
     welcomeName: "Enter your name",
     welcomeStart: "🚀 Start Playing",
@@ -320,19 +366,34 @@ const DICT = {
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
     cloudSyncTitle: "☁️ Your account cloud save",
-    cloudSyncDesc: "Your progress is saved on the Today Games server and linked to your Google account — restored automatically on any device.",
+    cloudSyncDesc: "Your progress is saved on Luma'a and linked to your Google account — restored automatically on any device.",
     cloudSyncActive: "Auto-synced",
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
     cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
-    cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device. Sign in with Google for automatic sync of all progress.",
+    cloudSyncGuestDesc: "Invest Sim only. For full progress sync across all games, sign in with Google above.",
+    syncCtaTitle: "Sync your progress across devices",
+    syncCtaDesc: "Sign in with Google to automatically save your scores, achievements, and best results — no manual export or import needed.",
+    profileTitle: "👤 Profile & Achievements",
+    achievementsTitle: "🏅 My Achievements",
+    copyCode: "📋 Copy",
+    profileSaved: "✅ Profile saved",
+    favAdded: "Added to favorites ⭐",
+    favRemoved: "Removed from favorites 💔",
+    shareCopied: "Link copied! 📋",
+    lbSaved: "Score saved to leaderboard 🏆",
+    newAchievement: "🏅 New achievement:",
+    questReward: "Claimed",
+    questRewardSuffix: "points! 🎁",
+    noCloudCode: "No code yet — play Invest Sim and cloud-save first",
+    cloudCodeCopied: "📋 Cloud code copied:",
     cloudMerged: "☁️ Your existing progress was merged with your account — nothing was lost!",
     searchPlaceholder: "🔍 Search for a game...",
     emptyGames: "No games match your search",
     loadingGame: "Loading game...",
     recent: "🕐 Recently Played",
     newBadge: "NEW",
-    installBanner: "📲 Install Today Games on your device for quick access!",
+    installBanner: "📲 Install Luma'a on your device for quick access!",
     installBtn: "Install",
     questPlay: "Play 5 different games",
     questScore: "Collect 500 total points",
@@ -359,7 +420,7 @@ const ACHIEVEMENTS = [
   { id: 'domino_win', icon: '🀄', name: { ar: 'سيد الدومينو', en: 'Domino Master' }, desc: { ar: 'افز في جولة دومينو', en: 'Win a domino round' }, check: () => getStore('domino_player_wins', 0) >= 1 },
   { id: 'anime_fan', icon: '🎌', name: { ar: 'أوتاكو', en: 'Otaku' }, desc: { ar: 'أجب على 3 أسئلة أنمي صح', en: 'Answer 3 anime questions correctly' }, check: () => getStore('best_anime', 0) >= 60 },
   { id: 'money_rich', icon: '💰', name: { ar: 'ثري', en: 'Tycoon' }, desc: { ar: 'اجمع 500$ في صائد الأموال', en: 'Collect $500 in Money Catcher' }, check: () => getStore('best_money', 0) >= 500 },
-  { id: 'empire_builder', icon: '👑', name: { ar: 'إمبراطور', en: 'Emperor' }, desc: { ar: 'اجمع 10,000$ في إمبراطورية الضغط', en: 'Earn $10,000 in Tap Empire' }, check: () => getStore('best_empire', 0) >= 10000 },
+  { id: 'empire_builder', icon: '👑', name: { ar: 'ملك اللمس', en: 'Tap King' }, desc: { ar: 'اجمع 10,000$ في ملوك اللمس', en: 'Earn $10,000 in Tap Kings' }, check: () => getStore('best_empire', 0) >= 10000 },
   { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 }
 ];
 const AVATARS = ['👤', '👦', '👧', '👨', '👩', '🤖', '👽', '👻', '🤡', '🐯', '🦁', '😎', '🤓', '🤠', '👑'];
@@ -381,6 +442,7 @@ function toggleTheme() {
 }
 
 const FEATURED_IDS = ['empire', 'invest', 'agar', 'baloot', 'anime'];
+const SIGNATURE_IDS = ['empire', 'agar', 'invest'];
 const CAT_LABELS = { puzzle: 'catPuzzle', card: 'catCard', online: 'catOnline' };
 
 function applyLang() {
@@ -389,7 +451,12 @@ function applyLang() {
   document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'EN' : 'عربي';
   
   const dict = DICT[currentLang];
+  const brand = dict.brandName || SITE_BRAND[currentLang];
   document.querySelector('.sub-logo').textContent = dict.subtitle;
+  const siteNameEl = document.getElementById('siteName');
+  if (siteNameEl) siteNameEl.textContent = brand;
+  document.querySelectorAll('.footer-logo-text').forEach(el => { el.textContent = brand; });
+  document.title = `${brand} | ${dict.pageTitle}`;
   try {
     document.getElementById('levelLabel').textContent = dict.level + ' ';
     document.getElementById('streakLabel').textContent = dict.streak + ' ';
@@ -403,6 +470,23 @@ function applyLang() {
     document.getElementById('heroOnlineLabel').textContent = dict.heroOnline;
     document.getElementById('heroLeaderLabel').textContent = dict.heroLeader;
     document.getElementById('featuredTitle').textContent = dict.featured;
+    const sigTitle = document.getElementById('signatureTitle');
+    if (sigTitle) sigTitle.textContent = dict.signatureTitle;
+    const sigSub = document.getElementById('signatureSub');
+    if (sigSub) sigSub.textContent = dict.signatureSub;
+    const empireModalTitle = document.getElementById('empireModalTitle');
+    if (empireModalTitle) {
+      const empireGame = ALL_GAMES.find(g => g.id === 'empire');
+      if (empireGame) empireModalTitle.textContent = `${empireGame.icon} ${empireGame.name[currentLang]}`;
+    }
+    const empireIntro = document.getElementById('empireIntro');
+    if (empireIntro) {
+      empireIntro.textContent = currentLang === 'ar'
+        ? 'اضغط، ابنِ أعمالك، واصعد من كشك الليمون إلى عرش الملوك.'
+        : 'Tap, build businesses, and rise from a lemonade stand to the royal throne.';
+    }
+    const empireStartBtn = document.getElementById('empireStartBtn');
+    if (empireStartBtn) empireStartBtn.textContent = currentLang === 'ar' ? '▶ ابدأ الحكم' : '▶ Begin Reign';
     document.getElementById('footerTagline').textContent = dict.footerTagline;
     document.getElementById('footerCopy').textContent = dict.footerCopy;
     document.getElementById('welcomeTitle').textContent = dict.welcomeTitle;
@@ -426,9 +510,28 @@ function applyLang() {
     if (guestCloudTitle) guestCloudTitle.textContent = dict.cloudSyncGuest;
     const guestCloudDesc = document.getElementById('profileGuestCloudDesc');
     if (guestCloudDesc) guestCloudDesc.textContent = dict.cloudSyncGuestDesc;
+    const syncCtaTitle = document.getElementById('profileSyncCtaTitle');
+    if (syncCtaTitle) syncCtaTitle.textContent = dict.syncCtaTitle;
+    const syncCtaDesc = document.getElementById('profileSyncCtaDesc');
+    if (syncCtaDesc) syncCtaDesc.textContent = dict.syncCtaDesc;
+    const syncCtaBtnText = document.getElementById('profileSyncCtaBtnText');
+    if (syncCtaBtnText) syncCtaBtnText.textContent = dict.googleSignIn;
+    const profileModalTitle = document.getElementById('profileModalTitle');
+    if (profileModalTitle) profileModalTitle.textContent = dict.profileTitle;
+    const achievementsTitle = document.getElementById('achievementsTitle');
+    if (achievementsTitle) achievementsTitle.textContent = dict.achievementsTitle;
+    const copyCodeBtn = document.getElementById('profileCopyCodeBtn');
+    if (copyCodeBtn) copyCodeBtn.textContent = dict.copyCode;
+    const skipLink = document.querySelector('.skip-link');
+    if (skipLink) skipLink.textContent = currentLang === 'ar' ? 'تخطي إلى المحتوى' : 'Skip to content';
     updateCloudSyncUI();
     document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
+    const audTitle = document.getElementById('audienceTitle');
+    if (audTitle) audTitle.textContent = dict.audienceTitle;
+    const audHint = document.getElementById('audienceHint');
+    if (audHint) audHint.textContent = dict.audienceHint;
+    renderAudienceFilters();
     const recentTitle = document.getElementById('recentTitle');
     if (recentTitle) recentTitle.textContent = dict.recent;
     const installText = document.getElementById('installBannerText');
@@ -440,6 +543,7 @@ function applyLang() {
     tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = dict[tabKeys[i]]; });
   } catch(e) {}
   if (document.getElementById('gameSearchInput')) document.getElementById('gameSearchInput').placeholder = dict.searchPlaceholder;
+  renderSignature();
   renderFeatured();
   renderRecent();
   init();
@@ -452,6 +556,19 @@ function toggleLang() {
 }
 
 let currentCategory = 'all';
+let currentAudience = 'all';
+
+function filterAudience(aud, btnEvent) {
+  playSound('blip');
+  currentAudience = aud;
+  document.querySelectorAll('.audience-btn').forEach(b => b.classList.remove('active'));
+  if (btnEvent) {
+    const btn = btnEvent.target.closest ? btnEvent.target.closest('.audience-btn') : btnEvent.target;
+    if (btn) btn.classList.add('active');
+  }
+  renderGames();
+}
+
 function filterCategory(cat, btnEvent) {
   playSound('blip');
   currentCategory = cat;
@@ -476,6 +593,7 @@ function renderGames() {
   const filtered = ALL_GAMES.filter(g => {
     if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
     if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
+    if (currentAudience !== 'all' && !(g.audiences || []).includes(currentAudience)) return false;
     const gameName = g.name.ar + ' ' + g.name.en;
     return !term || gameName.toLowerCase().includes(term);
   });
@@ -491,12 +609,13 @@ function renderGames() {
     const catKey = CAT_LABELS[g.category];
     const catLabel = catKey ? dict[catKey] : '';
     const catClass = g.category === 'card' ? 'cat-card' : g.category === 'online' ? 'cat-online' : '';
-    return `<div class="game-card" data-game-id="${g.id}">
+    return `<div class="game-card${g.isSignature ? ' signature-card signature-' + g.id : ''}" data-game-id="${g.id}">
       <div class="card-actions">
         <button class="card-action-btn ${isFav ? 'active-fav' : ''}" data-action="favorite" data-game-id="${g.id}" title="المفضلة">⭐</button>
         <button class="card-action-btn" data-action="share" data-game-id="${g.id}" data-game-name="${g.name[currentLang]}" title="مشاركة">🔗</button>
       </div>
-      ${g.isNew ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
+      ${g.isSignature ? `<span class="signature-badge">${g.signatureTag ? g.signatureTag[currentLang] : '✨'}</span>` : ''}
+      ${g.isNew && !g.isSignature ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
       <div class="game-desc">${g.desc[currentLang]}</div>
@@ -536,6 +655,37 @@ function renderRecent() {
       <div class="game-name">${g.name[currentLang]}</div>
     </div>`;
   }).join('');
+}
+
+function renderSignature() {
+  const container = document.getElementById('signatureGames');
+  if (!container) return;
+  const dict = DICT[currentLang];
+  container.innerHTML = SIGNATURE_IDS.map(id => {
+    const g = ALL_GAMES.find(x => x.id === id);
+    if (!g) return '';
+    const tag = g.signatureTag ? g.signatureTag[currentLang] : '';
+    return `<article class="signature-panel signature-${g.id}" data-game-id="${g.id}" role="button" tabindex="0">
+      <div class="signature-panel-glow" aria-hidden="true"></div>
+      <div class="signature-panel-icon">${g.icon}</div>
+      <div class="signature-panel-body">
+        <span class="signature-panel-tag">${tag}</span>
+        <h4 class="signature-panel-name">${g.name[currentLang]}</h4>
+        <p class="signature-panel-desc">${g.desc[currentLang]}</p>
+        <span class="signature-panel-cta">${dict.signaturePlay} →</span>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function renderAudienceFilters() {
+  const box = document.getElementById('audienceFilters');
+  if (!box) return;
+  box.innerHTML = AUDIENCE_FILTERS.map(f =>
+    `<button type="button" class="audience-btn${currentAudience === f.id ? ' active' : ''}" data-aud="${f.id}">
+      <span>${f.icon}</span> ${f.label[currentLang] || f.label.ar}
+    </button>`
+  ).join('');
 }
 
 function renderFeatured() {
@@ -592,6 +742,10 @@ const gameFiles = {
   'money': 'money-game.js',
   'empire': 'empire-game.js',
   'domino': 'domino-game.js',
+  'bubble': 'bubble-game.js',
+  'garden': 'garden-game.js',
+  'xo': 'xo-game.js',
+  'quiz': 'quiz-game.js',
   'invest': 'invest-game.js'
 };
 
@@ -611,6 +765,10 @@ const gameInitializers = {
   'money': () => typeof initMoney === 'function' && initMoney(),
   'empire': () => typeof initEmpire === 'function' && initEmpire(),
   'domino': () => typeof initDomino === 'function' && initDomino(),
+  'bubble': () => typeof initBubble === 'function' && initBubble(),
+  'garden': () => typeof initGarden === 'function' && initGarden(),
+  'xo': () => typeof initXO === 'function' && initXO(),
+  'quiz': () => typeof initQuiz === 'function' && initQuiz(),
   'invest': () => typeof initInvest === 'function' && initInvest()
 };
 
@@ -660,6 +818,7 @@ const gameClosers = {
   'money': () => typeof stopMoney === 'function' && stopMoney(),
   'empire': () => typeof closeEmpire === 'function' && closeEmpire(),
   'domino': () => typeof closeDomino === 'function' && closeDomino(),
+  'bubble': () => typeof stopBubble === 'function' && stopBubble(),
   'invest': () => typeof closeInvest === 'function' && closeInvest()
 };
 
@@ -795,6 +954,10 @@ function mergeSyncData(local, cloud) {
       merged[key] = [...new Set([...(Array.isArray(cloudVal) ? cloudVal : []), ...(Array.isArray(localVal) ? localVal : [])])].slice(-10);
     } else if (key === 'investGameProgress') {
       merged[key] = pickBetterInvestProgress(localVal, cloudVal);
+    } else if (key === 'empireGameProgress') {
+      const netA = Number(localVal?.money) || Number(localVal?.totalEarned) || 0;
+      const netB = Number(cloudVal?.money) || Number(cloudVal?.totalEarned) || 0;
+      merged[key] = netA >= netB ? localVal : cloudVal;
     } else if (key === 'investCloudId') {
       merged[key] = localVal || cloudVal;
     } else if (key === 'globalPlayerName') {
@@ -882,12 +1045,21 @@ function updateCloudSyncUI(syncing) {
   const dict = DICT[currentLang];
   const accountBox = document.getElementById('profileAccountCloudBox');
   const guestBox = document.getElementById('profileGuestCloudBox');
+  const guestCta = document.getElementById('profileGuestSyncCta');
+  const syncCtaBtn = document.getElementById('profileSyncCtaBtn');
   const statusEl = document.getElementById('profileCloudSyncStatus');
   const timeEl = document.getElementById('profileCloudSyncTime');
   const signedIn = !!currentUser;
+  const showGoogle = googleAuthEnabled && !signedIn;
 
   if (accountBox) accountBox.classList.toggle('d-none', !signedIn);
-  if (guestBox) guestBox.classList.toggle('d-none', signedIn);
+  if (guestCta) guestCta.classList.toggle('d-none', signedIn);
+  if (syncCtaBtn) syncCtaBtn.classList.toggle('d-none', !showGoogle);
+  if (guestBox) {
+    guestBox.classList.toggle('d-none', signedIn);
+    const hasInvestCode = !!getStore('investCloudId', '');
+    if (!signedIn && hasInvestCode) guestBox.classList.remove('d-none');
+  }
 
   if (statusEl) {
     statusEl.textContent = syncing ? dict.cloudSyncPending : dict.cloudSyncActive;
@@ -949,6 +1121,10 @@ function updateAuthUI() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('d-none', !showGoogle);
   });
+  const syncCtaBtn = document.getElementById('profileSyncCtaBtn');
+  if (syncCtaBtn) syncCtaBtn.classList.toggle('d-none', !showGoogle);
+  const guestCta = document.getElementById('profileGuestSyncCta');
+  if (guestCta) guestCta.classList.toggle('d-none', signedIn);
   const divider = document.getElementById('welcomeAuthDivider');
   if (divider) divider.classList.toggle('d-none', !showGoogle);
 
@@ -1074,7 +1250,7 @@ function submitScore(game_id, score, isLowerBetter = false) {
       }
       try {
         await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ game_id, player_name: playerName, score }) });
-        showToast('تم حفظ نتيجتك في لوحة الصدارة 🏆');
+        showToast(DICT[currentLang].lbSaved);
       } catch(e) { console.error(e); }
     }, 600); // ننتظر قليلاً حتى تظهر شاشة نهاية اللعبة أولاً
   }
@@ -1117,47 +1293,29 @@ function toggleFavorite(id) {
   playSound('blip');
   let favs = getStore('favorites', []);
   if (!Array.isArray(favs)) favs = [];
+  const dict = DICT[currentLang];
   if (favs.includes(id)) {
-    favs = favs.filter(f => f !== id); showToast('تمت الإزالة من المفضلة 💔');
+    favs = favs.filter(f => f !== id); showToast(dict.favRemoved);
   } else {
-    favs.push(id); showToast('تمت الإضافة للمفضلة ⭐');
+    favs.push(id); showToast(dict.favAdded);
   }
   setStore('favorites', favs); renderGames();
 }
 
 function shareGame(id, name) {
   playSound('blip');
-  const text = `جرب لعبة ${name} الممتعة على ألعاب اليوم وتحداني! 🎮`;
-  if (navigator.share) { navigator.share({ title: 'ألعاب اليوم', text: text, url: window.location.href });
-  } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast('تم نسخ الرابط! 📋'); }
+  const brand = DICT[currentLang].brandName || SITE_BRAND[currentLang];
+  const text = currentLang === 'ar'
+    ? `جرب لعبة ${name} الممتعة على ${brand} وتحداني! 🎮`
+    : `Try ${name} on ${brand} and challenge me! 🎮`;
+  if (navigator.share) { navigator.share({ title: brand, text: text, url: window.location.href });
+  } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast(DICT[currentLang].shareCopied); }
 }
 
 function toggleFullscreen() {
   playSound('blip');
   if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
   else if (document.exitFullscreen) document.exitFullscreen();
-}
-
-function exportSave() {
-  playSound('blip');
-  const data = JSON.stringify(localStorage);
-  const base64 = btoa(unescape(encodeURIComponent(data)));
-  navigator.clipboard.writeText(base64);
-  showToast('تم نسخ كود التقدم! احتفظ به بمكان آمن 💾');
-}
-
-function importSave() {
-  playSound('blip');
-  const code = prompt('أدخل كود النسخ الاحتياطي لاستعادة حسابك والتقدم:');
-  if (code) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(escape(atob(code))));
-      Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
-      showToast('تمت استعادة التقدم بنجاح! 🔄');
-      if (currentUser) scheduleCloudSync();
-      setTimeout(() => location.reload(), 1500);
-    } catch(e) { showToast('❌ الكود غير صحيح أو تالف!'); }
-  }
 }
 
 function openQuests() {
@@ -1181,7 +1339,8 @@ function closeQuests() { playSound('blip'); document.getElementById('questsOverl
 
 function claimQuest(id, reward) {
   playSound('coin'); setStore('quest_claimed_' + id, true); addScore(reward);
-  showToast(`تم استلام ${reward} نقطة بنجاح! 🎁`); openQuests(); // Refresh modal
+  const dict = DICT[currentLang];
+  showToast(`${dict.questReward} ${reward} ${dict.questRewardSuffix}`); openQuests();
 }
 
 // ─── PROFILE & ACHIEVEMENTS ───
@@ -1202,25 +1361,26 @@ function openProfile() {
   const codeEl = document.getElementById('profileCloudCode');
   const guestBox = document.getElementById('profileGuestCloudBox');
   if (codeEl) codeEl.textContent = cloudId || '—';
-  if (guestBox) guestBox.classList.toggle('d-none', !!currentUser);
+  if (guestBox) guestBox.classList.toggle('d-none', !!currentUser || !cloudId);
   updateCloudSyncUI(false);
 
   renderAchievements();
 }
 
 function copyCloudCode() {
+  const dict = DICT[currentLang];
   const cloudId = getStore('investCloudId', '');
-  if (!cloudId) { showToast('لا يوجد رمز بعد — العب الاستثمار واحفظ سحابياً أولاً'); return; }
+  if (!cloudId) { showToast(dict.noCloudCode); return; }
   navigator.clipboard.writeText(cloudId);
   playSound('coin');
-  showToast('📋 تم نسخ رمزك السحابي: ' + cloudId);
+  showToast(dict.cloudCodeCopied + ' ' + cloudId);
 }
 function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
 function saveProfile() {
   if (currentUser) return;
   savePlayerName(document.getElementById('profileName').value);
   setStore('globalPlayerAvatar', document.getElementById('profileAvatar').value);
-  showToast('✅ تم حفظ الملف الشخصي');
+  showToast(DICT[currentLang].profileSaved);
 }
 function renderAchievements() {
   const list = document.getElementById('achievementsList');
@@ -1237,7 +1397,7 @@ function checkAchievements() {
   ACHIEVEMENTS.forEach(ach => {
     if (!getStore(`ach_${ach.id}`, false) && ach.check()) {
       setStore(`ach_${ach.id}`, true);
-      showToast(`🏅 إنجاز جديد: ${ach.name[currentLang]}`);
+      showToast(`${DICT[currentLang].newAchievement} ${ach.name[currentLang]}`);
       playSound('levelup');
     }
   });
@@ -1340,10 +1500,34 @@ function closeActiveOverlay() {
       filterCategory(btn.dataset.cat, e);
     });
 
+    const audienceFilters = document.getElementById('audienceFilters');
+    if (audienceFilters) {
+      audienceFilters.addEventListener('click', (e) => {
+        const btn = e.target.closest('.audience-btn');
+        if (!btn) return;
+        filterAudience(btn.dataset.aud, e);
+      });
+    }
+
     document.getElementById('featuredGames').addEventListener('click', (e) => {
       const card = e.target.closest('.featured-card');
       if (card) openGame(card.dataset.gameId);
     });
+
+    const signatureGames = document.getElementById('signatureGames');
+    if (signatureGames) {
+      signatureGames.addEventListener('click', (e) => {
+        const panel = e.target.closest('.signature-panel');
+        if (panel) openGame(panel.dataset.gameId);
+      });
+      signatureGames.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const panel = e.target.closest('.signature-panel');
+        if (!panel) return;
+        e.preventDefault();
+        openGame(panel.dataset.gameId);
+      });
+    }
 
     document.getElementById('gamesGrid').addEventListener('click', (e) => {
       const card = e.target.closest('.game-card');
@@ -1382,8 +1566,8 @@ function closeActiveOverlay() {
 
   // تصدير الدوال للـ HTML onclick
   const api = {
-    filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
-    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode, signOut,
+    filterCategory, filterAudience, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
+    closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
     submitScore, showToast, getStore, setStore, playSound
