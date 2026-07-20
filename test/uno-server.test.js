@@ -363,3 +363,64 @@ test('a full round trip through the bot loop keeps the deck at exactly 108 cards
     const total = () => room.deck.length + room.discardPile.length + Object.values(room.players).reduce((sum, p) => sum + p.cards.length, 0);
     assert.equal(total(), 108);
 });
+
+// Regression test for a "the turn never advances" style freeze (e.g. after a
+// Reverse card): plays several complete all-bot rounds end-to-end, driving the
+// same setTimeout-based bot decision path the real server uses, and asserts
+// forward progress is always made instead of stalling on one player forever.
+test('an all-bot game runs multiple full rounds without ever freezing on one turn', async () => {
+    const realSetTimeout = global.setTimeout;
+    global.setTimeout = (fn) => { fn(); return 0; };
+    try {
+        const { game, connect } = createGame();
+        const host = new FakeSocket('fuzzhost');
+        join(host, connect, { name: 'Host', room: 'uno_fuzz_1', mode: 'computer', token: 'fuzz_host_token_1234' });
+        host.trigger('startUno');
+
+        const room = game.rooms.uno_fuzz_1;
+        Object.values(room.players).forEach((p) => { p.isBot = true; });
+
+        let roundsCompleted = 0;
+        let stuckTurnToken = room.turnOrder[room.currentTurn];
+        let stuckCount = 0;
+        const MAX_TICKS = 4000;
+
+        for (let tick = 0; tick < MAX_TICKS && roundsCompleted < 3; tick++) {
+            const beforeToken = room.turnOrder[room.currentTurn];
+            const beforeDiscard = room.discardPile.length;
+            const beforeCardsTotal = Object.values(room.players).reduce((sum, p) => sum + p.cards.length, 0);
+            const beforeState = room.state;
+
+            game.gameLoop();
+
+            const madeProgress = room.turnOrder[room.currentTurn] !== beforeToken
+                || room.discardPile.length !== beforeDiscard
+                || Object.values(room.players).reduce((sum, p) => sum + p.cards.length, 0) !== beforeCardsTotal
+                || room.state !== beforeState;
+
+            if (room.state === 'waiting') {
+                roundsCompleted++;
+                if (roundsCompleted < 3) host.trigger('startUno');
+                stuckTurnToken = room.turnOrder[room.currentTurn];
+                stuckCount = 0;
+                continue;
+            }
+
+            if (room.turnOrder[room.currentTurn] === stuckTurnToken && !madeProgress) {
+                stuckCount++;
+            } else {
+                stuckCount = 0;
+                stuckTurnToken = room.turnOrder[room.currentTurn];
+            }
+
+            assert.ok(stuckCount < 50, `game appears frozen: no progress for ${stuckCount} ticks on the same turn`);
+
+            const total = room.deck.length + room.discardPile.length + Object.values(room.players).reduce((sum, p) => sum + p.cards.length, 0);
+            assert.equal(total, 108, 'no cards may be lost or duplicated while the loop runs');
+        }
+
+        assert.equal(roundsCompleted, 3, 'all three rounds should finish, proving the game never permanently stalls');
+    } finally {
+        global.setTimeout = realSetTimeout;
+    }
+});

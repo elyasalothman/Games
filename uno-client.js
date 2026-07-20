@@ -159,6 +159,17 @@ function isMyUnoTurn() {
     return myUnoState && myUnoState.state === 'playing' && myUnoState.turnOrder[myUnoState.currentTurn] === getUnoToken();
 }
 
+// Mirrors the server's isValidPlay() so the hand only shows cards that will
+// actually be accepted, instead of letting players click any card and get
+// bounced with a "not allowed" message.
+function isValidUnoPlay(card, topCard, currentColor) {
+    if (!topCard) return true;
+    if (card.color === 'wild') return true;
+    if (card.color === currentColor) return true;
+    if (card.value === topCard.value) return true;
+    return false;
+}
+
 function setUnoStatus(message) {
     const status = document.getElementById('unoStatus');
     if (status) status.textContent = message;
@@ -213,9 +224,11 @@ function renderUnoTable() {
     const hand = document.getElementById('unoMyHand');
     hand.replaceChildren();
     const canAct = myTurn && !r.pendingChallenge;
+    const topCard = r.discardPile[r.discardPile.length - 1];
     if (me.cards) {
         me.cards.forEach((c, i) => {
-            hand.appendChild(createUnoCard(c, canAct, i));
+            const playable = canAct && isValidUnoPlay(c, topCard, r.currentColor);
+            hand.appendChild(createUnoCard(c, playable, i));
         });
     }
     document.getElementById('unoDrawPile').classList.toggle('uno-disabled', !canAct || r.hasDrawnThisTurn);
