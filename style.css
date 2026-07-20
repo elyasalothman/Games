@@ -16,6 +16,7 @@
   --accent-red: #ff5c8a;
   --accent-orange: #ffb347;
   --accent-purple: #c77dff;
+  --uno-yellow: #f4d100;
   --gradient-brand: linear-gradient(120deg, #6ec8ff 0%, #c77dff 50%, #ffc857 100%);
   --gradient-hero: linear-gradient(145deg, rgba(110, 200, 255, 0.14) 0%, rgba(199, 125, 255, 0.12) 45%, rgba(255, 200, 87, 0.1) 100%);
   --gradient-btn: linear-gradient(135deg, #5eb0ff 0%, #9b6dff 100%);
@@ -948,13 +949,16 @@ body.dark-mode::after {
 .uno-card.uno-disabled { cursor: not-allowed; filter: brightness(.7); }
 .uno-card.uno-disabled:hover { transform: none; }
 .bg-red { background: var(--accent-red); } .bg-blue { background: var(--accent-blue); }
-.bg-green { background: var(--accent-green); } .bg-yellow { background: var(--accent-orange); }
+.bg-green { background: var(--accent-green); } .bg-yellow { background: var(--uno-yellow); color: #2b2200; text-shadow: none; }
 .bg-wild { background: #2d2d44; }
-.uno-opponent { background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 12px; font-size: 14px; }
+.uno-opponent { background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 12px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+.uno-opponent.uno-offline { opacity: 0.55; }
 .active-turn { border: 2px solid var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
-.uno-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.uno-catch-btn { padding: 4px 10px; min-height: auto; font-size: 12px; }
+.uno-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
 .uno-room-label, .uno-room-info { color: var(--accent-gold); font-weight: 700; }
 .uno-room-info { margin: 12px auto 0; max-width: 360px; }
+.uno-scoreboard { font-size: 12px; color: #9fb3d9; }
 .uno-status { min-height: 24px; text-align: center; color: #dce7ff; margin: 0 0 10px; }
 .uno-color-picker { display: flex; justify-content: center; gap: 12px; margin: 8px 0 4px; }
 .uno-color { width: 38px; height: 38px; border: 3px solid #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
@@ -962,7 +966,17 @@ body.dark-mode::after {
 .uno-color.red { background: var(--accent-red); }
 .uno-color.blue { background: var(--accent-blue); }
 .uno-color.green { background: var(--accent-green); }
-.uno-color.yellow { background: var(--accent-orange); }
+.uno-color.yellow { background: var(--uno-yellow); }
+.uno-deck-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.uno-deck-count { font-size: 12px; color: #9fb3d9; }
+.uno-direction { font-size: 26px; color: var(--accent-gold); animation: unoSpin 3s linear infinite; }
+@keyframes unoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.uno-declare-btn { font-weight: 800; animation: unoPulse 1s ease-in-out infinite; }
+@keyframes unoPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.uno-challenge-prompt { background: rgba(255,60,60,0.12); border: 1px solid rgba(255,60,60,0.4); border-radius: 14px; padding: 12px; margin: 10px auto; max-width: 380px; text-align: center; }
+.uno-win-banner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 900; color: var(--accent-gold); text-shadow: 0 0 20px rgba(255,200,87,0.8); pointer-events: none; z-index: 20; opacity: 0; }
+.uno-win-pop { animation: unoWinPop 2.2s ease-out; }
+@keyframes unoWinPop { 0% { opacity: 0; transform: scale(0.5) rotate(-8deg); } 20% { opacity: 1; transform: scale(1.15) rotate(3deg); } 40% { transform: scale(1) rotate(0deg); } 80% { opacity: 1; } 100% { opacity: 0; } }
 
 /* Button Utilities */
 .leaderboard-btn {

@@ -609,16 +609,33 @@
     <div id="unoGameScreen" class="d-none">
         <div class="uno-toolbar">
             <span id="unoRoomLabel" class="uno-room-label"></span>
+            <span id="unoScoreboard" class="uno-scoreboard"></span>
             <button type="button" id="unoShareBtn" class="btn btn-purple d-none" onclick="shareUnoRoom()">🔗 مشاركة الرابط</button>
         </div>
         <p id="unoStatus" class="uno-status" role="status"></p>
+        <div id="unoWinBanner" class="uno-win-banner d-none">🎉 فوز! 🎉</div>
         <div id="unoOpponents"></div>
         <div class="uno-table-center">
-            <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>
+            <div class="uno-deck-wrap">
+                <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>
+                <span id="unoDeckCount" class="uno-deck-count"></span>
+            </div>
             <div id="unoCenter"></div>
             <div id="unoCurrentColor"></div>
+            <span id="unoDirection" class="uno-direction">↻</span>
         </div>
-        <button type="button" id="unoStartBtn" class="btn primary uno-start-btn" onclick="startUno()">▶ ابدأ اللعب</button>
+        <div class="flex-center-wrap">
+            <button type="button" id="unoStartBtn" class="btn primary uno-start-btn" onclick="startUno()">▶ ابدأ اللعب</button>
+            <button type="button" id="unoPassBtn" class="btn btn-dark d-none" onclick="passUnoTurn()">⏭ تمرير الدور</button>
+            <button type="button" id="unoDeclareBtn" class="btn btn-red uno-declare-btn d-none" onclick="declareUno()">🃏 UNO!</button>
+        </div>
+        <div id="unoChallengePrompt" class="uno-challenge-prompt d-none">
+            <p>هل تتحدّى بطاقة +4 أم تسحب 4 أوراق؟</p>
+            <div class="flex-center-wrap">
+                <button type="button" class="btn btn-red" onclick="resolveUnoChallenge(false)">⚔️ تحدّي</button>
+                <button type="button" class="btn btn-dark" onclick="resolveUnoChallenge(true)">📥 سحب 4 أوراق</button>
+            </div>
+        </div>
         <div id="unoColorPicker" class="uno-color-picker d-none" aria-label="اختر لون الورقة">
             <button type="button" class="uno-color red" onclick="chooseUnoColor('red')" aria-label="أحمر"></button>
             <button type="button" class="uno-color blue" onclick="chooseUnoColor('blue')" aria-label="أزرق"></button>

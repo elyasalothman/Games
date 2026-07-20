@@ -1,12 +1,28 @@
 let unoSocket;
 let myUnoState = null;
 let pendingUnoCardIndex = null;
+let unoToken = null;
+
+function getUnoToken() {
+    if (unoToken) return unoToken;
+    if (typeof getStore === 'function') {
+        const stored = getStore('unoPlayerToken', '');
+        if (stored) { unoToken = stored; return unoToken; }
+    }
+    const random = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID().replace(/-/g, '')
+        : `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    unoToken = `p_${random}`.slice(0, 40);
+    if (typeof setStore === 'function') setStore('unoPlayerToken', unoToken);
+    return unoToken;
+}
 
 function initUno() {
     document.getElementById('unoOverlay').classList.add('active');
     document.getElementById('unoStartScreen').classList.remove('d-none');
     document.getElementById('unoGameScreen').classList.add('d-none');
     document.getElementById('unoColorPicker').classList.add('d-none');
+    document.getElementById('unoChallengePrompt').classList.add('d-none');
     const room = getUnoRoomFromUrl();
     const roomInfo = document.getElementById('unoRoomInfo');
     roomInfo.classList.toggle('d-none', !room);
@@ -55,7 +71,7 @@ function joinUnoGame(mode) {
     setUnoStatus('جاري الاتصال بالغرفة...');
 
     unoSocket = io();
-    unoSocket.emit('joinUno', { name: playerName, room, mode });
+    unoSocket.emit('joinUno', { name: playerName, room, mode, token: getUnoToken() });
 
     unoSocket.on('unoGameState', (state) => {
         myUnoState = state;
@@ -64,6 +80,16 @@ function joinUnoGame(mode) {
     unoSocket.on('unoMessage', (message) => {
         setUnoStatus(message);
         if (typeof showToast === 'function') showToast(message);
+    });
+    unoSocket.on('unoRoundResult', ({ winnerToken }) => {
+        if (typeof playSound === 'function') playSound(winnerToken === getUnoToken() ? 'levelup' : 'blip');
+        if (winnerToken === getUnoToken()) {
+            celebrateUnoWin();
+            if (typeof addScore === 'function') addScore(100);
+            if (typeof setStore === 'function' && typeof getStore === 'function') {
+                setStore('best_uno', getStore('best_uno', 0) + 1);
+            }
+        }
     });
     unoSocket.on('connect_error', () => setUnoStatus('تعذر الاتصال بالخادم. حاول مرة أخرى.'));
 }
@@ -74,8 +100,9 @@ function startUno() {
 
 function playUnoCard(index) {
     if (!unoSocket || !myUnoState) return;
-    const card = myUnoState.players[unoSocket.id].cards[index];
-    if (!card || !isMyUnoTurn()) return;
+    const me = myUnoState.players[getUnoToken()];
+    const card = me && me.cards[index];
+    if (!card || !isMyUnoTurn() || myUnoState.pendingChallenge) return;
     if (card.color === 'wild') {
         pendingUnoCardIndex = index;
         document.getElementById('unoColorPicker').classList.remove('d-none');
@@ -94,12 +121,32 @@ function chooseUnoColor(color) {
 }
 
 function drawUnoCard() {
-    if (unoSocket && isMyUnoTurn()) unoSocket.emit('drawUnoCard');
+    if (!unoSocket || !myUnoState) return;
+    if (!isMyUnoTurn() || myUnoState.pendingChallenge || myUnoState.hasDrawnThisTurn) return;
+    unoSocket.emit('drawUnoCard');
     if (typeof playSound === 'function') playSound('blip');
 }
 
+function passUnoTurn() {
+    if (unoSocket) unoSocket.emit('passUnoTurn');
+}
+
+function declareUno() {
+    if (unoSocket) unoSocket.emit('declareUno');
+    if (typeof playSound === 'function') playSound('card');
+}
+
+function catchUnoPlayer(targetToken) {
+    if (unoSocket) unoSocket.emit('catchUno', { targetToken });
+}
+
+function resolveUnoChallenge(accept) {
+    if (unoSocket) unoSocket.emit('resolveUnoChallenge', { accept });
+    document.getElementById('unoChallengePrompt').classList.add('d-none');
+}
+
 function isMyUnoTurn() {
-    return myUnoState && unoSocket && myUnoState.state === 'playing' && myUnoState.turnOrder[myUnoState.currentTurn] === unoSocket.id;
+    return myUnoState && myUnoState.state === 'playing' && myUnoState.turnOrder[myUnoState.currentTurn] === getUnoToken();
 }
 
 function setUnoStatus(message) {
@@ -107,48 +154,88 @@ function setUnoStatus(message) {
     if (status) status.textContent = message;
 }
 
+const UNO_COLOR_VAR = { red: '--accent-red', blue: '--accent-blue', green: '--accent-green', yellow: '--uno-yellow' };
+
 function renderUnoTable() {
     if (!myUnoState || !unoSocket) return;
     const r = myUnoState;
-    const me = r.players[unoSocket.id];
+    const myToken = getUnoToken();
+    const me = r.players[myToken];
     if (!me) return;
     const myTurn = isMyUnoTurn();
+    const awaitingMyChallenge = r.pendingChallenge && r.pendingChallenge.target === myToken;
 
     const startBtn = document.getElementById('unoStartBtn');
-    startBtn.classList.toggle('d-none', !(r.state === 'waiting' && unoSocket.id === r.hostId));
-    setUnoStatus(r.state === 'waiting'
-        ? (unoSocket.id === r.hostId ? 'أنت المضيف — ابدأ الجولة عندما تكون مستعداً.' : 'بانتظار المضيف لبدء الجولة...')
-        : myTurn ? 'دورك الآن — العب ورقة أو اسحب.' : `بانتظار ${r.players[r.turnOrder[r.currentTurn]]?.name || 'اللاعب'}...`);
+    startBtn.classList.toggle('d-none', !(r.state === 'waiting' && myToken === r.hostToken));
+
+    if (r.state === 'waiting') {
+        setUnoStatus(myToken === r.hostToken ? 'أنت المضيف — ابدأ الجولة عندما تكون مستعداً.' : 'بانتظار المضيف لبدء الجولة...');
+    } else if (awaitingMyChallenge) {
+        setUnoStatus(`${r.pendingChallenge.byName} لعب +4! هل تتحدّاه أم تسحب 4 أوراق؟`);
+    } else if (r.pendingChallenge) {
+        setUnoStatus('بانتظار قرار اللاعب على بطاقة +4...');
+    } else if (myTurn) {
+        setUnoStatus(r.hasDrawnThisTurn ? 'سحبت بطاقة — العبها إن كانت مناسبة أو مرّر الدور.' : 'دورك الآن — العب ورقة أو اسحب.');
+    } else {
+        setUnoStatus(`بانتظار ${r.players[r.turnOrder[r.currentTurn]]?.name || 'اللاعب'}...`);
+    }
+
+    document.getElementById('unoChallengePrompt').classList.toggle('d-none', !awaitingMyChallenge);
+    document.getElementById('unoDeckCount').textContent = `🂠 ${r.deckCount}`;
+    document.getElementById('unoDirection').textContent = r.direction === 1 ? '↻' : '↺';
 
     const center = document.getElementById('unoCenter');
     if (r.discardPile.length > 0) {
         const topCard = r.discardPile[r.discardPile.length - 1];
         center.replaceChildren(createUnoCard(topCard, false));
-        document.getElementById('unoCurrentColor').style.backgroundColor = r.currentColor === 'wild' ? '#fff' : `var(--accent-${r.currentColor === 'red' ? 'red' : r.currentColor === 'blue' ? 'blue' : r.currentColor === 'green' ? 'green' : 'orange'})`;
+        const colorVar = UNO_COLOR_VAR[r.currentColor];
+        document.getElementById('unoCurrentColor').style.backgroundColor = colorVar ? `var(${colorVar})` : '#fff';
     } else {
         center.replaceChildren();
     }
 
     const opponentsDiv = document.getElementById('unoOpponents');
     opponentsDiv.replaceChildren();
-    Object.values(r.players).forEach(p => {
-        if (p.id !== unoSocket.id) {
-            const isTurn = r.state === 'playing' && r.turnOrder[r.currentTurn] === p.id;
-            const opponent = document.createElement('div');
-            opponent.className = `uno-opponent ${isTurn ? 'active-turn' : ''}`;
-            opponent.textContent = `👤 ${p.name} (${p.cardCount} أوراق)`;
-            opponentsDiv.appendChild(opponent);
-        }
-    });
+    r.turnOrder.length > 0
+        ? r.turnOrder.filter((t) => t !== myToken).forEach((t) => opponentsDiv.appendChild(buildOpponentCard(r, t)))
+        : Object.keys(r.players).filter((t) => t !== myToken).forEach((t) => opponentsDiv.appendChild(buildOpponentCard(r, t)));
 
     const hand = document.getElementById('unoMyHand');
     hand.replaceChildren();
+    const canAct = myTurn && !r.pendingChallenge;
     if (me.cards) {
         me.cards.forEach((c, i) => {
-            hand.appendChild(createUnoCard(c, myTurn, i));
+            hand.appendChild(createUnoCard(c, canAct, i));
         });
     }
-    document.getElementById('unoDrawPile').classList.toggle('uno-disabled', !myTurn);
+    document.getElementById('unoDrawPile').classList.toggle('uno-disabled', !canAct || r.hasDrawnThisTurn);
+    document.getElementById('unoPassBtn').classList.toggle('d-none', !(canAct && r.hasDrawnThisTurn));
+    document.getElementById('unoDeclareBtn').classList.toggle('d-none', !(me.cardCount === 1 && !me.saidUno));
+
+    const scoreboard = document.getElementById('unoScoreboard');
+    scoreboard.textContent = Object.values(r.players)
+        .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+        .map((p) => `${p.name}: ${p.wins || 0}🏆`)
+        .join('  ·  ');
+}
+
+function buildOpponentCard(r, token) {
+    const p = r.players[token];
+    const isTurn = r.state === 'playing' && r.turnOrder[r.currentTurn] === token;
+    const wrap = document.createElement('div');
+    wrap.className = `uno-opponent ${isTurn ? 'active-turn' : ''} ${p.connected === false ? 'uno-offline' : ''}`;
+    const label = document.createElement('span');
+    label.textContent = `${p.token === r.hostToken ? '👑 ' : '👤 '}${p.name}${p.connected === false ? ' (غير متصل)' : ''} — ${p.cardCount} 🂠`;
+    wrap.appendChild(label);
+    if (p.cardCount === 1 && !p.saidUno) {
+        const catchBtn = document.createElement('button');
+        catchBtn.type = 'button';
+        catchBtn.className = 'btn btn-red uno-catch-btn';
+        catchBtn.textContent = '🚨 قبض!';
+        catchBtn.onclick = () => catchUnoPlayer(token);
+        wrap.appendChild(catchBtn);
+    }
+    return wrap;
 }
 
 function createUnoCard(card, playable, index) {
@@ -158,6 +245,17 @@ function createUnoCard(card, playable, index) {
     element.textContent = card.value;
     if (playable) element.addEventListener('click', () => playUnoCard(index));
     return element;
+}
+
+function celebrateUnoWin() {
+    const banner = document.getElementById('unoWinBanner');
+    if (!banner) return;
+    banner.classList.remove('d-none');
+    banner.classList.add('uno-win-pop');
+    setTimeout(() => {
+        banner.classList.add('d-none');
+        banner.classList.remove('uno-win-pop');
+    }, 2200);
 }
 
 async function shareUnoRoom() {
