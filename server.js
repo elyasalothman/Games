@@ -3,13 +3,13 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const sqlite3 = require('sqlite3').verbose();
 const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const { createStorage } = require('./storage');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,8 +21,8 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'leaderboard.db');
 const GOOGLE_ENABLED = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+let storage;
 
 // 4. تفعيل دعم الوكلاء لمعرفة IP المستخدم الحقيقي وتفعيل حظر الـ RateLimit بدقة
 app.set('trust proxy', 1);
@@ -50,93 +50,38 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// إعداد قاعدة بيانات SQLite
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) console.error('خطأ في الاتصال بقاعدة البيانات:', err);
-    else console.log('✅ تم الاتصال بقاعدة بيانات SQLite بنجاح');
-});
-
-// 6. الإغلاق الآمن لقاعدة البيانات (Graceful Shutdown) لمنع تلفها
-const shutdown = () => {
-    db.close(() => {
-        console.log('تم إغلاق قاعدة البيانات بأمان.');
-        process.exit(0);
-    });
+// الإغلاق الآمن لمخزن البيانات
+const shutdown = async () => {
+    if (storage) await storage.close();
+    console.log('تم إغلاق مخزن البيانات بأمان.');
+    process.exit(0);
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// إنشاء جدول لوحة الصدارة إذا لم يكن موجوداً
-db.run(`CREATE TABLE IF NOT EXISTS leaderboard (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id TEXT NOT NULL,
-    player_name TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
-
-// جدول المستخدمين (تسجيل الدخول بـ Google)
-db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    google_id TEXT UNIQUE NOT NULL,
-    email TEXT,
-    name TEXT,
-    avatar_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
-
-// جدول الحفظ السحابي (للتقدم طويل الأمد مثل لعبة الاستثمار)
-db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
-    cloud_id TEXT NOT NULL,
-    game_id TEXT NOT NULL,
-    player_name TEXT DEFAULT '',
-    data TEXT NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (cloud_id, game_id)
-)`);
-
-// حفظ سحابي كامل لحسابات Google (نقاط، إنجازات، تقدم الألعاب)
-db.run(`CREATE TABLE IF NOT EXISTS user_saves (
-    user_id INTEGER PRIMARY KEY,
-    data TEXT NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-)`);
-
 // --- تسجيل الدخول بـ Google ---
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => {
-    db.get(`SELECT id, google_id, email, name, avatar_url FROM users WHERE id = ?`, [id], (err, row) => done(err, row));
+    storage.getUserById(id).then((user) => done(null, user)).catch(done);
 });
 
-function findOrCreateGoogleUser(profile, done) {
+async function findOrCreateGoogleUser(profile, done) {
     const googleId = profile.id;
     const email = profile.emails?.[0]?.value || '';
     const name = (profile.displayName || profile.name?.givenName || 'لاعب').substring(0, 30);
     const avatarUrl = profile.photos?.[0]?.value || '';
 
-    db.get(`SELECT id, google_id, email, name, avatar_url FROM users WHERE google_id = ?`, [googleId], (err, row) => {
-        if (err) return done(err);
-        if (row) {
-            db.run(
-                `UPDATE users SET email = ?, name = ?, avatar_url = ? WHERE id = ?`,
-                [email, name, avatarUrl, row.id],
-                (updateErr) => {
-                    if (updateErr) return done(updateErr);
-                    done(null, { ...row, email, name, avatar_url: avatarUrl });
-                }
-            );
-            return;
-        }
-        db.run(
-            `INSERT INTO users (google_id, email, name, avatar_url) VALUES (?, ?, ?, ?)`,
-            [googleId, email, name, avatarUrl],
-            function (insertErr) {
-                if (insertErr) return done(insertErr);
-                done(null, { id: this.lastID, google_id: googleId, email, name, avatar_url: avatarUrl });
-            }
-        );
-    });
+    try {
+        const user = await storage.upsertGoogleUser({
+            google_id: googleId,
+            email,
+            name,
+            avatar_url: avatarUrl
+        });
+        done(null, user);
+    } catch (err) {
+        done(err);
+    }
 }
 
 if (GOOGLE_ENABLED) {
@@ -188,17 +133,16 @@ function requireAuth(req, res, next) {
 }
 
 // --- مزامنة سحابية لحسابات Google ---
-app.get('/api/user-sync', requireAuth, (req, res) => {
-    db.get(`SELECT data, updated_at FROM user_saves WHERE user_id = ?`, [req.user.id], (err, row) => {
-        if (err) return res.status(500).json({ error: 'خطأ في القراءة' });
-        if (!row) return res.status(200).json({ data: {}, updated_at: null });
-        let parsed;
-        try { parsed = JSON.parse(row.data); } catch (e) { parsed = {}; }
-        res.status(200).json({ data: parsed, updated_at: row.updated_at });
-    });
+app.get('/api/user-sync', requireAuth, async (req, res) => {
+    try {
+        res.status(200).json(await storage.getUserSave(req.user.id));
+    } catch (err) {
+        console.error('User sync read failed:', err);
+        res.status(500).json({ error: 'خطأ في القراءة' });
+    }
 });
 
-app.post('/api/user-sync', requireAuth, (req, res) => {
+app.post('/api/user-sync', requireAuth, async (req, res) => {
     const { data } = req.body || {};
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
         return res.status(400).json({ error: 'بيانات غير صالحة' });
@@ -210,15 +154,12 @@ app.post('/api/user-sync', requireAuth, (req, res) => {
     if (payload.length > 500000) {
         return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
     }
-    db.run(
-        `INSERT INTO user_saves (user_id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
-        [req.user.id, payload],
-        function (err) {
-            if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
-            res.status(200).json({ success: true, updated_at: new Date().toISOString() });
-        }
-    );
+    try {
+        res.status(200).json(await storage.saveUserData(req.user.id, data));
+    } catch (err) {
+        console.error('User sync write failed:', err);
+        res.status(500).json({ error: 'فشل الحفظ السحابي' });
+    }
 });
 
 // إعداد نظام الحماية (Rate Limiting)
@@ -251,14 +192,15 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.status(200).json({ 
         status: 'success', 
-        message: 'الخادم يعمل بكفاءة وجاهز للتوسع!' 
+        message: 'الخادم يعمل بكفاءة وجاهز للتوسع!',
+        storage: storage?.type || 'initializing'
     });
 });
 
 // --- نقاط نهاية (APIs) لوحة الصدارة ---
 
 // حفظ نتيجة جديدة
-app.post('/api/leaderboard', (req, res) => {
+app.post('/api/leaderboard', async (req, res) => {
     let { game_id, player_name, score } = req.body;
     const parsedScore = Number(score);
     
@@ -268,19 +210,25 @@ app.post('/api/leaderboard', (req, res) => {
     // 2. الحماية من ثغرات XSS
     player_name = String(player_name).replace(/</g, "&lt;").replace(/>/g, "&gt;").substring(0, 30);
     
-    db.run(`INSERT INTO leaderboard (game_id, player_name, score) VALUES (?, ?, ?)`, [game_id, player_name, parsedScore], function(err) {
-        if (err) return res.status(500).json({ error: 'حدث خطأ داخلي' });
-        res.status(200).json({ success: true, id: this.lastID });
-    });
+    try {
+        const id = await storage.addLeaderboardScore(String(game_id).substring(0, 40), player_name, parsedScore);
+        res.status(200).json({ success: true, id });
+    } catch (err) {
+        console.error('Leaderboard write failed:', err);
+        res.status(500).json({ error: 'حدث خطأ داخلي' });
+    }
 });
 
 // جلب أفضل 10 نتائج للعبة معينة
-app.get('/api/leaderboard/:game_id', (req, res) => {
+app.get('/api/leaderboard/:game_id', async (req, res) => {
     const sort = req.query.sort === 'asc' ? 'ASC' : 'DESC'; // بعض الألعاب الأقل فيها أفضل كالزمن أو المحاولات
-    db.all(`SELECT player_name, score FROM leaderboard WHERE game_id = ? ORDER BY score ${sort} LIMIT 10`, [req.params.game_id], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'حدث خطأ داخلي' });
+    try {
+        const rows = await storage.getLeaderboard(String(req.params.game_id).substring(0, 40), sort);
         res.status(200).json(rows);
-    });
+    } catch (err) {
+        console.error('Leaderboard read failed:', err);
+        res.status(500).json({ error: 'حدث خطأ داخلي' });
+    }
 });
 
 // --- الحفظ السحابي ---
@@ -291,7 +239,7 @@ function generateCloudId() {
     return id;
 }
 
-app.post('/api/cloud-save', (req, res) => {
+app.post('/api/cloud-save', async (req, res) => {
     let { cloud_id, game_id, player_name, data } = req.body || {};
     if (!game_id || data === undefined || data === null) {
         return res.status(400).json({ error: 'بيانات غير مكتملة' });
@@ -301,8 +249,12 @@ app.post('/api/cloud-save', (req, res) => {
     player_name = String(player_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30);
 
     let payload;
+    let storedData = data;
     try {
         payload = typeof data === 'string' ? data : JSON.stringify(data);
+        if (typeof data === 'string') {
+            try { storedData = JSON.parse(data); } catch { storedData = data; }
+        }
     } catch (e) {
         return res.status(400).json({ error: 'بيانات غير صالحة' });
     }
@@ -310,62 +262,52 @@ app.post('/api/cloud-save', (req, res) => {
         return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
     }
 
-    const finalize = (id) => {
-        db.run(
-            `INSERT INTO cloud_saves (cloud_id, game_id, player_name, data, updated_at)
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-             ON CONFLICT(cloud_id, game_id) DO UPDATE SET
-               data = excluded.data,
-               player_name = excluded.player_name,
-               updated_at = CURRENT_TIMESTAMP`,
-            [id, game_id, player_name, payload],
-            function (err) {
-                if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
-                res.status(200).json({ success: true, cloud_id: id, updated_at: new Date().toISOString() });
-            }
-        );
+    const finalize = async (id) => {
+        try {
+            res.status(200).json(
+                await storage.saveCloudSave(id, game_id, player_name, storedData)
+            );
+        } catch (err) {
+            console.error('Cloud save write failed:', err);
+            res.status(500).json({ error: 'فشل الحفظ السحابي' });
+        }
     };
 
     if (cloud_id) {
         cloud_id = String(cloud_id).toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
         if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
-        return finalize(cloud_id);
+        return await finalize(cloud_id);
     }
 
     // إنشاء رمز جديد مع إعادة المحاولة عند التصادم النادر
-    const tryCreate = (attempts) => {
+    const tryCreate = async (attempts) => {
         const id = generateCloudId();
-        db.get(`SELECT cloud_id FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`, [id, game_id], (err, row) => {
-            if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
-            if (row && attempts > 0) return tryCreate(attempts - 1);
-            finalize(id);
-        });
+        try {
+            if (await storage.cloudSaveExists(id, game_id) && attempts > 0) {
+                return tryCreate(attempts - 1);
+            }
+            return finalize(id);
+        } catch (err) {
+            console.error('Cloud save collision check failed:', err);
+            res.status(500).json({ error: 'فشل الحفظ السحابي' });
+        }
     };
-    tryCreate(5);
+    await tryCreate(5);
 });
 
-app.get('/api/cloud-save/:cloud_id', (req, res) => {
+app.get('/api/cloud-save/:cloud_id', async (req, res) => {
     const cloud_id = String(req.params.cloud_id || '').toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
     const game_id = String(req.query.game_id || 'invest').substring(0, 40);
     if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
 
-    db.get(
-        `SELECT cloud_id, game_id, player_name, data, updated_at FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`,
-        [cloud_id, game_id],
-        (err, row) => {
-            if (err) return res.status(500).json({ error: 'خطأ في القراءة' });
-            if (!row) return res.status(404).json({ error: 'لا يوجد حفظ بهذا الرمز' });
-            let parsed;
-            try { parsed = JSON.parse(row.data); } catch (e) { parsed = row.data; }
-            res.status(200).json({
-                cloud_id: row.cloud_id,
-                game_id: row.game_id,
-                player_name: row.player_name,
-                data: parsed,
-                updated_at: row.updated_at
-            });
-        }
-    );
+    try {
+        const row = await storage.getCloudSave(cloud_id, game_id);
+        if (!row) return res.status(404).json({ error: 'لا يوجد حفظ بهذا الرمز' });
+        res.status(200).json(row);
+    } catch (err) {
+        console.error('Cloud save read failed:', err);
+        res.status(500).json({ error: 'خطأ في القراءة' });
+    }
 });
 
 // --- منطق اللعبة الجماعية (Agar.io Clone) ---
@@ -1153,6 +1095,15 @@ setInterval(() => {
     }
 }, 1000); // تحديث مرة واحدة كل ثانية كافية جداً لألعاب الورق
 
-server.listen(PORT, () => {
-    console.log(`🚀 الخادم يعمل بنجاح على الرابط: http://localhost:${PORT}`);
+async function startServer() {
+    storage = await createStorage();
+    console.log(`✅ تم تفعيل مخزن البيانات: ${storage.type}`);
+    server.listen(PORT, () => {
+        console.log(`🚀 الخادم يعمل بنجاح على الرابط: http://localhost:${PORT}`);
+    });
+}
+
+startServer().catch((err) => {
+    console.error('❌ فشل تشغيل مخزن البيانات:', err);
+    process.exit(1);
 });
