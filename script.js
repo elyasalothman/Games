@@ -167,7 +167,7 @@ const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'guess'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
   'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
-  'investCloudId', 'investGameProgress', 'domino_player_wins', 'domino_bot_wins',
+  'investCloudId', 'investGameProgress', 'empireGameProgress', 'domino_player_wins', 'domino_bot_wins',
   'quest_play', 'quest_score', 'quest_online',
   'quest_claimed_play', 'quest_claimed_score', 'quest_claimed_online'
 ]);
@@ -261,7 +261,22 @@ const DICT = {
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
     cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
-    cloudSyncGuestDesc: "هذا الرمز هو حسابك السحابي — احفظه لاستعادة تقدمك من أي جهاز. سجّل الدخول بـ Google للحفظ التلقائي لكل تقدمك.",
+    cloudSyncGuestDesc: "رمز خاص بلعبة الاستثمار فقط. للمزامنة الكاملة لكل تقدمك، استخدم تسجيل الدخول بـ Google أعلاه.",
+    syncCtaTitle: "مزامنة تقدمك على كل الأجهزة",
+    syncCtaDesc: "سجّل الدخول بـ Google لحفظ نقاطك وإنجازاتك وأفضل نتائجك تلقائياً — بدون تصدير أو استيراد يدوي.",
+    profileTitle: "👤 الملف الشخصي والأوسمة",
+    achievementsTitle: "🏅 إنجازاتي",
+    copyCode: "📋 نسخ",
+    profileSaved: "✅ تم حفظ الملف الشخصي",
+    favAdded: "تمت الإضافة للمفضلة ⭐",
+    favRemoved: "تمت الإزالة من المفضلة 💔",
+    shareCopied: "تم نسخ الرابط! 📋",
+    lbSaved: "تم حفظ نتيجتك في لوحة الصدارة 🏆",
+    newAchievement: "🏅 إنجاز جديد:",
+    questReward: "تم استلام",
+    questRewardSuffix: "نقطة بنجاح! 🎁",
+    noCloudCode: "لا يوجد رمز بعد — العب الاستثمار واحفظ سحابياً أولاً",
+    cloudCodeCopied: "📋 تم نسخ رمزك السحابي:",
     cloudMerged: "☁️ تم دمج تقدمك السابق مع حسابك — لم يُفقد شيء!",
     searchPlaceholder: "🔍 ابحث عن لعبة...",
     emptyGames: "لا توجد ألعاب مطابقة للبحث",
@@ -325,7 +340,22 @@ const DICT = {
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
     cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
-    cloudSyncGuestDesc: "Save this code to restore your Invest Sim progress on another device. Sign in with Google for automatic sync of all progress.",
+    cloudSyncGuestDesc: "Invest Sim only. For full progress sync across all games, sign in with Google above.",
+    syncCtaTitle: "Sync your progress across devices",
+    syncCtaDesc: "Sign in with Google to automatically save your scores, achievements, and best results — no manual export or import needed.",
+    profileTitle: "👤 Profile & Achievements",
+    achievementsTitle: "🏅 My Achievements",
+    copyCode: "📋 Copy",
+    profileSaved: "✅ Profile saved",
+    favAdded: "Added to favorites ⭐",
+    favRemoved: "Removed from favorites 💔",
+    shareCopied: "Link copied! 📋",
+    lbSaved: "Score saved to leaderboard 🏆",
+    newAchievement: "🏅 New achievement:",
+    questReward: "Claimed",
+    questRewardSuffix: "points! 🎁",
+    noCloudCode: "No code yet — play Invest Sim and cloud-save first",
+    cloudCodeCopied: "📋 Cloud code copied:",
     cloudMerged: "☁️ Your existing progress was merged with your account — nothing was lost!",
     searchPlaceholder: "🔍 Search for a game...",
     emptyGames: "No games match your search",
@@ -426,6 +456,20 @@ function applyLang() {
     if (guestCloudTitle) guestCloudTitle.textContent = dict.cloudSyncGuest;
     const guestCloudDesc = document.getElementById('profileGuestCloudDesc');
     if (guestCloudDesc) guestCloudDesc.textContent = dict.cloudSyncGuestDesc;
+    const syncCtaTitle = document.getElementById('profileSyncCtaTitle');
+    if (syncCtaTitle) syncCtaTitle.textContent = dict.syncCtaTitle;
+    const syncCtaDesc = document.getElementById('profileSyncCtaDesc');
+    if (syncCtaDesc) syncCtaDesc.textContent = dict.syncCtaDesc;
+    const syncCtaBtnText = document.getElementById('profileSyncCtaBtnText');
+    if (syncCtaBtnText) syncCtaBtnText.textContent = dict.googleSignIn;
+    const profileModalTitle = document.getElementById('profileModalTitle');
+    if (profileModalTitle) profileModalTitle.textContent = dict.profileTitle;
+    const achievementsTitle = document.getElementById('achievementsTitle');
+    if (achievementsTitle) achievementsTitle.textContent = dict.achievementsTitle;
+    const copyCodeBtn = document.getElementById('profileCopyCodeBtn');
+    if (copyCodeBtn) copyCodeBtn.textContent = dict.copyCode;
+    const skipLink = document.querySelector('.skip-link');
+    if (skipLink) skipLink.textContent = currentLang === 'ar' ? 'تخطي إلى المحتوى' : 'Skip to content';
     updateCloudSyncUI();
     document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
@@ -795,6 +839,10 @@ function mergeSyncData(local, cloud) {
       merged[key] = [...new Set([...(Array.isArray(cloudVal) ? cloudVal : []), ...(Array.isArray(localVal) ? localVal : [])])].slice(-10);
     } else if (key === 'investGameProgress') {
       merged[key] = pickBetterInvestProgress(localVal, cloudVal);
+    } else if (key === 'empireGameProgress') {
+      const netA = Number(localVal?.money) || Number(localVal?.totalEarned) || 0;
+      const netB = Number(cloudVal?.money) || Number(cloudVal?.totalEarned) || 0;
+      merged[key] = netA >= netB ? localVal : cloudVal;
     } else if (key === 'investCloudId') {
       merged[key] = localVal || cloudVal;
     } else if (key === 'globalPlayerName') {
@@ -882,12 +930,21 @@ function updateCloudSyncUI(syncing) {
   const dict = DICT[currentLang];
   const accountBox = document.getElementById('profileAccountCloudBox');
   const guestBox = document.getElementById('profileGuestCloudBox');
+  const guestCta = document.getElementById('profileGuestSyncCta');
+  const syncCtaBtn = document.getElementById('profileSyncCtaBtn');
   const statusEl = document.getElementById('profileCloudSyncStatus');
   const timeEl = document.getElementById('profileCloudSyncTime');
   const signedIn = !!currentUser;
+  const showGoogle = googleAuthEnabled && !signedIn;
 
   if (accountBox) accountBox.classList.toggle('d-none', !signedIn);
-  if (guestBox) guestBox.classList.toggle('d-none', signedIn);
+  if (guestCta) guestCta.classList.toggle('d-none', signedIn);
+  if (syncCtaBtn) syncCtaBtn.classList.toggle('d-none', !showGoogle);
+  if (guestBox) {
+    guestBox.classList.toggle('d-none', signedIn);
+    const hasInvestCode = !!getStore('investCloudId', '');
+    if (!signedIn && hasInvestCode) guestBox.classList.remove('d-none');
+  }
 
   if (statusEl) {
     statusEl.textContent = syncing ? dict.cloudSyncPending : dict.cloudSyncActive;
@@ -949,6 +1006,10 @@ function updateAuthUI() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('d-none', !showGoogle);
   });
+  const syncCtaBtn = document.getElementById('profileSyncCtaBtn');
+  if (syncCtaBtn) syncCtaBtn.classList.toggle('d-none', !showGoogle);
+  const guestCta = document.getElementById('profileGuestSyncCta');
+  if (guestCta) guestCta.classList.toggle('d-none', signedIn);
   const divider = document.getElementById('welcomeAuthDivider');
   if (divider) divider.classList.toggle('d-none', !showGoogle);
 
@@ -1074,7 +1135,7 @@ function submitScore(game_id, score, isLowerBetter = false) {
       }
       try {
         await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ game_id, player_name: playerName, score }) });
-        showToast('تم حفظ نتيجتك في لوحة الصدارة 🏆');
+        showToast(DICT[currentLang].lbSaved);
       } catch(e) { console.error(e); }
     }, 600); // ننتظر قليلاً حتى تظهر شاشة نهاية اللعبة أولاً
   }
@@ -1117,10 +1178,11 @@ function toggleFavorite(id) {
   playSound('blip');
   let favs = getStore('favorites', []);
   if (!Array.isArray(favs)) favs = [];
+  const dict = DICT[currentLang];
   if (favs.includes(id)) {
-    favs = favs.filter(f => f !== id); showToast('تمت الإزالة من المفضلة 💔');
+    favs = favs.filter(f => f !== id); showToast(dict.favRemoved);
   } else {
-    favs.push(id); showToast('تمت الإضافة للمفضلة ⭐');
+    favs.push(id); showToast(dict.favAdded);
   }
   setStore('favorites', favs); renderGames();
 }
@@ -1129,35 +1191,13 @@ function shareGame(id, name) {
   playSound('blip');
   const text = `جرب لعبة ${name} الممتعة على ألعاب اليوم وتحداني! 🎮`;
   if (navigator.share) { navigator.share({ title: 'ألعاب اليوم', text: text, url: window.location.href });
-  } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast('تم نسخ الرابط! 📋'); }
+  } else { navigator.clipboard.writeText(`${text} \n${window.location.href}`); showToast(DICT[currentLang].shareCopied); }
 }
 
 function toggleFullscreen() {
   playSound('blip');
   if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
   else if (document.exitFullscreen) document.exitFullscreen();
-}
-
-function exportSave() {
-  playSound('blip');
-  const data = JSON.stringify(localStorage);
-  const base64 = btoa(unescape(encodeURIComponent(data)));
-  navigator.clipboard.writeText(base64);
-  showToast('تم نسخ كود التقدم! احتفظ به بمكان آمن 💾');
-}
-
-function importSave() {
-  playSound('blip');
-  const code = prompt('أدخل كود النسخ الاحتياطي لاستعادة حسابك والتقدم:');
-  if (code) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(escape(atob(code))));
-      Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
-      showToast('تمت استعادة التقدم بنجاح! 🔄');
-      if (currentUser) scheduleCloudSync();
-      setTimeout(() => location.reload(), 1500);
-    } catch(e) { showToast('❌ الكود غير صحيح أو تالف!'); }
-  }
 }
 
 function openQuests() {
@@ -1181,7 +1221,8 @@ function closeQuests() { playSound('blip'); document.getElementById('questsOverl
 
 function claimQuest(id, reward) {
   playSound('coin'); setStore('quest_claimed_' + id, true); addScore(reward);
-  showToast(`تم استلام ${reward} نقطة بنجاح! 🎁`); openQuests(); // Refresh modal
+  const dict = DICT[currentLang];
+  showToast(`${dict.questReward} ${reward} ${dict.questRewardSuffix}`); openQuests();
 }
 
 // ─── PROFILE & ACHIEVEMENTS ───
@@ -1202,25 +1243,26 @@ function openProfile() {
   const codeEl = document.getElementById('profileCloudCode');
   const guestBox = document.getElementById('profileGuestCloudBox');
   if (codeEl) codeEl.textContent = cloudId || '—';
-  if (guestBox) guestBox.classList.toggle('d-none', !!currentUser);
+  if (guestBox) guestBox.classList.toggle('d-none', !!currentUser || !cloudId);
   updateCloudSyncUI(false);
 
   renderAchievements();
 }
 
 function copyCloudCode() {
+  const dict = DICT[currentLang];
   const cloudId = getStore('investCloudId', '');
-  if (!cloudId) { showToast('لا يوجد رمز بعد — العب الاستثمار واحفظ سحابياً أولاً'); return; }
+  if (!cloudId) { showToast(dict.noCloudCode); return; }
   navigator.clipboard.writeText(cloudId);
   playSound('coin');
-  showToast('📋 تم نسخ رمزك السحابي: ' + cloudId);
+  showToast(dict.cloudCodeCopied + ' ' + cloudId);
 }
 function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
 function saveProfile() {
   if (currentUser) return;
   savePlayerName(document.getElementById('profileName').value);
   setStore('globalPlayerAvatar', document.getElementById('profileAvatar').value);
-  showToast('✅ تم حفظ الملف الشخصي');
+  showToast(DICT[currentLang].profileSaved);
 }
 function renderAchievements() {
   const list = document.getElementById('achievementsList');
@@ -1237,7 +1279,7 @@ function checkAchievements() {
   ACHIEVEMENTS.forEach(ach => {
     if (!getStore(`ach_${ach.id}`, false) && ach.check()) {
       setStore(`ach_${ach.id}`, true);
-      showToast(`🏅 إنجاز جديد: ${ach.name[currentLang]}`);
+      showToast(`${DICT[currentLang].newAchievement} ${ach.name[currentLang]}`);
       playSound('levelup');
     }
   });
@@ -1383,7 +1425,7 @@ function closeActiveOverlay() {
   // تصدير الدوال للـ HTML onclick
   const api = {
     filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
-    closeQuests, claimQuest, closeProfile, saveProfile, exportSave, importSave, copyCloudCode, signOut,
+    closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
     submitScore, showToast, getStore, setStore, playSound
