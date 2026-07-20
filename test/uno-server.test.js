@@ -329,6 +329,30 @@ test('an opening +2 forces the first player to draw and lose their turn', () => 
     assert.equal(room.turnOrder[room.currentTurn], secondSeat);
 });
 
+test('a bot resolves a +4 challenge against another bot quickly, instead of freezing for the human AFK timeout', async () => {
+    const { game, connect } = createGame();
+    const human = new FakeSocket('human1');
+    join(human, connect, { name: 'Human', room: 'uno_bot_challenge_1', mode: 'computer', token: 'human_token_9234567a' });
+
+    const room = game.rooms.uno_bot_challenge_1;
+    const botTokens = Object.keys(room.players).filter((t) => t !== 'human_token_9234567a');
+    assert.ok(botTokens.length >= 2, 'computer mode should add bot opponents');
+
+    room.state = 'playing';
+    room.turnOrder = ['human_token_9234567a', ...botTokens];
+    room.currentTurn = 1;
+    room.currentColor = 'red';
+    room.discardPile = [{ color: 'red', value: '5' }];
+    room.players[botTokens[0]].cards = [{ color: 'wild', value: '+4' }];
+    room.players[botTokens[1]].cards = [{ color: 'green', value: '3' }];
+    room.pendingChallenge = { by: botTokens[0], target: botTokens[1], previousColor: 'red', illegal: false, createdAt: Date.now() };
+
+    game.gameLoop();
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    assert.equal(room.pendingChallenge, null, 'the bot must resolve well before the 15s human-AFK timeout');
+});
+
 test('a full round trip through the bot loop keeps the deck at exactly 108 cards', () => {
     const { game, connect } = createGame();
     const host = new FakeSocket('bothost');

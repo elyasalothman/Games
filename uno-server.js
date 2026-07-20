@@ -217,6 +217,7 @@ module.exports = function(io, options = {}) {
         const target = room.players[targetToken];
         const originalPlayer = room.players[by];
         room.pendingChallenge = null;
+        room.challengeThinking = false;
 
         if (!accept) {
             if (illegal) {
@@ -442,11 +443,20 @@ module.exports = function(io, options = {}) {
                     }
                 });
 
-                if (r.pendingChallenge && now - r.pendingChallenge.createdAt > CHALLENGE_TIMEOUT_MS) {
+                if (r.pendingChallenge) {
                     const target = r.players[r.pendingChallenge.target];
-                    if (target && target.isBot) {
-                        resolveChallenge(roomId, target.token, Math.random() > 0.3);
-                    } else {
+                    if (target && target.isBot && !r.challengeThinking) {
+                        // Bots decide quickly (like their normal turn "thinking" delay) instead
+                        // of sitting through the full human-AFK timeout below, so a bot-vs-bot
+                        // +4 challenge doesn't make the game appear frozen for everyone watching.
+                        r.challengeThinking = true;
+                        const challengeToken = target.token;
+                        setTimeout(() => {
+                            r.challengeThinking = false;
+                            if (!unoRooms[roomId] || !r.pendingChallenge || r.pendingChallenge.target !== challengeToken) return;
+                            resolveChallenge(roomId, challengeToken, Math.random() > 0.3);
+                        }, 1200);
+                    } else if (now - r.pendingChallenge.createdAt > CHALLENGE_TIMEOUT_MS) {
                         resolveChallenge(roomId, r.pendingChallenge.target, true);
                     }
                     continue;
