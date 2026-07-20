@@ -21,6 +21,7 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'leaderboard.db');
 const GOOGLE_ENABLED = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 // 4. تفعيل دعم الوكلاء لمعرفة IP المستخدم الحقيقي وتفعيل حظر الـ RateLimit بدقة
@@ -50,7 +51,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // إعداد قاعدة بيانات SQLite
-const db = new sqlite3.Database('./leaderboard.db', (err) => {
+const db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) console.error('خطأ في الاتصال بقاعدة البيانات:', err);
     else console.log('✅ تم الاتصال بقاعدة بيانات SQLite بنجاح');
 });
