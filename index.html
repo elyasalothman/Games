@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="لُمعة — 16 لعبة مجانية من الذكاء والورق والأونلاين. ألوان حية، مزامنة سحابية، ودعم عربي/إنجليزي.">
+<meta name="description" content="لُمعة — 20 لعبة مجانية لكل الأعمار: أطفال، عائلة، بنات، أولاد، وكبار. ذكاء، ورق، وأونلاين.">
 <meta name="keywords" content="لُمعة, Luma, ألعاب ذكاء, ألعاب متصفح, تنشيط الذاكرة, games, alhajda">
 <meta name="author" content="الياس العثمان">
 <meta name="color-scheme" content="dark light">
 <meta name="robots" content="index, follow">
 
-<meta property="og:title" content="لُمعة | 16 لعبة مجانية">
-<meta property="og:description" content="منصة لُمعة — ألعاب ذكاء وورق وأونلاين ملونة مع مزامنة سحابية تلقائية.">
+<meta property="og:title" content="لُمعة | 20 لعبة لكل الأعمار">
+<meta property="og:description" content="منصة لُمعة — ألعاب مناسبة للأطفال والعائلة والبنات والأولاد والكبار.">
 <meta property="og:url" content="https://games.alhajda.com/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ar_SA">
@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -71,7 +71,7 @@
         </div>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><span class="hero-stat-num" id="heroGameCount">16</span><span class="hero-stat-label" id="heroGamesLabel">لعبة</span></div>
+        <div class="hero-stat"><span class="hero-stat-num" id="heroGameCount">20</span><span class="hero-stat-label" id="heroGamesLabel">لعبة</span></div>
         <div class="hero-stat"><span class="hero-stat-num">🌐</span><span class="hero-stat-label" id="heroOnlineLabel">أونلاين</span></div>
         <div class="hero-stat"><span class="hero-stat-num">🏆</span><span class="hero-stat-label" id="heroLeaderLabel">صدارة</span></div>
       </div>
@@ -100,7 +100,7 @@
       <div class="stat-pill"><span id="levelLabel">مستواك: </span><span id="playerLevel">1</span> 🌟</div>
       <div class="stat-pill"><span id="streakLabel">سلسلة الأيام: </span><span id="streakCount">0</span></div>
       <div class="stat-pill"><span id="totalScoreLabel">إجمالي النقاط: </span><span id="totalScore">0</span></div>
-      <div class="stat-pill"><span id="todayGamesLabel">ألعابك اليوم: </span><span id="todayGames">0</span>/<span id="todayGamesMax">16</span></div>
+      <div class="stat-pill"><span id="todayGamesLabel">ألعابك اليوم: </span><span id="todayGames">0</span>/<span id="todayGamesMax">20</span></div>
     </div>
 
     <div class="date-banner" id="dateBanner"></div>
@@ -109,6 +109,13 @@
     <div class="search-container text-center mb-16">
       <input type="text" id="gameSearchInput" class="search-input" placeholder="🔍 ابحث عن لعبة...">
     </div>
+
+    <!-- فلتر الفئات العمرية -->
+    <section class="audience-section" aria-label="فلتر الفئات">
+      <h3 class="section-title" id="audienceTitle">لمن تلعب؟</h3>
+      <p class="audience-hint" id="audienceHint">كل فئة لها ألعاب تناسبها — أطفال، عائلة، بنات، أولاد، وكبار</p>
+      <div class="audience-filters" id="audienceFilters"></div>
+    </section>
 
     <!-- تبويبات التصنيف -->
     <div class="category-tabs" id="categoryTabs">
@@ -133,7 +140,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version">v3.3</span>
+        <span class="footer-version">v3.4</span>
       </div>
     </footer>
 
@@ -879,8 +886,89 @@
   </div>
 </div>
 
+<!-- BUBBLE MODAL — أطفال -->
+<div class="overlay" id="bubbleOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🫧 فقاعات الألوان</h2>
+      <button type="button" class="close-btn" onclick="closeGame('bubble')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="bubbleScore">0</div></div>
+      <div class="score-box"><div class="score-label">الأرواح</div><div class="score-value" id="bubbleLives">3</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="bubbleBest">0</div></div>
+    </div>
+    <div id="bubbleArea" class="bubble-area" aria-label="ساحة الفقاعات"></div>
+    <div class="text-center mt-8">
+      <button type="button" class="btn primary" id="bubbleStartBtn" onclick="startBubble()">▶ ابدأ اللعب</button>
+    </div>
+  </div>
+</div>
+
+<!-- GARDEN MODAL — بنات / عائلة -->
+<div class="overlay" id="gardenOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🌸 حديقة الورود</h2>
+      <button type="button" class="close-btn" onclick="closeGame('garden')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">الحركات</div><div class="score-value" id="gardenMoves">0</div></div>
+      <div class="score-box"><div class="score-label">أزواج</div><div class="score-value" id="gardenMatched">0</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="gardenBest">-</div></div>
+    </div>
+    <div id="gardenGrid" class="garden-grid"></div>
+    <div class="text-center mt-8"><button type="button" class="btn" onclick="initGarden()">▶ جولة جديدة</button></div>
+  </div>
+</div>
+
+<!-- XO MODAL — عائلة -->
+<div class="overlay" id="xoOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">⭕ إكس أو</h2>
+      <button type="button" class="close-btn" onclick="closeGame('xo')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">انتصاراتك</div><div class="score-value" id="xoWins">0</div></div>
+    </div>
+    <div class="text-center mb-16">
+      <select id="xoMode" class="name-input" style="max-width:220px;margin:0 auto" onchange="initXO()">
+        <option value="bot">ضد الكمبيوتر</option>
+        <option value="pvp">لاعبان على نفس الجهاز</option>
+      </select>
+      <p id="xoStatus" class="mt-8 font-bold">دورك X</p>
+    </div>
+    <div id="xoGrid" class="xo-grid"></div>
+    <div class="text-center mt-8"><button type="button" class="btn primary" onclick="initXO()">▶ جولة جديدة</button></div>
+  </div>
+</div>
+
+<!-- QUIZ MODAL — مراهقون / كبار -->
+<div class="overlay" id="quizOverlay">
+  <div class="game-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">📚 ثقافة عامة</h2>
+      <button type="button" class="close-btn" onclick="closeGame('quiz')">✕</button>
+    </div>
+    <div class="score-display">
+      <div class="score-box"><div class="score-label">النقاط</div><div class="score-value" id="quizScore">0</div></div>
+      <div class="score-box"><div class="score-label">سؤال</div><div class="score-value" id="quizNum">1/8</div></div>
+      <div class="score-box"><div class="score-label">أفضل</div><div class="score-value" id="quizBest">0</div></div>
+    </div>
+    <div id="quizPlay" class="d-none text-center">
+      <p class="quiz-question" id="quizQuestion"></p>
+      <div id="quizOptions" class="quiz-options"></div>
+    </div>
+    <div class="text-center mt-8">
+      <p id="quizLobbyText" class="text-muted mb-16">اختبر معلوماتك العامة في 8 أسئلة!</p>
+      <button type="button" class="btn primary" id="quizStartBtn" onclick="startQuiz()">▶ ابدأ الاختبار</button>
+    </div>
+  </div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
-<script src="script.js?v=10"></script>
+<script src="script.js?v=11"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {

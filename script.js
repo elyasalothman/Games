@@ -142,22 +142,37 @@ function playSound(type) {
 
 // ─── DATA (تم توحيد الألعاب وتصنيفها) ───
 const ALL_GAMES = [
-  {id:'snake',   category: 'puzzle', name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
-  {id:'memory',  category: 'puzzle', name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
-  {id:'math',    category: 'puzzle', name:{ar:'تحدي الأرقام', en:'Math Challenge'}, icon:'🔢', desc:{ar:'أجب على الأسئلة الرياضية بسرعة.', en:'Answer math questions quickly.'}},
-  {id:'word',    category: 'puzzle', name:{ar:'فك الكلمة', en:'Word Scramble'}, icon:'📝', desc:{ar:'رتّب الحروف لتكوّن كلمة صحيحة!', en:'Rearrange letters to form a word!'}},
-  {id:'reaction',category: 'puzzle', name:{ar:'رد الفعل', en:'Reaction Time'}, icon:'⚡', desc:{ar:'اضغط بمجرد تغيّر اللون!', en:'Click as soon as the color changes!'}},
-  {id:'color',   category: 'puzzle', name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
-  {id:'guesser', category: 'puzzle', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
-  {id:'sequence',category: 'puzzle', name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
-  {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
-  {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'أونلاين! كُل لتكبر وسيطر على الساحة الحية.', en:'Online! Eat to grow and rule the living arena.'}, isSignature: true, signatureTag:{ar:'أونلاين مباشر', en:'Live Online'}},
-  {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
-  {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
-  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
-  {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
-  {id:'empire',  category: 'puzzle', name:{ar:'ملوك اللمس', en:'Tap Kings'}, icon:'👑', desc:{ar:'اضغط وابنِ مملكتك من كشك الليمون إلى عرش الملوك!', en:'Tap to build from a lemonade stand to a royal throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'بناء وثروة', en:'Build & Wealth'}},
-  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true, isSignature: true, signatureTag:{ar:'أسواق واستراتيجية', en:'Markets & Strategy'}}
+  {id:'snake',   category: 'puzzle', audiences:['kids','teens','boys'], name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
+  {id:'memory',  category: 'puzzle', audiences:['kids','family','seniors'], name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
+  {id:'math',    category: 'puzzle', audiences:['kids','teens'], name:{ar:'تحدي الأرقام', en:'Math Challenge'}, icon:'🔢', desc:{ar:'أجب على الأسئلة الرياضية بسرعة.', en:'Answer math questions quickly.'}},
+  {id:'word',    category: 'puzzle', audiences:['teens','adults','family'], name:{ar:'فك الكلمة', en:'Word Scramble'}, icon:'📝', desc:{ar:'رتّب الحروف لتكوّن كلمة صحيحة!', en:'Rearrange letters to form a word!'}},
+  {id:'reaction',category: 'puzzle', audiences:['teens','boys'], name:{ar:'رد الفعل', en:'Reaction Time'}, icon:'⚡', desc:{ar:'اضغط بمجرد تغيّر اللون!', en:'Click as soon as the color changes!'}},
+  {id:'color',   category: 'puzzle', audiences:['kids','teens','girls'], name:{ar:'مطابقة الألوان', en:'Color Match'}, icon:'🎨', desc:{ar:'اختر لون النص وليس معنى الكلمة!', en:'Choose the text color, not the word!'}},
+  {id:'guesser', category: 'puzzle', audiences:['kids','family','seniors'], name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
+  {id:'sequence',category: 'puzzle', audiences:['kids','teens','family'], name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
+  {id:'anime',   category: 'puzzle', audiences:['teens','boys','girls'], name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
+  {id:'agar',    category: 'online', audiences:['teens','boys'], name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'أونلاين! كُل لتكبر وسيطر على الساحة الحية.', en:'Online! Eat to grow and rule the living arena.'}, isSignature: true, signatureTag:{ar:'أونلاين مباشر', en:'Live Online'}},
+  {id:'baloot',  category: 'card', audiences:['adults','family'], name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
+  {id:'uno',     category: 'card', audiences:['kids','teens','family','girls'], name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
+  {id:'domino',  category: 'card', audiences:['family','seniors','adults'], name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
+  {id:'money',   category: 'puzzle', audiences:['kids','teens'], name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
+  {id:'empire',  category: 'puzzle', audiences:['teens','adults','boys'], name:{ar:'ملوك اللمس', en:'Tap Kings'}, icon:'👑', desc:{ar:'اضغط وابنِ مملكتك من كشك الليمون إلى عرش الملوك!', en:'Tap to build from a lemonade stand to a royal throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'بناء وثروة', en:'Build & Wealth'}},
+  {id:'invest',  category: 'puzzle', audiences:['adults','teens'], name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true, isSignature: true, signatureTag:{ar:'أسواق واستراتيجية', en:'Markets & Strategy'}},
+  {id:'bubble',  category: 'puzzle', audiences:['kids','girls'], name:{ar:'فقاعات الألوان', en:'Color Bubbles'}, icon:'🫧', desc:{ar:'العبة خفيفة للأطفال — انقر الفقاعات قبل أن تطير!', en:'A light kids game — pop bubbles before they float away!'}, isNew: true},
+  {id:'garden',  category: 'puzzle', audiences:['girls','family','seniors'], name:{ar:'حديقة الورود', en:'Rose Garden'}, icon:'🌸', desc:{ar:'طابق الورود بهدوء — مناسبة للبنات والعائلة.', en:'Match roses calmly — great for girls and families.'}, isNew: true},
+  {id:'xo',      category: 'puzzle', audiences:['kids','family','seniors','boys','girls'], name:{ar:'إكس أو', en:'Tic-Tac-Toe'}, icon:'⭕', desc:{ar:'اللعبة الكلاسيكية للعائلة — ضد صديق أو الكمبيوتر.', en:'The classic family game — vs friend or computer.'}, isNew: true},
+  {id:'quiz',    category: 'puzzle', audiences:['teens','adults','seniors'], name:{ar:'ثقافة عامة', en:'Trivia Quiz'}, icon:'📚', desc:{ar:'أسئلة عامة للمراهقين والكبار — ثقف نفسك والعب.', en:'General trivia for teens and adults — learn while you play.'}, isNew: true}
+];
+
+const AUDIENCE_FILTERS = [
+  { id: 'all', icon: '✨', label: { ar: 'الكل', en: 'All' } },
+  { id: 'kids', icon: '🧒', label: { ar: 'أطفال', en: 'Kids' } },
+  { id: 'teens', icon: '🧑', label: { ar: 'مراهقون', en: 'Teens' } },
+  { id: 'adults', icon: '👔', label: { ar: 'كبار', en: 'Adults' } },
+  { id: 'family', icon: '👨‍👩‍👧‍👦', label: { ar: 'عائلة', en: 'Family' } },
+  { id: 'girls', icon: '💖', label: { ar: 'بنات', en: 'Girls' } },
+  { id: 'boys', icon: '⚡', label: { ar: 'أولاد', en: 'Boys' } },
+  { id: 'seniors', icon: '🧓', label: { ar: 'كبار السن', en: 'Seniors' } }
 ];
 
 // ─── STORAGE & CORE ───
@@ -235,6 +250,8 @@ const DICT = {
     tabCard: "🃏 ورق",
     tabOnline: "🌐 أونلاين",
     tabFav: "⭐ المفضلة",
+    audienceTitle: "لمن تلعب؟",
+    audienceHint: "كل فئة لها ألعاب تناسبها — أطفال، عائلة، بنات، أولاد، وكبار",
     catPuzzle: "ذكاء",
     catCard: "ورق",
     catOnline: "أونلاين",
@@ -319,6 +336,8 @@ const DICT = {
     tabCard: "🃏 Cards",
     tabOnline: "🌐 Online",
     tabFav: "⭐ Favorites",
+    audienceTitle: "Who's playing?",
+    audienceHint: "Each group has games that fit — kids, family, girls, boys, and adults",
     catPuzzle: "Puzzle",
     catCard: "Cards",
     catOnline: "Online",
@@ -508,6 +527,11 @@ function applyLang() {
     updateCloudSyncUI();
     document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
+    const audTitle = document.getElementById('audienceTitle');
+    if (audTitle) audTitle.textContent = dict.audienceTitle;
+    const audHint = document.getElementById('audienceHint');
+    if (audHint) audHint.textContent = dict.audienceHint;
+    renderAudienceFilters();
     const recentTitle = document.getElementById('recentTitle');
     if (recentTitle) recentTitle.textContent = dict.recent;
     const installText = document.getElementById('installBannerText');
@@ -532,6 +556,19 @@ function toggleLang() {
 }
 
 let currentCategory = 'all';
+let currentAudience = 'all';
+
+function filterAudience(aud, btnEvent) {
+  playSound('blip');
+  currentAudience = aud;
+  document.querySelectorAll('.audience-btn').forEach(b => b.classList.remove('active'));
+  if (btnEvent) {
+    const btn = btnEvent.target.closest ? btnEvent.target.closest('.audience-btn') : btnEvent.target;
+    if (btn) btn.classList.add('active');
+  }
+  renderGames();
+}
+
 function filterCategory(cat, btnEvent) {
   playSound('blip');
   currentCategory = cat;
@@ -556,6 +593,7 @@ function renderGames() {
   const filtered = ALL_GAMES.filter(g => {
     if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
     if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
+    if (currentAudience !== 'all' && !(g.audiences || []).includes(currentAudience)) return false;
     const gameName = g.name.ar + ' ' + g.name.en;
     return !term || gameName.toLowerCase().includes(term);
   });
@@ -640,6 +678,16 @@ function renderSignature() {
   }).join('');
 }
 
+function renderAudienceFilters() {
+  const box = document.getElementById('audienceFilters');
+  if (!box) return;
+  box.innerHTML = AUDIENCE_FILTERS.map(f =>
+    `<button type="button" class="audience-btn${currentAudience === f.id ? ' active' : ''}" data-aud="${f.id}">
+      <span>${f.icon}</span> ${f.label[currentLang] || f.label.ar}
+    </button>`
+  ).join('');
+}
+
 function renderFeatured() {
   const container = document.getElementById('featuredGames');
   if (!container) return;
@@ -694,6 +742,10 @@ const gameFiles = {
   'money': 'money-game.js',
   'empire': 'empire-game.js',
   'domino': 'domino-game.js',
+  'bubble': 'bubble-game.js',
+  'garden': 'garden-game.js',
+  'xo': 'xo-game.js',
+  'quiz': 'quiz-game.js',
   'invest': 'invest-game.js'
 };
 
@@ -713,6 +765,10 @@ const gameInitializers = {
   'money': () => typeof initMoney === 'function' && initMoney(),
   'empire': () => typeof initEmpire === 'function' && initEmpire(),
   'domino': () => typeof initDomino === 'function' && initDomino(),
+  'bubble': () => typeof initBubble === 'function' && initBubble(),
+  'garden': () => typeof initGarden === 'function' && initGarden(),
+  'xo': () => typeof initXO === 'function' && initXO(),
+  'quiz': () => typeof initQuiz === 'function' && initQuiz(),
   'invest': () => typeof initInvest === 'function' && initInvest()
 };
 
@@ -762,6 +818,7 @@ const gameClosers = {
   'money': () => typeof stopMoney === 'function' && stopMoney(),
   'empire': () => typeof closeEmpire === 'function' && closeEmpire(),
   'domino': () => typeof closeDomino === 'function' && closeDomino(),
+  'bubble': () => typeof stopBubble === 'function' && stopBubble(),
   'invest': () => typeof closeInvest === 'function' && closeInvest()
 };
 
@@ -1443,6 +1500,15 @@ function closeActiveOverlay() {
       filterCategory(btn.dataset.cat, e);
     });
 
+    const audienceFilters = document.getElementById('audienceFilters');
+    if (audienceFilters) {
+      audienceFilters.addEventListener('click', (e) => {
+        const btn = e.target.closest('.audience-btn');
+        if (!btn) return;
+        filterAudience(btn.dataset.aud, e);
+      });
+    }
+
     document.getElementById('featuredGames').addEventListener('click', (e) => {
       const card = e.target.closest('.featured-card');
       if (card) openGame(card.dataset.gameId);
@@ -1500,7 +1566,7 @@ function closeActiveOverlay() {
 
   // تصدير الدوال للـ HTML onclick
   const api = {
-    filterCategory, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
+    filterCategory, filterAudience, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
     closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
