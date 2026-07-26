@@ -12,7 +12,9 @@ function initBaloot() {
 }
 
 function joinBalootGame(mode) {
-    const name = document.getElementById('balootName').value || 'لاعب';
+    const name = (document.getElementById('balootName').value || '').trim();
+    const playerName = name || (typeof getStore === 'function' ? getStore('globalPlayerName', '') : '') || 'لاعب';
+    if (name && typeof savePlayerName === 'function') savePlayerName(name);
     let room = 'public_baloot';
     
     if (mode === 'private') {
@@ -27,7 +29,7 @@ function joinBalootGame(mode) {
     
     // الاتصال بخادم البلوت
     balootSocket = io();
-    balootSocket.emit('joinBaloot', { name, room, mode });
+    balootSocket.emit('joinBaloot', { name: playerName, room, mode });
     
     // الاستماع لحالة الطاولة والأوراق
     balootSocket.on('balootGameState', (state) => {

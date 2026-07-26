@@ -5,7 +5,7 @@ let seqState = { sequence: [], playerStep: 0, level: 1, playing: false };
 function initSequence(){
   seqState = { sequence: [], playerStep: 0, level: 1, playing: false };
   document.getElementById('seqLevel').textContent = '1';
-  document.getElementById('seqBest').textContent = getStore('best_seq', 0);
+  document.getElementById('seqBest').textContent = getStore('best_sequence', getStore('best_seq', 0));
   document.getElementById('seqStartBtn').classList.remove('d-none');
 }
 function startSequence(){
@@ -49,8 +49,8 @@ function handleSeqClick(id){
     if(seqState.playerStep === seqState.sequence.length) {
       playSound('levelup');
       seqState.level++; document.getElementById('seqLevel').textContent = seqState.level;
-      const best = Math.max(seqState.level - 1, getStore('best_seq', 0));
-      setStore('best_seq', best); document.getElementById('seqBest').textContent = best;
+      const best = Math.max(seqState.level - 1, getStore('best_sequence', getStore('best_seq', 0)));
+      setStore('best_sequence', best); document.getElementById('seqBest').textContent = best;
       setTimeout(nextSeqLevel, 1000);
     }
   } else {

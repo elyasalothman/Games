@@ -1,20 +1,30 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const sqlite3 = require('sqlite3').verbose();
 const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const { createGoogleVerify } = require('./auth');
+const { createStorage } = require('./storage');
+const { APP_VERSION, CACHE_NAME } = require('./app-version');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         // حصر الاتصال بدومينك في بيئة الإنتاج لحماية الخادم
-        origin: process.env.NODE_ENV === 'production' ? ["https://games.alhajda.com/"] : "*",
+        origin: process.env.NODE_ENV === 'production' ? ["https://games.alhajda.com"] : "*",
     }
 });
 const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const GOOGLE_ENABLED = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+let storage;
 
 // 4. تفعيل دعم الوكلاء لمعرفة IP المستخدم الحقيقي وتفعيل حظر الـ RateLimit بدقة
 app.set('trust proxy', 1);
@@ -28,40 +38,114 @@ app.use(compression());
 // Middleware لقراءة البيانات المرسلة بصيغة JSON
 app.use(express.json());
 
-// إعداد قاعدة بيانات SQLite
-const db = new sqlite3.Database('./leaderboard.db', (err) => {
-    if (err) console.error('خطأ في الاتصال بقاعدة البيانات:', err);
-    else console.log('✅ تم الاتصال بقاعدة بيانات SQLite بنجاح');
-});
+// جلسات المستخدم وتسجيل الدخول بـ Google
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000
+    }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// 6. الإغلاق الآمن لقاعدة البيانات (Graceful Shutdown) لمنع تلفها
-const shutdown = () => {
-    db.close(() => {
-        console.log('تم إغلاق قاعدة البيانات بأمان.');
-        process.exit(0);
-    });
+// الإغلاق الآمن لمخزن البيانات
+const shutdown = async () => {
+    if (storage) await storage.close();
+    console.log('تم إغلاق مخزن البيانات بأمان.');
+    process.exit(0);
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// إنشاء جدول لوحة الصدارة إذا لم يكن موجوداً
-db.run(`CREATE TABLE IF NOT EXISTS leaderboard (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id TEXT NOT NULL,
-    player_name TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
+// --- تسجيل الدخول بـ Google ---
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => {
+    storage.getUserById(id).then((user) => done(null, user)).catch(done);
+});
 
-// جدول الحفظ السحابي (للتقدم طويل الأمد مثل لعبة الاستثمار)
-db.run(`CREATE TABLE IF NOT EXISTS cloud_saves (
-    cloud_id TEXT NOT NULL,
-    game_id TEXT NOT NULL,
-    player_name TEXT DEFAULT '',
-    data TEXT NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (cloud_id, game_id)
-)`);
+function configureGoogleAuth() {
+    if (GOOGLE_ENABLED) {
+        passport.use(new GoogleStrategy({
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: `${BASE_URL}/auth/google/callback`
+        }, createGoogleVerify(storage)));
+        console.log('✅ Google Sign-In enabled');
+    } else {
+        console.log('ℹ️ Google Sign-In disabled — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable');
+    }
+}
+
+app.get('/auth/status', (req, res) => {
+    res.status(200).json({ googleEnabled: GOOGLE_ENABLED, authenticated: !!req.user });
+});
+
+app.get('/auth/me', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'غير مسجل الدخول' });
+    res.status(200).json({
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        avatar_url: req.user.avatar_url
+    });
+});
+
+if (GOOGLE_ENABLED) {
+    app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+    app.get('/auth/google/callback',
+        passport.authenticate('google', { failureRedirect: '/?auth=failed' }),
+        (req, res) => res.redirect('/?auth=success')
+    );
+}
+
+app.post('/auth/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) return res.status(500).json({ error: 'فشل تسجيل الخروج' });
+        req.session.destroy(() => {
+            res.clearCookie('connect.sid');
+            res.status(200).json({ success: true });
+        });
+    });
+});
+
+function requireAuth(req, res, next) {
+    if (!req.user) return res.status(401).json({ error: 'يجب تسجيل الدخول' });
+    next();
+}
+
+// --- مزامنة سحابية لحسابات Google ---
+app.get('/api/user-sync', requireAuth, async (req, res) => {
+    try {
+        res.status(200).json(await storage.getUserSave(req.user.id));
+    } catch (err) {
+        console.error('User sync read failed:', err);
+        res.status(500).json({ error: 'خطأ في القراءة' });
+    }
+});
+
+app.post('/api/user-sync', requireAuth, async (req, res) => {
+    const { data } = req.body || {};
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return res.status(400).json({ error: 'بيانات غير صالحة' });
+    }
+    let payload;
+    try { payload = JSON.stringify(data); } catch (e) {
+        return res.status(400).json({ error: 'بيانات غير صالحة' });
+    }
+    if (payload.length > 500000) {
+        return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
+    }
+    try {
+        res.status(200).json(await storage.saveUserData(req.user.id, data));
+    } catch (err) {
+        console.error('User sync write failed:', err);
+        res.status(500).json({ error: 'فشل الحفظ السحابي' });
+    }
+});
 
 // إعداد نظام الحماية (Rate Limiting)
 const limiter = rateLimit({
@@ -73,8 +157,27 @@ app.use('/api', limiter); // تطبيق الحماية على واجهات ال�
 
 // تقديم الملفات الثابتة الموجودة في نفس المجلد (مثل index.html والآيقونات)
 const staticOptions = {
-    maxAge: '30d', // زيادة مدة التخزين المؤقت إلى 30 يوماً لتسريع التحميل للزوار العائدين
     etag: true,
+    setHeaders: (res, filePath) => {
+        const fileName = path.basename(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        // HTML / SW / manifest: always revalidate so brand & UI updates show immediately
+        if (fileName === 'index.html' || fileName === 'sw.js' || fileName === 'manifest.json') {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            return;
+        }
+        // Versioned CSS/JS (?v=): short cache is fine; without query, revalidate
+        if (ext === '.css' || ext === '.js') {
+            res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+            return;
+        }
+        // Images / fonts / audio
+        if (['.png', '.svg', '.jpg', '.jpeg', '.webp', '.ico', '.mp3', '.woff2'].includes(ext)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 days
+            return;
+        }
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+    },
 };
 app.use(express.static(path.join(__dirname), staticOptions));
 
@@ -87,14 +190,55 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.status(200).json({ 
         status: 'success', 
-        message: 'الخادم يعمل بكفاءة وجاهز للتوسع!' 
+        message: 'الخادم يعمل بكفاءة وجاهز للتوسع!',
+        storage: storage?.type || 'initializing',
+        version: APP_VERSION
     });
+});
+
+// إصدار التطبيق — يستخدمه المتصفح لكشف التحديثات وكسر الكاش
+app.get('/api/version', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.status(200).json({
+        version: APP_VERSION,
+        cache: CACHE_NAME,
+        builtAt: process.env.BUILD_TIME || null
+    });
+});
+
+// بذرة أسعار حية لمحاكاة الاستثمار (CoinGecko — بدون مفتاح)
+let marketSeedCache = { at: 0, data: null };
+app.get('/api/market-seed', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (marketSeedCache.data && now - marketSeedCache.at < 5 * 60 * 1000) {
+            return res.json(marketSeedCache.data);
+        }
+        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true';
+        const upstream = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!upstream.ok) throw new Error('upstream ' + upstream.status);
+        const json = await upstream.json();
+        const payload = {
+            ok: true,
+            source: 'coingecko',
+            fetchedAt: new Date().toISOString(),
+            btcUsd: json.bitcoin?.usd ?? null,
+            btcChange24h: json.bitcoin?.usd_24h_change ?? null,
+            goldUsd: json['pax-gold']?.usd ?? null,
+            goldChange24h: json['pax-gold']?.usd_24h_change ?? null
+        };
+        marketSeedCache = { at: now, data: payload };
+        res.json(payload);
+    } catch (err) {
+        console.warn('market-seed failed:', err.message);
+        res.json({ ok: false, error: 'live_unavailable' });
+    }
 });
 
 // --- نقاط نهاية (APIs) لوحة الصدارة ---
 
 // حفظ نتيجة جديدة
-app.post('/api/leaderboard', (req, res) => {
+app.post('/api/leaderboard', async (req, res) => {
     let { game_id, player_name, score } = req.body;
     const parsedScore = Number(score);
     
@@ -104,19 +248,25 @@ app.post('/api/leaderboard', (req, res) => {
     // 2. الحماية من ثغرات XSS
     player_name = String(player_name).replace(/</g, "&lt;").replace(/>/g, "&gt;").substring(0, 30);
     
-    db.run(`INSERT INTO leaderboard (game_id, player_name, score) VALUES (?, ?, ?)`, [game_id, player_name, parsedScore], function(err) {
-        if (err) return res.status(500).json({ error: 'حدث خطأ داخلي' });
-        res.status(200).json({ success: true, id: this.lastID });
-    });
+    try {
+        const id = await storage.addLeaderboardScore(String(game_id).substring(0, 40), player_name, parsedScore);
+        res.status(200).json({ success: true, id });
+    } catch (err) {
+        console.error('Leaderboard write failed:', err);
+        res.status(500).json({ error: 'حدث خطأ داخلي' });
+    }
 });
 
 // جلب أفضل 10 نتائج للعبة معينة
-app.get('/api/leaderboard/:game_id', (req, res) => {
+app.get('/api/leaderboard/:game_id', async (req, res) => {
     const sort = req.query.sort === 'asc' ? 'ASC' : 'DESC'; // بعض الألعاب الأقل فيها أفضل كالزمن أو المحاولات
-    db.all(`SELECT player_name, score FROM leaderboard WHERE game_id = ? ORDER BY score ${sort} LIMIT 10`, [req.params.game_id], (err, rows) => {
-        if (err) return res.status(500).json({ error: 'حدث خطأ داخلي' });
+    try {
+        const rows = await storage.getLeaderboard(String(req.params.game_id).substring(0, 40), sort);
         res.status(200).json(rows);
-    });
+    } catch (err) {
+        console.error('Leaderboard read failed:', err);
+        res.status(500).json({ error: 'حدث خطأ داخلي' });
+    }
 });
 
 // --- الحفظ السحابي ---
@@ -127,7 +277,7 @@ function generateCloudId() {
     return id;
 }
 
-app.post('/api/cloud-save', (req, res) => {
+app.post('/api/cloud-save', async (req, res) => {
     let { cloud_id, game_id, player_name, data } = req.body || {};
     if (!game_id || data === undefined || data === null) {
         return res.status(400).json({ error: 'بيانات غير مكتملة' });
@@ -137,8 +287,12 @@ app.post('/api/cloud-save', (req, res) => {
     player_name = String(player_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 30);
 
     let payload;
+    let storedData = data;
     try {
         payload = typeof data === 'string' ? data : JSON.stringify(data);
+        if (typeof data === 'string') {
+            try { storedData = JSON.parse(data); } catch { storedData = data; }
+        }
     } catch (e) {
         return res.status(400).json({ error: 'بيانات غير صالحة' });
     }
@@ -146,62 +300,52 @@ app.post('/api/cloud-save', (req, res) => {
         return res.status(400).json({ error: 'حجم البيانات كبير جداً' });
     }
 
-    const finalize = (id) => {
-        db.run(
-            `INSERT INTO cloud_saves (cloud_id, game_id, player_name, data, updated_at)
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-             ON CONFLICT(cloud_id, game_id) DO UPDATE SET
-               data = excluded.data,
-               player_name = excluded.player_name,
-               updated_at = CURRENT_TIMESTAMP`,
-            [id, game_id, player_name, payload],
-            function (err) {
-                if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
-                res.status(200).json({ success: true, cloud_id: id, updated_at: new Date().toISOString() });
-            }
-        );
+    const finalize = async (id) => {
+        try {
+            res.status(200).json(
+                await storage.saveCloudSave(id, game_id, player_name, storedData)
+            );
+        } catch (err) {
+            console.error('Cloud save write failed:', err);
+            res.status(500).json({ error: 'فشل الحفظ السحابي' });
+        }
     };
 
     if (cloud_id) {
         cloud_id = String(cloud_id).toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
         if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
-        return finalize(cloud_id);
+        return await finalize(cloud_id);
     }
 
     // إنشاء رمز جديد مع إعادة المحاولة عند التصادم النادر
-    const tryCreate = (attempts) => {
+    const tryCreate = async (attempts) => {
         const id = generateCloudId();
-        db.get(`SELECT cloud_id FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`, [id, game_id], (err, row) => {
-            if (err) return res.status(500).json({ error: 'فشل الحفظ السحابي' });
-            if (row && attempts > 0) return tryCreate(attempts - 1);
-            finalize(id);
-        });
+        try {
+            if (await storage.cloudSaveExists(id, game_id) && attempts > 0) {
+                return tryCreate(attempts - 1);
+            }
+            return finalize(id);
+        } catch (err) {
+            console.error('Cloud save collision check failed:', err);
+            res.status(500).json({ error: 'فشل الحفظ السحابي' });
+        }
     };
-    tryCreate(5);
+    await tryCreate(5);
 });
 
-app.get('/api/cloud-save/:cloud_id', (req, res) => {
+app.get('/api/cloud-save/:cloud_id', async (req, res) => {
     const cloud_id = String(req.params.cloud_id || '').toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 12);
     const game_id = String(req.query.game_id || 'invest').substring(0, 40);
     if (cloud_id.length < 6) return res.status(400).json({ error: 'رمز السحابة غير صالح' });
 
-    db.get(
-        `SELECT cloud_id, game_id, player_name, data, updated_at FROM cloud_saves WHERE cloud_id = ? AND game_id = ?`,
-        [cloud_id, game_id],
-        (err, row) => {
-            if (err) return res.status(500).json({ error: 'خطأ في القراءة' });
-            if (!row) return res.status(404).json({ error: 'لا يوجد حفظ بهذا الرمز' });
-            let parsed;
-            try { parsed = JSON.parse(row.data); } catch (e) { parsed = row.data; }
-            res.status(200).json({
-                cloud_id: row.cloud_id,
-                game_id: row.game_id,
-                player_name: row.player_name,
-                data: parsed,
-                updated_at: row.updated_at
-            });
-        }
-    );
+    try {
+        const row = await storage.getCloudSave(cloud_id, game_id);
+        if (!row) return res.status(404).json({ error: 'لا يوجد حفظ بهذا الرمز' });
+        res.status(200).json(row);
+    } catch (err) {
+        console.error('Cloud save read failed:', err);
+        res.status(500).json({ error: 'خطأ في القراءة' });
+    }
 });
 
 // --- منطق اللعبة الجماعية (Agar.io Clone) ---
@@ -989,6 +1133,16 @@ setInterval(() => {
     }
 }, 1000); // تحديث مرة واحدة كل ثانية كافية جداً لألعاب الورق
 
-server.listen(PORT, () => {
-    console.log(`🚀 الخادم يعمل بنجاح على الرابط: http://localhost:${PORT}`);
+async function startServer() {
+    storage = await createStorage();
+    configureGoogleAuth();
+    console.log(`✅ تم تفعيل مخزن البيانات: ${storage.type}`);
+    server.listen(PORT, () => {
+        console.log(`🚀 الخادم يعمل بنجاح على الرابط: http://localhost:${PORT}`);
+    });
+}
+
+startServer().catch((err) => {
+    console.error('❌ فشل تشغيل مخزن البيانات:', err);
+    process.exit(1);
 });

@@ -1,12 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#060b14"/>
-  <rect x="7" y="21" width="50" height="26" rx="9" fill="none" stroke="#00f5ff" stroke-width="2.8"/>
-  <rect x="9" y="41" width="13" height="11" rx="5" fill="none" stroke="#00f5ff" stroke-width="2.8"/>
-  <rect x="42" y="41" width="13" height="11" rx="5" fill="none" stroke="#00f5ff" stroke-width="2.8"/>
-  <rect x="19" y="27" width="4" height="13" rx="2" fill="#00f5ff"/>
-  <rect x="14" y="32" width="14" height="4" rx="2" fill="#00f5ff"/>
-  <circle cx="41" cy="30" r="2.8" fill="#00f5ff" opacity="0.6"/>
-  <circle cx="47" cy="30" r="2.8" fill="#00f5ff"/>
-  <circle cx="44" cy="36" r="2.8" fill="#00f5ff" opacity="0.6"/>
-  <rect x="28" y="34" width="8" height="2.5" rx="1.2" fill="#00f5ff" opacity="0.45"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a1438"/>
+      <stop offset="100%" stop-color="#2d1f5e"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6ec8ff"/>
+      <stop offset="50%" stop-color="#c77dff"/>
+      <stop offset="100%" stop-color="#ffc857"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="url(#glow)" stroke-width="2.5" opacity="0.35"/>
+  <text x="32" y="40" text-anchor="middle" font-family="Tajawal, Arial, sans-serif" font-size="28" font-weight="800" fill="url(#glow)">ل</text>
 </svg>

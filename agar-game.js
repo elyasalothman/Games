@@ -12,9 +12,28 @@ let agarCvs = null, agarCtx = null; // لتخزين الكانفاس لتسري�
 let hasAgarEvents = false; // لمنع تكرار مستمعات الأحداث
 let agarRenderFrame = null; // للتحكم في الإطارات ومنع التكدس
 let agarLowGraphics = false; // متغير حالة الرسومات المنخفضة
+let agarJoinMode = 'public';
+let agarPeakMass = 0;
+let agarStartTime = 0;
+let agarLastMode = 'computer';
+
+function updateAgarPreview() {
+  const cell = document.getElementById('agarPreviewCell');
+  const skinEl = document.getElementById('agarPreviewSkin');
+  const nameEl = document.getElementById('agarPreviewName');
+  const color = document.getElementById('agarColor')?.value || '#00d2ff';
+  const skin = document.getElementById('agarSkin')?.value || '';
+  const name = document.getElementById('agarName')?.value?.trim() || 'خليتك';
+  if (cell) {
+    cell.style.background = `radial-gradient(circle at 35% 30%, #fff8, transparent 45%), ${color}`;
+    cell.style.boxShadow = `0 0 24px ${color}88`;
+  }
+  if (skinEl) skinEl.textContent = skin;
+  if (nameEl) nameEl.textContent = name;
+}
 
 function initAgar() {
-    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn', 'joystickContainer'].forEach(id => {
+    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn', 'agarDeathScreen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             if (id === 'agarStartScreen') el.classList.remove('d-none');
@@ -22,6 +41,16 @@ function initAgar() {
         }
     });
     if(socket) { socket.disconnect(); socket = null; }
+    updateAgarPreview();
+    const colorEl = document.getElementById('agarColor');
+    const skinEl = document.getElementById('agarSkin');
+    const nameEl = document.getElementById('agarName');
+    if (colorEl && !colorEl.dataset.previewBound) {
+      colorEl.dataset.previewBound = '1';
+      colorEl.addEventListener('input', updateAgarPreview);
+      skinEl?.addEventListener('change', updateAgarPreview);
+      nameEl?.addEventListener('input', updateAgarPreview);
+    }
 }
 
 function joinAgarGame(mode) {
@@ -35,7 +64,9 @@ function joinAgarGame(mode) {
     const skinEl = document.getElementById('agarSkin');
     const lowGraphicsEl = document.getElementById('agarLowGraphics');
     agarLowGraphics = lowGraphicsEl ? lowGraphicsEl.checked : false;
-    const name = (nameEl && nameEl.value) ? nameEl.value : 'لاعب';
+    const name = (nameEl && nameEl.value) ? nameEl.value.trim() : '';
+    const playerName = name || (typeof getStore === 'function' ? getStore('globalPlayerName', '') : '') || 'لاعب';
+    if (name && typeof savePlayerName === 'function') savePlayerName(name);
     const color = (colorEl && colorEl.value) ? colorEl.value : '#007aff';
     const skin = (skinEl && skinEl.value) ? skinEl.value : '';
     let room = 'public';
@@ -47,8 +78,13 @@ function joinAgarGame(mode) {
         room = 'bot_room_' + Math.random().toString(36).substr(2, 6);
     }
 
+    agarLastMode = mode;
+    agarPeakMass = 0;
+    agarStartTime = Date.now();
+
     const startScreen = document.getElementById('agarStartScreen');
     if (startScreen) startScreen.classList.add('d-none');
+    document.getElementById('agarDeathScreen')?.classList.add('d-none');
     
     const cvs = agarCvs || document.getElementById('agarCanvas');
     agarCvs = cvs;
@@ -86,7 +122,7 @@ function joinAgarGame(mode) {
         ctx.fillText('❌ فشل الاتصال بالخادم! يرجى تحديث الصفحة.', cvs.width / 2, cvs.height / 2);
     });
 
-    socket.emit('joinGame', { name, room, mode, color, skin });
+    socket.emit('joinGame', { name: playerName, room, mode, color, skin });
     
     socket.on('init', (data) => {
         myAgarId = data.id;
@@ -123,8 +159,16 @@ function joinAgarGame(mode) {
         }
         if (agarRenderFrame) cancelAnimationFrame(agarRenderFrame);
         agarRenderFrame = requestAnimationFrame(drawAgar);
+        // تتبع أفضل كتلة للاعب
+        const me = agarState.players[myAgarId];
+        if (me) {
+          const mass = Array.isArray(me.cells)
+            ? me.cells.reduce((s, c) => s + (c.r * c.r), 0)
+            : (me.r ? me.r * me.r : 0);
+          if (mass > agarPeakMass) agarPeakMass = mass;
+        }
     });
-    socket.on('died', () => { showToast('❌ لقد تم ابتلاعك!'); playSound('gameover'); initAgar(); });
+    socket.on('died', () => { showAgarDeath(); });
 
     if (!hasAgarEvents) {
         cvs.addEventListener('mousemove', (e) => {
@@ -224,6 +268,43 @@ function joinAgarGame(mode) {
 
     window.addEventListener('keydown', handleAgarKey);
 }
+
+function showAgarDeath() {
+  playSound('gameover');
+  if (socket) { socket.disconnect(); socket = null; }
+  const cvs = document.getElementById('agarCanvas');
+  if (cvs) cvs.classList.add('d-none');
+  document.getElementById('agarStatus')?.classList.add('d-none');
+  document.getElementById('mobileSplitBtn')?.classList.add('d-none');
+  document.getElementById('mobileShootBtn')?.classList.add('d-none');
+  document.getElementById('joystickContainer')?.classList.add('d-none');
+  const death = document.getElementById('agarDeathScreen');
+  if (death) death.classList.remove('d-none');
+  const massEl = document.getElementById('agarDeathMass');
+  const timeEl = document.getElementById('agarDeathTime');
+  const secs = Math.max(1, Math.round((Date.now() - (agarStartTime || Date.now())) / 1000));
+  if (massEl) massEl.textContent = Math.round(Math.sqrt(agarPeakMass) || 0);
+  if (timeEl) timeEl.textContent = secs + 'ث';
+  const score = Math.round(Math.sqrt(agarPeakMass) || 0);
+  if (score > 0 && typeof setStore === 'function') {
+    setStore('best_agar', Math.max(getStore('best_agar', 0), score));
+  }
+  if (score > 0 && typeof submitScore === 'function') submitScore('agar', score, false);
+  if (typeof showToast === 'function') showToast('❌ انتهت الجولة — راجع إحصاءاتك');
+}
+
+function agarPlayAgain() {
+  document.getElementById('agarDeathScreen')?.classList.add('d-none');
+  joinAgarGame(agarLastMode || 'computer');
+}
+
+function agarBackToLobby() {
+  document.getElementById('agarDeathScreen')?.classList.add('d-none');
+  initAgar();
+}
+
+window.agarPlayAgain = agarPlayAgain;
+window.agarBackToLobby = agarBackToLobby;
 
 function handleAgarKey(e) {
     if (e.code === 'KeyS' || e.code === 'KeyQ') {
@@ -531,7 +612,6 @@ function closeAgar() {
     if(socket) socket.disconnect(); 
     if(agarLoop) clearInterval(agarLoop); 
     window.removeEventListener('keydown', handleAgarKey);
-    initAgar();
 }
 
 // دالة مساعدة لتغميق/تفتيح الألوان في التدرجات (Hex to Darker Hex)

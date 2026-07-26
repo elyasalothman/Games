@@ -1,12 +1,12 @@
 # استخدام نسخة حديثة وخفيفة من Node.js
-FROM node:18-alpine
+FROM node:22-alpine
 
 # تعيين مسار العمل داخل الحاوية
 WORKDIR /usr/src/app
 
 # نسخ ملفات الاعتماديات وتثبيتها أولاً
 COPY package*.json ./
-RUN npm install --only=production
+RUN npm ci --omit=dev
 
 # نسخ باقي ملفات المشروع (بما في ذلك index.html و server.js)
 COPY . .
