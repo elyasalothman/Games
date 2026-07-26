@@ -141,6 +141,8 @@ function playSound(type) {
 }
 
 // ─── DATA (تم توحيد الألعاب وتصنيفها) ───
+const APP_VERSION = '3.0';
+
 const ALL_GAMES = [
   {id:'snake',   category: 'puzzle', name:{ar:'الثعبان', en:'Snake'}, icon:'🐍', desc:{ar:'كُل الطعام دون أن تصطدم!', en:'Eat the food without crashing!'}},
   {id:'memory',  category: 'puzzle', name:{ar:'تطابق الذاكرة', en:'Memory Match'}, icon:'🧠', desc:{ar:'اقلب البطاقات واكتشف الأزواج المتطابقة!', en:'Flip cards and find matching pairs!'}},
@@ -151,13 +153,13 @@ const ALL_GAMES = [
   {id:'guesser', category: 'puzzle', name:{ar:'خمن الرقم', en:'Number Guesser'}, icon:'🤔', desc:{ar:'هل يمكنك تخمين الرقم السري؟', en:'Can you guess the secret number?'}},
   {id:'sequence',category: 'puzzle', name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
   {id:'anime',   category: 'puzzle', name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
-  {id:'agar',    category: 'online', name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
-  {id:'baloot',  category: 'card', name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
-  {id:'uno',     category: 'card', name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
-  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true},
+  {id:'agar',    category: 'online', online: true, name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'لعبة أونلاين! كُل لتكبر وتجنب الأعداء.', en:'Online! Eat to grow and avoid enemies.'}},
+  {id:'baloot',  category: 'card', online: true, name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}},
+  {id:'uno',     category: 'card', online: true, name:{ar:'أونو', en:'Uno'}, icon:'🃏', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
+  {id:'domino',  category: 'card', name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, comingSoon: true},
   {id:'money',   category: 'puzzle', name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
   {id:'empire',  category: 'puzzle', name:{ar:'إمبراطورية الضغط', en:'Tap Empire'}, icon:'👑', desc:{ar:'اضغط واجمع الثروة وابنِ إمبراطوريتك على الجوال!', en:'Tap to earn and build your mobile money empire!'}, isNew: true},
-  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true}
+  {id:'invest',  category: 'puzzle', name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, comingSoon: true}
 ];
 
 // ─── STORAGE & CORE ───
@@ -210,9 +212,9 @@ const DICT = {
     catPuzzle: "ذكاء",
     catCard: "ورق",
     catOnline: "أونلاين",
-    heroTitle: "العب، تنافس، وطوّر مهاراتك!",
-    heroDesc: "مجموعة متنوعة من ألعاب الذكاء والورق والأونلاين — مجانية بالكامل وبدون تسجيل.",
-    randomPlay: "🎲 العب عشوائياً",
+    heroTitle: "ألعاب اليوم",
+    heroDesc: "ذكاء · ورق · أونلاين — مجاناً وبدون تسجيل",
+    randomPlay: "العب عشوائياً",
     dailyQuests: "📋 المهام اليومية",
     heroGames: "لعبة",
     heroOnline: "أونلاين",
@@ -231,6 +233,8 @@ const DICT = {
     loadingGame: "جاري تحميل اللعبة...",
     recent: "🕐 آخر ما لعبت",
     newBadge: "جديد",
+    comingSoon: "قريباً",
+    comingSoonToast: "🚧 هذه اللعبة قيد التطوير — قريباً!",
     installBanner: "📲 ثبّت ألعاب اليوم على جهازك للوصول السريع!",
     installBtn: "تثبيت",
     questPlay: "العب 5 ألعاب مختلفة",
@@ -261,9 +265,9 @@ const DICT = {
     catPuzzle: "Puzzle",
     catCard: "Cards",
     catOnline: "Online",
-    heroTitle: "Play, Compete, and Level Up!",
-    heroDesc: "A variety of puzzle, card, and online games — completely free, no signup required.",
-    randomPlay: "🎲 Random Game",
+    heroTitle: "Games Today",
+    heroDesc: "Puzzle · Cards · Online — free, no signup",
+    randomPlay: "Play Random",
     dailyQuests: "📋 Daily Quests",
     heroGames: "Games",
     heroOnline: "Online",
@@ -282,6 +286,8 @@ const DICT = {
     loadingGame: "Loading game...",
     recent: "🕐 Recently Played",
     newBadge: "NEW",
+    comingSoon: "Soon",
+    comingSoonToast: "🚧 This game is under development — coming soon!",
     installBanner: "📲 Install Today Games on your device for quick access!",
     installBtn: "Install",
     questPlay: "Play 5 different games",
@@ -330,7 +336,7 @@ function toggleTheme() {
   setStore('theme', currentTheme); applyTheme();
 }
 
-const FEATURED_IDS = ['empire', 'invest', 'agar', 'baloot', 'anime'];
+const FEATURED_IDS = ['uno', 'baloot', 'agar', 'empire', 'snake'];
 const CAT_LABELS = { puzzle: 'catPuzzle', card: 'catCard', online: 'catOnline' };
 
 function applyLang() {
@@ -345,13 +351,20 @@ function applyLang() {
     document.getElementById('streakLabel').textContent = dict.streak + ' ';
     document.getElementById('totalScoreLabel').textContent = dict.totalScore + ' ';
     document.getElementById('todayGamesLabel').textContent = dict.todayGames + ' ';
-    document.getElementById('heroTitle').textContent = dict.heroTitle;
     document.getElementById('heroDesc').textContent = dict.heroDesc;
     document.getElementById('randomGameBtn').textContent = dict.randomPlay;
-    document.getElementById('heroQuestsBtn').textContent = dict.dailyQuests;
-    document.getElementById('heroGamesLabel').textContent = dict.heroGames;
-    document.getElementById('heroOnlineLabel').textContent = dict.heroOnline;
-    document.getElementById('heroLeaderLabel').textContent = dict.heroLeader;
+    const brandEl = document.querySelector('.site-brand');
+    if (brandEl) brandEl.textContent = dict.heroTitle;
+    const heroTitle = document.getElementById('heroTitle');
+    if (heroTitle) heroTitle.textContent = dict.heroTitle;
+    const heroQuests = document.getElementById('heroQuestsBtn');
+    if (heroQuests) heroQuests.textContent = dict.dailyQuests;
+    const heroGamesLabel = document.getElementById('heroGamesLabel');
+    if (heroGamesLabel) heroGamesLabel.textContent = dict.heroGames;
+    const heroOnlineLabel = document.getElementById('heroOnlineLabel');
+    if (heroOnlineLabel) heroOnlineLabel.textContent = dict.heroOnline;
+    const heroLeaderLabel = document.getElementById('heroLeaderLabel');
+    if (heroLeaderLabel) heroLeaderLabel.textContent = dict.heroLeader;
     document.getElementById('featuredTitle').textContent = dict.featured;
     document.getElementById('footerTagline').textContent = dict.footerTagline;
     document.getElementById('footerCopy').textContent = dict.footerCopy;
@@ -360,7 +373,7 @@ function applyLang() {
     document.getElementById('welcomeName').placeholder = dict.welcomeName;
     document.getElementById('welcomeStartBtn').textContent = dict.welcomeStart;
     document.getElementById('welcomeSkipBtn').textContent = dict.welcomeSkip;
-    document.getElementById('heroGameCount').textContent = ALL_GAMES.length;
+    document.getElementById('heroGameCount') && (document.getElementById('heroGameCount').textContent = ALL_GAMES.length);
     document.getElementById('todayGamesMax').textContent = ALL_GAMES.length;
     const recentTitle = document.getElementById('recentTitle');
     if (recentTitle) recentTitle.textContent = dict.recent;
@@ -407,7 +420,11 @@ function renderGames() {
   const dict = DICT[currentLang];
 
   const filtered = ALL_GAMES.filter(g => {
-    if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) return false;
+    if (currentCategory === 'online') {
+      if (!(g.category === 'online' || g.online)) return false;
+    } else if (currentCategory !== 'all' && currentCategory !== 'favorites' && g.category !== currentCategory) {
+      return false;
+    }
     if (currentCategory === 'favorites' && !favs.includes(g.id)) return false;
     const gameName = g.name.ar + ' ' + g.name.en;
     return !term || gameName.toLowerCase().includes(term);
@@ -424,16 +441,17 @@ function renderGames() {
     const catKey = CAT_LABELS[g.category];
     const catLabel = catKey ? dict[catKey] : '';
     const catClass = g.category === 'card' ? 'cat-card' : g.category === 'online' ? 'cat-online' : '';
-    return `<div class="game-card" data-game-id="${g.id}">
+    const soon = !!g.comingSoon;
+    return `<div class="game-card ${soon ? 'coming-soon-card' : ''}" data-game-id="${g.id}" data-coming-soon="${soon ? '1' : '0'}">
       <div class="card-actions">
         <button class="card-action-btn ${isFav ? 'active-fav' : ''}" data-action="favorite" data-game-id="${g.id}" title="المفضلة">⭐</button>
         <button class="card-action-btn" data-action="share" data-game-id="${g.id}" data-game-name="${g.name[currentLang]}" title="مشاركة">🔗</button>
       </div>
-      ${g.isNew ? `<span class="new-badge">${dict.newBadge}</span>` : ''}
+      ${soon ? `<span class="coming-soon-badge">${dict.comingSoon || 'قريباً'}</span>` : (g.isNew ? `<span class="new-badge">${dict.newBadge}</span>` : '')}
       <span class="game-icon">${g.icon}</span>
       <div class="game-name">${g.name[currentLang]}</div>
-      <div class="game-desc">${g.desc[currentLang]}</div>
-      <div class="game-best">${dict.best} ${best}</div>
+      <div class="game-desc">${soon ? (dict.comingSoonToast || '🚧 قيد التطوير') : g.desc[currentLang]}</div>
+      <div class="game-best">${soon ? '—' : `${dict.best} ${best}`}</div>
       ${catLabel ? `<span class="cat-badge ${catClass}">${catLabel}</span>` : ''}
     </div>`;
   }).join('');
@@ -548,6 +566,11 @@ const gameInitializers = {
 };
 
 function openGame(id) {
+  const game = ALL_GAMES.find(g => g.id === id);
+  if (game && game.comingSoon) {
+    showToast(DICT[currentLang].comingSoonToast || '🚧 هذه اللعبة قيد التطوير — قريباً!');
+    return;
+  }
   playSound('blip');
   trackRecentGame(id);
   const overlay = document.getElementById(id+'Overlay');
@@ -559,7 +582,7 @@ function openGame(id) {
   if (gameFiles[id] && !loadedScripts[id]) {
     showToast(DICT[currentLang].loadingGame);
     const script = document.createElement('script');
-    script.src = gameFiles[id] + '?v=' + Date.now();
+    script.src = gameFiles[id] + '?v=' + APP_VERSION;
     script.onload = () => {
       loadedScripts[id] = true;
       runGameInit(id);
@@ -638,7 +661,9 @@ function recordGamePlayed(){
 
 function playRandomGame() {
   playSound('blip');
-  const random = ALL_GAMES[Math.floor(Math.random() * ALL_GAMES.length)];
+  const playable = ALL_GAMES.filter(g => !g.comingSoon);
+  if (!playable.length) return;
+  const random = playable[Math.floor(Math.random() * playable.length)];
   openGame(random.id);
 }
 
@@ -936,7 +961,22 @@ function closeActiveOverlay() {
     document.getElementById('profileBtn').addEventListener('click', openProfile);
     document.getElementById('gameSearchInput').addEventListener('input', filterGames);
     document.getElementById('randomGameBtn').addEventListener('click', playRandomGame);
-    document.getElementById('heroQuestsBtn').addEventListener('click', openQuests);
+    const heroQuests = document.getElementById('heroQuestsBtn');
+    if (heroQuests) heroQuests.addEventListener('click', openQuests);
+    const moreBtn = document.getElementById('moreBtn');
+    const moreMenu = document.getElementById('moreMenu');
+    if (moreBtn && moreMenu) {
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = moreMenu.classList.toggle('d-none') === false;
+        moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', () => {
+        moreMenu.classList.add('d-none');
+        moreBtn.setAttribute('aria-expanded', 'false');
+      });
+      moreMenu.addEventListener('click', (e) => e.stopPropagation());
+    }
     document.getElementById('footerLeaderBtn').addEventListener('click', openLeaderboard);
     document.getElementById('footerProfileBtn').addEventListener('click', openProfile);
     document.getElementById('footerQuestsBtn').addEventListener('click', openQuests);

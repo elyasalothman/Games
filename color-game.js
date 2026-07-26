@@ -17,7 +17,7 @@ function initColor(){
   colorWordEl.style.color = 'var(--text-main)';
   document.getElementById('colorOptions').innerHTML='';
   document.getElementById('colorStartBtn').classList.remove('d-none');
-  document.getElementById('timerBar').style.width='100%';
+  document.getElementById('colorTimerBar').style.width='100%';
 }
 function startColor(){
   colorState.active=true; colorState.score=0; colorState.wrong=0;
@@ -47,7 +47,8 @@ function nextColorQ(){
 }
 function startColorTimer(){
   if(colorState.timer)clearInterval(colorState.timer);
-  let t=100; const bar=document.getElementById('timerBar');
+  let t=100; const bar=document.getElementById('colorTimerBar');
+  if(!bar) return;
   bar.style.width='100%'; bar.style.backgroundColor='var(--accent-blue)';
   colorState.timer=setInterval(()=>{
     t-=1; // كان 2، الآن أبطأ بالنصف (وقت أكثر)

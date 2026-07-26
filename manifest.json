@@ -1,7 +1,7 @@
 {
   "name": "ألعاب اليوم",
   "short_name": "ألعاب اليوم",
-  "description": "منصة ألعاب ذكاء وتنشيط ذاكرة مجانية — 14 لعبة عربية",
+  "description": "منصة ألعاب ذكاء وتنشيط ذاكرة مجانية — ألعاب عربية عبر المتصفح",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "orientation": "any",

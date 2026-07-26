@@ -14,7 +14,7 @@ let agarRenderFrame = null; // للتحكم في الإطارات ومنع ال�
 let agarLowGraphics = false; // متغير حالة الرسومات المنخفضة
 
 function initAgar() {
-    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn'].forEach(id => {
+    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn', 'joystickContainer'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             if (id === 'agarStartScreen') el.classList.remove('d-none');
@@ -531,6 +531,7 @@ function closeAgar() {
     if(socket) socket.disconnect(); 
     if(agarLoop) clearInterval(agarLoop); 
     window.removeEventListener('keydown', handleAgarKey);
+    initAgar();
 }
 
 // دالة مساعدة لتغميق/تفتيح الألوان في التدرجات (Hex to Darker Hex)

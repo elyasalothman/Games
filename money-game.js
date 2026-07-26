@@ -109,6 +109,12 @@ function stopMoney() {
     moneyState.active = false;
     if (moneyState.animationId) cancelAnimationFrame(moneyState.animationId);
     document.getElementById('moneyUpgrades').classList.add('d-none');
+    document.getElementById('moneyCanvas').classList.add('d-none');
+    const startBtn = document.getElementById('moneyStartBtn');
+    if (startBtn) {
+        startBtn.classList.remove('d-none');
+        startBtn.textContent = '▶ ابدأ اللعب';
+    }
     saveMoneyProgress();
 
     const best = Math.max(moneyState.score, getStore('best_money', 0));
