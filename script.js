@@ -152,7 +152,7 @@ const ALL_GAMES = [
   {id:'sequence',category: 'puzzle', audiences:['kids','teens','family'], name:{ar:'تتبع النمط', en:'Sequence'}, icon:'🧩', desc:{ar:'تذكر تسلسل الألوان وأعد تكراره!', en:'Remember the color sequence and repeat!'}},
   {id:'anime',   category: 'puzzle', audiences:['teens','boys','girls'], name:{ar:'تحدي الأنمي', en:'Anime Trivia'}, icon:'🎌', desc:{ar:'اختبر معلوماتك في عالم الأنمي الشيق!', en:'Test your knowledge in the exciting Anime world!'}, isNew: true},
   {id:'agar',    category: 'online', audiences:['teens','boys'], name:{ar:'معركة الخلايا', en:'Cell Wars'}, icon:'🦠', desc:{ar:'أونلاين! كُل لتكبر وسيطر على الساحة الحية.', en:'Online! Eat to grow and rule the living arena.'}, isSignature: true, signatureTag:{ar:'أونلاين مباشر', en:'Live Online'}},
-  {id:'baloot',  category: 'card', audiences:['adults','family'], name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}, comingSoon: true},
+  {id:'baloot',  category: 'card', audiences:['adults','family'], name:{ar:'بلوت', en:'Baloot'}, icon:'♠️', desc:{ar:'لعبة الورق الأشهر في الخليج. حكم أو صن؟', en:'The most famous card game in the Gulf.'}, isNew: true, comingSoon: true},
   {id:'uno',     category: 'card', audiences:['kids','teens','family','girls'], name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
   {id:'domino',  category: 'card', audiences:['family','seniors','adults'], name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true, comingSoon: true},
   {id:'money',   category: 'puzzle', audiences:['kids','teens'], name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
@@ -184,7 +184,7 @@ const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'garden'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
   'theme', 'lang', 'sound', 'radioStation', 'favorites', 'recentGames', 'lastQuestDate',
-  'investCloudId', 'investGameProgress', 'empireGameProgress', 'domino_player_wins', 'domino_bot_wins',
+  'investCloudId', 'investCloudToken', 'investGameProgress', 'empireGameProgress', 'domino_player_wins', 'domino_bot_wins',
   'quest_play', 'quest_score', 'quest_online',
   'quest_claimed_play', 'quest_claimed_score', 'quest_claimed_online'
 ]);
@@ -228,12 +228,20 @@ function checkStreak(){
 }
 
 // ─── THEME & LANGUAGE SYSTEM ───
-let currentTheme = getStore('theme', 'light');
+// إصلاح تسمية قديمة: سابقاً 'light' كان يعرض الواجهة الداكنة والعكس
+let currentTheme = getStore('theme', 'dark');
+if (!getStore('_themeSemFixed', false)) {
+  const legacy = getStore('theme', 'light');
+  currentTheme = legacy === 'dark' ? 'light' : 'dark';
+  setStore('theme', currentTheme);
+  setStore('_themeSemFixed', true);
+}
 let currentLang = getStore('lang', 'ar');
 let currentUser = null;
 let googleAuthEnabled = false;
 
 if (currentLang !== 'ar' && currentLang !== 'en') currentLang = 'ar';
+if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'dark';
 
 const SITE_BRAND = { ar: 'لُمعة', en: "Luma'a" };
 
@@ -444,12 +452,21 @@ const ACHIEVEMENTS = [
 const AVATARS = ['👤', '👦', '👧', '👨', '👩', '🤖', '👽', '👻', '🤡', '🐯', '🦁', '😎', '🤓', '🤠', '👑'];
 
 function applyTheme() {
-  if (currentTheme === 'dark') {
-    document.body.classList.add('dark-mode');
-    document.getElementById('themeBtn').textContent = '☀️';
+  const themeBtn = document.getElementById('themeBtn');
+  if (currentTheme === 'light') {
+    document.body.classList.add('light-mode');
+    if (themeBtn) {
+      themeBtn.textContent = '🌙';
+      themeBtn.setAttribute('aria-label', currentLang === 'ar' ? 'التبديل للوضع الداكن' : 'Switch to dark mode');
+      themeBtn.title = themeBtn.getAttribute('aria-label');
+    }
   } else {
-    document.body.classList.remove('dark-mode');
-    document.getElementById('themeBtn').textContent = '🌙';
+    document.body.classList.remove('light-mode');
+    if (themeBtn) {
+      themeBtn.textContent = '☀️';
+      themeBtn.setAttribute('aria-label', currentLang === 'ar' ? 'التبديل للوضع الفاتح' : 'Switch to light mode');
+      themeBtn.title = themeBtn.getAttribute('aria-label');
+    }
   }
 }
 
@@ -459,7 +476,7 @@ function toggleTheme() {
   setStore('theme', currentTheme); applyTheme();
 }
 
-const FEATURED_IDS = ['empire', 'invest', 'agar', 'uno', 'anime'];
+const FEATURED_IDS = ['empire', 'invest', 'agar', 'baloot', 'domino', 'uno'];
 const SIGNATURE_IDS = ['empire', 'agar', 'invest'];
 const CAT_LABELS = { puzzle: 'catPuzzle', card: 'catCard', online: 'catOnline' };
 
@@ -570,7 +587,17 @@ function applyLang() {
     const tabKeys = ['tabAll', 'tabPuzzle', 'tabCard', 'tabOnline', 'tabFav'];
     tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = dict[tabKeys[i]]; });
   } catch(e) {}
-  if (document.getElementById('gameSearchInput')) document.getElementById('gameSearchInput').placeholder = dict.searchPlaceholder;
+  const searchInput = document.getElementById('gameSearchInput');
+  if (searchInput) {
+    searchInput.placeholder = dict.searchPlaceholder;
+    searchInput.setAttribute('aria-label', dict.searchPlaceholder || (currentLang === 'ar' ? 'ابحث عن لعبة' : 'Search games'));
+  }
+  const langBtn = document.getElementById('langBtn');
+  if (langBtn) {
+    langBtn.setAttribute('aria-label', currentLang === 'ar' ? 'التبديل للإنجليزية' : 'Switch to Arabic');
+    langBtn.title = langBtn.getAttribute('aria-label');
+  }
+  applyTheme();
   renderSignature();
   renderFeatured();
   renderRecent();
@@ -805,6 +832,25 @@ const gameInitializers = {
   'mole': () => typeof initMole === 'function' && initMole()
 };
 
+function activateOverlay(overlay, label) {
+  if (!overlay) return;
+  overlay.classList.add('active');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  if (label) overlay.setAttribute('aria-label', label);
+  document.body.style.overflow = 'hidden';
+  const focusTarget = overlay.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusTarget && typeof focusTarget.focus === 'function') {
+    setTimeout(() => focusTarget.focus(), 30);
+  }
+}
+
+function deactivateOverlay(overlay) {
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  overlay.removeAttribute('aria-modal');
+}
+
 function openGame(id) {
   const game = ALL_GAMES.find(g => g.id === id);
   if (game && game.comingSoon) {
@@ -815,8 +861,8 @@ function openGame(id) {
   trackRecentGame(id);
   const overlay = document.getElementById(id+'Overlay');
   if (overlay) {
-    overlay.classList.add('active');
-    document.body.style.overflow='hidden';
+    const label = game ? `${game.icon} ${game.name[currentLang]}` : id;
+    activateOverlay(overlay, label);
   }
 
   if (gameFiles[id] && !loadedScripts[id]) {
@@ -864,9 +910,7 @@ const gameClosers = {
 function closeGame(id){
   playSound('blip');
   const overlay = document.getElementById(id+'Overlay');
-  if (overlay) {
-    overlay.classList.remove('active');
-  }
+  deactivateOverlay(overlay);
   document.body.style.overflow='';
   if (gameClosers[id]) {
     gameClosers[id]();
@@ -999,7 +1043,7 @@ function mergeSyncData(local, cloud) {
       const netA = Number(localVal?.money) || Number(localVal?.totalEarned) || 0;
       const netB = Number(cloudVal?.money) || Number(cloudVal?.totalEarned) || 0;
       merged[key] = netA >= netB ? localVal : cloudVal;
-    } else if (key === 'investCloudId') {
+    } else if (key === 'investCloudId' || key === 'investCloudToken') {
       merged[key] = localVal || cloudVal;
     } else if (key === 'globalPlayerName') {
       merged[key] = String(localVal || '').trim() || String(cloudVal || '').trim();
@@ -1234,13 +1278,12 @@ function showWelcome() {
   if (getStore('welcomeSeen', false) || hasPlayerIdentity()) return;
   const welcomeName = document.getElementById('welcomeName');
   if (welcomeName) welcomeName.value = getStore('globalPlayerName', '');
-  document.getElementById('welcomeOverlay').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  activateOverlay(document.getElementById('welcomeOverlay'), DICT[currentLang].welcomeTitle || 'Welcome');
 }
 
 function closeWelcome() {
   setStore('welcomeSeen', true);
-  document.getElementById('welcomeOverlay').classList.remove('active');
+  deactivateOverlay(document.getElementById('welcomeOverlay'));
   document.body.style.overflow = '';
 }
 
@@ -1299,13 +1342,14 @@ function submitScore(game_id, score, isLowerBetter = false) {
 
 function openLeaderboard() {
   playSound('blip');
-  document.getElementById('leaderboardOverlay').classList.add('active');
+  activateOverlay(document.getElementById('leaderboardOverlay'), currentLang === 'ar' ? 'لوحة الصدارة' : 'Leaderboard');
   document.getElementById('leaderboardGameSelect').innerHTML = ALL_GAMES.map(g => `<option value="${g.id}">${g.icon} ${g.name[currentLang]}</option>`).join('');
   fetchLeaderboard();
 }
 function closeLeaderboard() { 
   playSound('blip');
-  document.getElementById('leaderboardOverlay').classList.remove('active'); 
+  deactivateOverlay(document.getElementById('leaderboardOverlay'));
+  document.body.style.overflow = '';
 }
 
 async function fetchLeaderboard() {
@@ -1360,7 +1404,8 @@ function toggleFullscreen() {
 }
 
 function openQuests() {
-  playSound('blip'); document.getElementById('questsOverlay').classList.add('active');
+  playSound('blip');
+  activateOverlay(document.getElementById('questsOverlay'), DICT[currentLang].dailyQuests || 'Quests');
   const list = document.getElementById('questsList');
   const dict = DICT[currentLang];
   const quests = [
@@ -1376,7 +1421,11 @@ function openQuests() {
     return `<div class="quest-card"><div class="quest-info"><h4>${q.name}</h4><div class="quest-progress-bg"><div class="quest-progress-fill" style="width:${pct}%"></div></div><div class="quest-reward">+${q.reward} نقطة</div></div>${btnHtml}</div>`;
   }).join('');
 }
-function closeQuests() { playSound('blip'); document.getElementById('questsOverlay').classList.remove('active'); }
+function closeQuests() {
+  playSound('blip');
+  deactivateOverlay(document.getElementById('questsOverlay'));
+  document.body.style.overflow = '';
+}
 
 function claimQuest(id, reward) {
   playSound('coin'); setStore('quest_claimed_' + id, true); addScore(reward);
@@ -1387,7 +1436,7 @@ function claimQuest(id, reward) {
 // ─── PROFILE & ACHIEVEMENTS ───
 function openProfile() {
   playSound('blip');
-  document.getElementById('profileOverlay').classList.add('active');
+  activateOverlay(document.getElementById('profileOverlay'), DICT[currentLang].profileTitle || 'Profile');
 
   if (!currentUser) {
     document.getElementById('profileName').value = getStore('globalPlayerName', '');
@@ -1416,7 +1465,11 @@ function copyCloudCode() {
   playSound('coin');
   showToast(dict.cloudCodeCopied + ' ' + cloudId);
 }
-function closeProfile() { playSound('blip'); document.getElementById('profileOverlay').classList.remove('active'); }
+function closeProfile() {
+  playSound('blip');
+  deactivateOverlay(document.getElementById('profileOverlay'));
+  document.body.style.overflow = '';
+}
 function saveProfile() {
   if (currentUser) return;
   savePlayerName(document.getElementById('profileName').value);
@@ -1450,7 +1503,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.6.1';
+const APP_VERSION = '3.7.0';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;

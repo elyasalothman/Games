@@ -37,3 +37,10 @@ test('script.js APP_VERSION matches shared app-version', () => {
   assert.ok(match, 'script.js should declare APP_VERSION');
   assert.equal(match[1], APP_VERSION);
 });
+
+test('package.json version matches APP_VERSION', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.equal(pkg.version, APP_VERSION);
+});

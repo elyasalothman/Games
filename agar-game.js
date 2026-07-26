@@ -33,13 +33,15 @@ function updateAgarPreview() {
 }
 
 function initAgar() {
-    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn', 'agarDeathScreen'].forEach(id => {
+    ['agarStartScreen', 'agarCanvas', 'agarStatus', 'mobileSplitBtn', 'mobileShootBtn', 'joystickContainer', 'agarDeathScreen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             if (id === 'agarStartScreen') el.classList.remove('d-none');
             else el.classList.add('d-none');
         }
     });
+    const joystickKnob = document.getElementById('joystickKnob');
+    if (joystickKnob) joystickKnob.style.transform = 'translate(-50%, -50%)';
     if(socket) { socket.disconnect(); socket = null; }
     updateAgarPreview();
     const colorEl = document.getElementById('agarColor');
@@ -612,6 +614,7 @@ function closeAgar() {
     if(socket) socket.disconnect(); 
     if(agarLoop) clearInterval(agarLoop); 
     window.removeEventListener('keydown', handleAgarKey);
+    initAgar();
 }
 
 // دالة مساعدة لتغميق/تفتيح الألوان في التدرجات (Hex to Darker Hex)

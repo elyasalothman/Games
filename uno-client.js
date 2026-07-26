@@ -2,16 +2,51 @@ let unoSocket;
 let myUnoState = null;
 let pendingUnoCardIndex = null;
 
+const UNO_VALUE_LABELS = {
+    Skip: '⊘',
+    Reverse: '⇄',
+    Wild: '★',
+    '+2': '+2',
+    '+4': '+4'
+};
+
+const UNO_COLOR_HEX = {
+    red: '#c9183a',
+    blue: '#0a8fd4',
+    green: '#12b56a',
+    yellow: '#f0a000',
+    wild: '#2d2d44'
+};
+
 function initUno() {
     document.getElementById('unoOverlay').classList.add('active');
-    document.getElementById('unoStartScreen').classList.remove('d-none');
-    document.getElementById('unoGameScreen').classList.add('d-none');
-    document.getElementById('unoColorPicker').classList.add('d-none');
+    showUnoScreen('start');
+    hideUnoColorPicker();
+    pendingUnoCardIndex = null;
     const room = getUnoRoomFromUrl();
     const roomInfo = document.getElementById('unoRoomInfo');
     roomInfo.classList.toggle('d-none', !room);
     if (room) roomInfo.textContent = `🔒 تمت دعوتك إلى الغرفة الخاصة: ${room}`;
     document.getElementById('unoPrivateAction').textContent = room ? 'انضم للغرفة المدعوة' : 'أنشئ غرفة خاصة (8 لاعبين)';
+}
+
+function showUnoScreen(which) {
+    const start = document.getElementById('unoStartScreen');
+    const game = document.getElementById('unoGameScreen');
+    if (which === 'start') {
+        start.classList.remove('d-none');
+        game.classList.add('d-none');
+        game.classList.remove('d-flex');
+    } else {
+        start.classList.add('d-none');
+        game.classList.remove('d-none');
+        game.classList.add('d-flex');
+    }
+}
+
+function hideUnoColorPicker() {
+    const el = document.getElementById('unoColorPicker');
+    if (el) el.classList.add('d-none');
 }
 
 function getUnoRoomFromUrl() {
@@ -47,12 +82,18 @@ function joinUnoGame(mode) {
         room = 'bot_uno_' + Math.random().toString(36).substr(2, 6);
     }
 
-    if (unoSocket) unoSocket.disconnect();
-    document.getElementById('unoStartScreen').classList.add('d-none');
-    document.getElementById('unoGameScreen').classList.remove('d-none');
-    document.getElementById('unoRoomLabel').textContent = mode === 'private' ? `🔒 غرفة خاصة` : mode === 'computer' ? '🤖 ضد الكمبيوتر' : '🌐 غرفة عامة';
+    if (unoSocket) {
+        unoSocket.removeAllListeners();
+        unoSocket.disconnect();
+        unoSocket = null;
+    }
+
+    showUnoScreen('game');
+    document.getElementById('unoRoomLabel').textContent = mode === 'private' ? '🔒 غرفة خاصة' : mode === 'computer' ? '🤖 ضد الكمبيوتر' : '🌐 غرفة عامة';
     document.getElementById('unoShareBtn').classList.toggle('d-none', mode !== 'private');
     setUnoStatus('جاري الاتصال بالغرفة...');
+    hideUnoColorPicker();
+    pendingUnoCardIndex = null;
 
     unoSocket = io();
     unoSocket.emit('joinUno', { name: playerName, room, mode });
@@ -63,38 +104,66 @@ function joinUnoGame(mode) {
     });
     unoSocket.on('unoMessage', (message) => {
         setUnoStatus(message);
+        const actionEl = document.getElementById('unoLastAction');
+        if (actionEl) actionEl.textContent = message;
         if (typeof showToast === 'function') showToast(message);
     });
     unoSocket.on('connect_error', () => setUnoStatus('تعذر الاتصال بالخادم. حاول مرة أخرى.'));
+    unoSocket.on('disconnect', () => setUnoStatus('انقطع الاتصال'));
 }
 
 function startUno() {
     if (unoSocket) unoSocket.emit('startUno');
 }
 
+function rematchUno() {
+    startUno();
+}
+
+function passUno() {
+    setUnoStatus('التمرير غير متاح — اسحب ورقة للمتابعة');
+}
+
 function playUnoCard(index) {
     if (!unoSocket || !myUnoState) return;
-    const card = myUnoState.players[unoSocket.id].cards[index];
+    const me = myUnoState.players[unoSocket.id];
+    if (!me || !me.cards) return;
+
+    const card = me.cards[index];
     if (!card || !isMyUnoTurn()) return;
+
     if (card.color === 'wild') {
         pendingUnoCardIndex = index;
         document.getElementById('unoColorPicker').classList.remove('d-none');
+        setUnoStatus('اختر لوناً');
         return;
     }
+
     unoSocket.emit('playUnoCard', { cardIndex: index, selectedColor: null });
     if (typeof playSound === 'function') playSound('card');
 }
 
 function chooseUnoColor(color) {
     if (pendingUnoCardIndex === null || !unoSocket) return;
+    if (!['red', 'blue', 'green', 'yellow'].includes(color)) return;
     unoSocket.emit('playUnoCard', { cardIndex: pendingUnoCardIndex, selectedColor: color });
     pendingUnoCardIndex = null;
-    document.getElementById('unoColorPicker').classList.add('d-none');
+    hideUnoColorPicker();
     if (typeof playSound === 'function') playSound('card');
 }
 
+function cancelUnoColor() {
+    pendingUnoCardIndex = null;
+    hideUnoColorPicker();
+    setUnoStatus('تم إلغاء اختيار اللون');
+}
+
 function drawUnoCard() {
-    if (unoSocket && isMyUnoTurn()) unoSocket.emit('drawUnoCard');
+    if (!unoSocket || !isMyUnoTurn()) {
+        setUnoStatus('ليس دورك');
+        return;
+    }
+    unoSocket.emit('drawUnoCard');
     if (typeof playSound === 'function') playSound('blip');
 }
 
@@ -107,57 +176,162 @@ function setUnoStatus(message) {
     if (status) status.textContent = message;
 }
 
+function cardLabel(card) {
+    if (!card) return '';
+    return UNO_VALUE_LABELS[card.value] || card.value;
+}
+
+function cardTitle(card) {
+    if (!card) return '';
+    const names = {
+        Skip: 'تخطي',
+        Reverse: 'عكس الاتجاه',
+        Wild: 'تبديل اللون',
+        '+2': 'سحب اثنتين',
+        '+4': 'سحب أربع'
+    };
+    return names[card.value] || card.value;
+}
+
+function getDiscardTop(state) {
+    if (!state || !state.discardPile || state.discardPile.length === 0) return null;
+    return state.discardPile[state.discardPile.length - 1];
+}
+
+function isUnoCardPlayable(card, state) {
+    const topCard = getDiscardTop(state);
+    if (!card || !topCard) return false;
+    if (card.color === 'wild') return true;
+    if (card.color === state.currentColor) return true;
+    if (card.value === topCard.value) return true;
+    return false;
+}
+
+function renderUnoCardHtml(card, extraClass, onclick, styleAttr) {
+    const label = cardLabel(card);
+    const title = cardTitle(card);
+    const click = onclick ? `onclick="${onclick}"` : '';
+    const style = styleAttr ? `style="${styleAttr}"` : '';
+    const isWild = card.color === 'wild';
+    const faceClass = isWild ? 'uno-face-wild' : `uno-face-${card.color}`;
+    return `<div class="uno-card ${faceClass} ${extraClass || ''}" ${click} ${style} title="${escapeUnoHtml(title)}" role="button" tabindex="0">
+  <div class="uno-card-inner">
+    <span class="uno-corner uno-corner-tl">${label}</span>
+    <div class="uno-oval"><span class="uno-card-value">${label}</span></div>
+    <span class="uno-corner uno-corner-br">${label}</span>
+    <div class="uno-card-shine"></div>
+  </div>
+</div>`;
+}
+
 function renderUnoTable() {
     if (!myUnoState || !unoSocket) return;
     const r = myUnoState;
     const me = r.players[unoSocket.id];
     if (!me) return;
     const myTurn = isMyUnoTurn();
+    const playerCount = Object.keys(r.players).length;
+    const isHost = unoSocket.id === r.hostId;
+    const topCard = getDiscardTop(r);
 
     const startBtn = document.getElementById('unoStartBtn');
-    startBtn.classList.toggle('d-none', !(r.state === 'waiting' && unoSocket.id === r.hostId));
-    setUnoStatus(r.state === 'waiting'
-        ? (unoSocket.id === r.hostId ? 'أنت المضيف — ابدأ الجولة عندما تكون مستعداً.' : 'بانتظار المضيف لبدء الجولة...')
-        : myTurn ? 'دورك الآن — العب ورقة أو اسحب.' : `بانتظار ${r.players[r.turnOrder[r.currentTurn]]?.name || 'اللاعب'}...`);
+    const rematchBtn = document.getElementById('unoRematchBtn');
+    const passBtn = document.getElementById('unoPassBtn');
+
+    if (startBtn) {
+        startBtn.classList.toggle('d-none', !(r.state === 'waiting' && isHost));
+    }
+    if (rematchBtn) {
+        rematchBtn.classList.add('d-none');
+    }
+    if (passBtn) {
+        passBtn.classList.add('d-none');
+    }
+
+    if (r.state === 'waiting') {
+        setUnoStatus(isHost
+            ? `أنت المضيف — ${playerCount}/${r.maxPlayers} لاعبين`
+            : `بانتظار المضيف — ${playerCount}/${r.maxPlayers} لاعبين`);
+    } else if (myTurn) {
+        setUnoStatus('دورك — العب أو اسحب');
+    } else {
+        const turnPlayer = r.players[r.turnOrder[r.currentTurn]];
+        setUnoStatus(turnPlayer ? `دور: ${turnPlayer.name}` : '...');
+    }
 
     const center = document.getElementById('unoCenter');
-    if (r.discardPile.length > 0) {
-        const topCard = r.discardPile[r.discardPile.length - 1];
-        center.replaceChildren(createUnoCard(topCard, false));
-        document.getElementById('unoCurrentColor').style.backgroundColor = r.currentColor === 'wild' ? '#fff' : `var(--accent-${r.currentColor === 'red' ? 'red' : r.currentColor === 'blue' ? 'blue' : r.currentColor === 'green' ? 'green' : 'orange'})`;
+    if (topCard) {
+        center.innerHTML = renderUnoCardHtml(topCard, 'uno-discard-card');
     } else {
-        center.replaceChildren();
+        center.innerHTML = '';
+    }
+
+    const colorEl = document.getElementById('unoCurrentColor');
+    if (colorEl) {
+        colorEl.style.background = UNO_COLOR_HEX[r.currentColor] || '#fff';
+        colorEl.title = r.currentColor || '';
+    }
+
+    const deckEl = document.getElementById('unoDrawPile');
+    const deckCount = document.getElementById('unoDeckCount');
+    if (deckEl) {
+        deckEl.classList.toggle('uno-disabled', !myTurn || r.state !== 'playing');
+    }
+    if (deckCount) {
+        deckCount.textContent = r.deckCount != null ? r.deckCount : '•';
     }
 
     const opponentsDiv = document.getElementById('unoOpponents');
-    opponentsDiv.replaceChildren();
-    Object.values(r.players).forEach(p => {
-        if (p.id !== unoSocket.id) {
-            const isTurn = r.state === 'playing' && r.turnOrder[r.currentTurn] === p.id;
-            const opponent = document.createElement('div');
-            opponent.className = `uno-opponent ${isTurn ? 'active-turn' : ''}`;
-            opponent.textContent = `👤 ${p.name} (${p.cardCount} أوراق)`;
-            opponentsDiv.appendChild(opponent);
+    opponentsDiv.innerHTML = '';
+    Object.values(r.players).forEach((p) => {
+        if (p.id === unoSocket.id) return;
+        const isTurn = r.state === 'playing' && r.turnOrder[r.currentTurn] === p.id;
+        const count = p.cardCount != null ? p.cardCount : (p.cards ? p.cards.length : 0);
+        const backs = Math.min(count, 5);
+        let mini = '';
+        for (let i = 0; i < backs; i++) {
+            mini += `<div class="uno-mini-back" style="--i:${i}"></div>`;
         }
+        opponentsDiv.innerHTML += `
+          <div class="uno-opponent ${isTurn ? 'active-turn' : ''}">
+            <div class="uno-opp-name">${p.isBot ? '🤖 ' : '👤 '}${escapeUnoHtml(p.name)}</div>
+            <div class="uno-opp-stack">${mini}</div>
+            <div class="uno-opp-cards">${count} ورقة</div>
+          </div>`;
     });
 
     const hand = document.getElementById('unoMyHand');
-    hand.replaceChildren();
+    hand.innerHTML = '';
     if (me.cards) {
+        const n = me.cards.length;
+        const mid = (n - 1) / 2;
+        const spread = n <= 1 ? 0 : Math.min(5.5, 42 / Math.max(n - 1, 1));
         me.cards.forEach((c, i) => {
-            hand.appendChild(createUnoCard(c, myTurn, i));
+            const playable = myTurn && isUnoCardPlayable(c, r);
+            const cls = playable ? 'uno-playable' : (myTurn ? 'uno-unplayable' : '');
+            const angle = (i - mid) * spread;
+            const lift = -Math.max(0, 22 - Math.abs(i - mid) * 5);
+            hand.innerHTML += renderUnoCardHtml(
+                c,
+                cls,
+                `playUnoCard(${i})`,
+                `--uno-rot:${angle}deg; --uno-lift:${lift}px; --uno-z:${i}`
+            );
         });
     }
-    document.getElementById('unoDrawPile').classList.toggle('uno-disabled', !myTurn);
+
+    const turnBanner = document.getElementById('unoTurnBanner');
+    if (turnBanner) {
+        turnBanner.classList.toggle('d-none', !myTurn || r.state !== 'playing');
+    }
 }
 
-function createUnoCard(card, playable, index) {
-    const element = document.createElement('button');
-    element.type = 'button';
-    element.className = `uno-card bg-${card.color}${playable ? '' : ' uno-disabled'}`;
-    element.textContent = card.value;
-    if (playable) element.addEventListener('click', () => playUnoCard(index));
-    return element;
+function escapeUnoHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 async function shareUnoRoom() {
@@ -176,7 +350,13 @@ async function shareUnoRoom() {
 
 function closeUno() {
     document.getElementById('unoOverlay').classList.remove('active');
-    if (unoSocket) { unoSocket.disconnect(); unoSocket = null; }
-    myUnoState = null;
+    hideUnoColorPicker();
     pendingUnoCardIndex = null;
+    myUnoState = null;
+    if (unoSocket) {
+        unoSocket.removeAllListeners();
+        unoSocket.disconnect();
+        unoSocket = null;
+    }
+    showUnoScreen('start');
 }

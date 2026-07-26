@@ -23,13 +23,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="لُمعة">
   <meta name="theme-color" content="#1a1438">
-  <meta name="app-version" content="3.6.1">
+  <meta name="app-version" content="3.7.0">
   <link rel="manifest" href="manifest.json">
 <title>لُمعة | ألعاب ذكاء وترفيه مجانية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -108,7 +108,8 @@
 
     <!-- شريط البحث (Search Bar) -->
     <div class="search-container text-center mb-16">
-      <input type="text" id="gameSearchInput" class="search-input" placeholder="🔍 ابحث عن لعبة...">
+      <label class="sr-only" for="gameSearchInput">ابحث عن لعبة</label>
+      <input type="text" id="gameSearchInput" class="search-input" placeholder="🔍 ابحث عن لعبة..." aria-label="ابحث عن لعبة">
     </div>
 
     <!-- فلتر الفئات العمرية -->
@@ -141,7 +142,7 @@
       </div>
       <div class="footer-meta">
         <span id="footerCopy">© 2026 الياس العثمان</span>
-        <span class="footer-version" id="footerVersion">v3.6</span>
+        <span class="footer-version" id="footerVersion">v3.7.0</span>
       </div>
     </footer>
 
@@ -598,34 +599,57 @@
       <button type="button" class="close-btn dark-close-btn" onclick="closeUno()">✕</button>
     </div>
     <div id="unoStartScreen" class="start-screen">
-        <input type="text" id="unoName" placeholder="أدخل اسمك" class="dark-name-input">
+        <input type="text" id="unoName" placeholder="أدخل اسمك" class="dark-name-input" maxlength="20">
         <p id="unoRoomInfo" class="uno-room-info d-none"></p>
+        <p class="uno-hint">تخلّص من أوراقك أولاً — طابق اللون أو الرقم</p>
         <div class="flex-center-wrap mt-15">
             <button type="button" class="btn primary live-badge" onclick="joinUnoGame('public')">🌐 أونلاين (5 لاعبين)</button>
             <button type="button" class="btn btn-purple" onclick="joinUnoGame(getUnoRoomFromUrl() ? 'invited' : 'private')">🔒 <span id="unoPrivateAction">غرفة خاصة (8 لاعبين)</span></button>
             <button type="button" class="btn btn-orange" onclick="joinUnoGame('computer')">🤖 ضد الكمبيوتر</button>
-     </div>
+        </div>
     </div>
     <div id="unoGameScreen" class="d-none">
         <div class="uno-toolbar">
             <span id="unoRoomLabel" class="uno-room-label"></span>
             <button type="button" id="unoShareBtn" class="btn btn-purple d-none" onclick="shareUnoRoom()">🔗 مشاركة الرابط</button>
         </div>
-        <p id="unoStatus" class="uno-status" role="status"></p>
+        <div id="unoStatus" class="uno-status" role="status">—</div>
+        <div id="unoLastAction" class="uno-last-action"></div>
+        <div id="unoTurnBanner" class="uno-turn-banner d-none">دورك!</div>
         <div id="unoOpponents"></div>
-        <div class="uno-table-center">
-            <div id="unoDrawPile" class="uno-card bg-wild draw-pile" onclick="drawUnoCard()">سحب</div>
-            <div id="unoCenter"></div>
-            <div id="unoCurrentColor"></div>
+        <div class="uno-felt">
+            <div class="uno-table-center">
+                <div id="unoDrawPile" class="uno-deck-3d" onclick="drawUnoCard()" title="سحب ورقة">
+                    <div class="uno-deck-layer"></div>
+                    <div class="uno-deck-layer"></div>
+                    <div class="uno-deck-face">
+                        <span class="uno-deck-logo">UNO</span>
+                        <small id="unoDeckCount">0</small>
+                    </div>
+                </div>
+                <div id="unoCenter" class="uno-discard-slot"></div>
+                <div class="uno-color-indicator">
+                    <div id="unoCurrentColor" title="اللون الحالي"></div>
+                    <span>اللون</span>
+                </div>
+            </div>
         </div>
-        <button type="button" id="unoStartBtn" class="btn primary uno-start-btn" onclick="startUno()">▶ ابدأ اللعب</button>
+        <div class="uno-actions">
+            <button type="button" id="unoStartBtn" class="btn primary uno-start-btn d-none" onclick="startUno()">▶ ابدأ اللعب</button>
+            <button type="button" id="unoPassBtn" class="btn btn-dark d-none" onclick="passUno()">تمرير</button>
+            <button type="button" id="unoRematchBtn" class="btn btn-green d-none" onclick="rematchUno()">جولة جديدة</button>
+        </div>
+        <div id="unoMyHand" class="uno-hand-3d"></div>
         <div id="unoColorPicker" class="uno-color-picker d-none" aria-label="اختر لون الورقة">
-            <button type="button" class="uno-color red" onclick="chooseUnoColor('red')" aria-label="أحمر"></button>
-            <button type="button" class="uno-color blue" onclick="chooseUnoColor('blue')" aria-label="أزرق"></button>
-            <button type="button" class="uno-color green" onclick="chooseUnoColor('green')" aria-label="أخضر"></button>
-            <button type="button" class="uno-color yellow" onclick="chooseUnoColor('yellow')" aria-label="أصفر"></button>
+            <p>اختر اللون</p>
+            <div class="uno-color-row">
+                <button type="button" class="uno-color-btn bg-red" onclick="chooseUnoColor('red')" title="أحمر" aria-label="أحمر"></button>
+                <button type="button" class="uno-color-btn bg-blue" onclick="chooseUnoColor('blue')" title="أزرق" aria-label="أزرق"></button>
+                <button type="button" class="uno-color-btn bg-green" onclick="chooseUnoColor('green')" title="أخضر" aria-label="أخضر"></button>
+                <button type="button" class="uno-color-btn bg-yellow" onclick="chooseUnoColor('yellow')" title="أصفر" aria-label="أصفر"></button>
+            </div>
+            <button type="button" class="btn btn-dark" onclick="cancelUnoColor()">إلغاء</button>
         </div>
-        <div id="unoMyHand"></div>
     </div>
   </div>
 </div>
@@ -874,7 +898,7 @@
       </button>
     </div>
     <div class="money-canvas-wrap">
-      <canvas id="moneyCanvas" width="320" height="400"></canvas>
+      <canvas id="moneyCanvas" class="d-none" width="320" height="400"></canvas>
       <button type="button" id="moneyStartBtn" class="btn primary money-start-btn" onclick="startMoney()">▶ ابدأ اللعب</button>
     </div>
   </div>
@@ -1055,7 +1079,7 @@
       .catch(function () {});
   })();
 </script>
-<script src="script.js?v=13"></script>
+<script src="script.js?v=18"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {
