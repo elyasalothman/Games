@@ -1,9 +1,17 @@
 // ─────────────────────────────────────────────
-// 👑 ملوك اللمس — Tap Kings
+// 👑 عرش الذهب — Gold Throne
 // ─────────────────────────────────────────────
 
 const EMPIRE_STORAGE_KEY = 'empireGameProgress';
 const EMPIRE_OFFLINE_CAP_HOURS = 8;
+const EMPIRE_COMBO_WINDOW_MS = 900;
+const EMPIRE_COMBO_MAX = 10;
+const EMPIRE_CRIT_CHANCE = 0.14;
+const EMPIRE_CRIT_MULT = 3;
+const EMPIRE_FEVER_NEED = 18;
+const EMPIRE_FEVER_MS = 8000;
+const EMPIRE_ORB_MIN_MS = 9000;
+const EMPIRE_ORB_MAX_MS = 16000;
 
 const EMPIRE_BIZ = [
   { id: 'lemon',  icon: '🍋', color: '#f4c430', name: { ar: 'كشك ليمون', en: 'Lemon Stand' }, baseCost: 15, baseCps: 0.1 },
@@ -22,7 +30,8 @@ const EMPIRE_EVENTS = [
   { id: 'boom', ar: '📈 ازدهار اقتصادي! دخل أعمالك ×1.5 لدقيقة.', en: '📈 Economic boom! Business income ×1.5 for a minute.', mul: 1.5, secs: 60 },
   { id: 'tax', ar: '🧾 ضريبة مفاجئة — خسرت 8% من الرصيد.', en: '🧾 Surprise tax — lost 8% of cash.', tax: 0.08 },
   { id: 'viral', ar: '📱 منتجك انتشر! +مكافأة نقدية.', en: '📱 Your product went viral! Cash bonus.', bonusPct: 0.12 },
-  { id: 'strike', ar: '⏸ إضراب عمال — الدخل يتباطأ قليلاً.', en: '⏸ Worker strike — income slows briefly.', mul: 0.6, secs: 40 }
+  { id: 'strike', ar: '⏸ إضراب عمال — الدخل يتباطأ قليلاً.', en: '⏸ Worker strike — income slows briefly.', mul: 0.6, secs: 40 },
+  { id: 'goldrush', ar: '🏆 حمّى ذهب! اللمسات ×2 لمدة 45 ثانية.', en: '🏆 Gold rush! Taps ×2 for 45 seconds.', tapMul: 2, secs: 45 }
 ];
 const EMPIRE_MILESTONES = [100, 1000, 10000, 100000, 1000000];
 
@@ -32,7 +41,14 @@ let empireSaveTimer = null;
 let empireFloatId = 0;
 let empireEventMul = 1;
 let empireEventUntil = 0;
+let empireTapEventMul = 1;
+let empireTapEventUntil = 0;
 let empireMilestoneHit = {};
+let empireCombo = 0;
+let empireLastTapAt = 0;
+let empireFeverUntil = 0;
+let empireOrbTimer = null;
+let empireMaxCombo = 0;
 
 function empireLang() {
   return document.documentElement.lang === 'en' ? 'en' : 'ar';
@@ -72,7 +88,9 @@ function defaultEmpireState() {
     prestige: 0,
     prestigeMult: 1,
     lastSeen: Date.now(),
-    started: false
+    started: false,
+    maxCombo: 0,
+    crits: 0
   };
 }
 
@@ -104,7 +122,9 @@ function saveEmpireState() {
     prestige: empireState.prestige,
     prestigeMult: empireState.prestigeMult,
     lastSeen: empireState.lastSeen,
-    started: empireState.started
+    started: empireState.started,
+    maxCombo: empireState.maxCombo || 0,
+    crits: empireState.crits || 0
   });
 }
 
@@ -113,7 +133,7 @@ function empireBizCost(biz, owned) {
 }
 
 function empireTapCost(level) {
-  return Math.floor(25 * Math.pow(1.55, level));
+  return Math.floor(20 * Math.pow(1.48, level));
 }
 
 function empireCps() {
@@ -126,9 +146,30 @@ function empireCps() {
   return cps * (empireState.prestigeMult || 1) * eventActive;
 }
 
-function empireTapGain() {
+function empireComboMult() {
+  if (empireCombo <= 1) return 1;
+  return Math.min(EMPIRE_COMBO_MAX, 1 + (empireCombo - 1) * 0.35);
+}
+
+function empireFeverActive() {
+  return Date.now() < empireFeverUntil;
+}
+
+function empireTapEventActive() {
+  return Date.now() < empireTapEventUntil ? empireTapEventMul : 1;
+}
+
+/** قوة اللمسة: ترقية + نسبة من الدخل/ثانية حتى تبقى اللمسة مجزية دائماً */
+function empireTapGain(opts = {}) {
   if (!empireState) return 1;
-  return Math.max(1, Math.floor(empireState.tapPower * (empireState.prestigeMult || 1)));
+  const cps = empireCps();
+  const base = empireState.tapPower + Math.floor(cps * 0.22) + Math.floor(Math.sqrt(Math.max(0, empireState.totalEarned)) * 0.015);
+  let gain = Math.max(1, Math.floor(base * (empireState.prestigeMult || 1)));
+  gain = Math.floor(gain * empireComboMult());
+  if (empireFeverActive()) gain *= 2;
+  gain = Math.floor(gain * empireTapEventActive());
+  if (opts.crit) gain = Math.floor(gain * EMPIRE_CRIT_MULT);
+  return Math.max(1, gain);
 }
 
 function empireStage() {
@@ -141,6 +182,7 @@ function empireStage() {
 
 function initEmpire() {
   empireState = loadEmpireState();
+  empireMaxCombo = empireState.maxCombo || 0;
   applyOfflineEmpire();
   renderEmpireStart();
   if (empireState.started) {
@@ -169,6 +211,7 @@ function showEmpireLobby() {
   document.getElementById('empireLobby').classList.remove('d-none');
   document.getElementById('empirePlay').classList.add('d-none');
   stopEmpireLoop();
+  clearEmpireOrbs();
   renderEmpireStart();
 }
 
@@ -196,6 +239,7 @@ function continueEmpireGame() {
 
 function closeEmpire() {
   stopEmpireLoop();
+  clearEmpireOrbs();
   if (empireState) {
     const lifetime = empireState.lifetimeEarned || empireState.totalEarned;
     const best = Math.max(lifetime, getStore('best_empire', 0));
@@ -214,6 +258,10 @@ function stopEmpireLoop() {
     clearInterval(empireSaveTimer);
     empireSaveTimer = null;
   }
+  if (empireOrbTimer) {
+    clearTimeout(empireOrbTimer);
+    empireOrbTimer = null;
+  }
 }
 
 function startEmpireLoop() {
@@ -227,10 +275,20 @@ function startEmpireLoop() {
       empireState.lifetimeEarned += gain;
       updateEmpireHud();
     }
+    // اضمحلال الكومبو إن توقّف اللمس
+    if (empireCombo > 0 && Date.now() - empireLastTapAt > EMPIRE_COMBO_WINDOW_MS) {
+      empireCombo = 0;
+      updateEmpireComboUI();
+    }
+    if (!empireFeverActive()) {
+      document.getElementById('empirePlay')?.classList.remove('fever');
+      document.getElementById('empireFeverBadge')?.classList.add('d-none');
+    }
     empireMaybeEvent();
     empireCheckMilestones();
   }, 100);
   empireSaveTimer = setInterval(saveEmpireState, 8000);
+  scheduleEmpireOrb();
 }
 
 function renderEmpireStart() {
@@ -251,6 +309,7 @@ function renderEmpireAll() {
   updateEmpireTapUpgrade();
   updateEmpirePrestige();
   updateEmpireStageVisual();
+  updateEmpireComboUI();
 }
 
 function updateEmpireHud() {
@@ -273,6 +332,28 @@ function updateEmpireStageVisual() {
   if (icon) icon.textContent = stage.icon;
   if (label) label.textContent = empireT(stage.name);
   if (ring) ring.style.setProperty('--empire-accent', stage.color);
+}
+
+function updateEmpireComboUI() {
+  const text = document.getElementById('empireComboText');
+  const fill = document.getElementById('empireComboFill');
+  const fever = document.getElementById('empireFeverBadge');
+  const mult = empireComboMult();
+  if (text) {
+    text.textContent = empireLang() === 'en'
+      ? `Combo ×${mult.toFixed(1)} · ${empireCombo}`
+      : `كومبو ×${mult.toFixed(1)} · ${empireCombo}`;
+  }
+  if (fill) {
+    const pct = Math.min(100, (empireCombo / EMPIRE_FEVER_NEED) * 100);
+    fill.style.width = pct + '%';
+  }
+  if (fever) {
+    fever.classList.toggle('d-none', !empireFeverActive());
+    fever.textContent = empireLang() === 'en' ? '🔥 Fever!' : '🔥 حماس!';
+  }
+  document.getElementById('empirePlay')?.classList.toggle('fever', empireFeverActive());
+  document.getElementById('empireTapBtn')?.classList.toggle('combo-hot', empireCombo >= 8);
 }
 
 function renderEmpireBiz() {
@@ -341,7 +422,8 @@ function upgradeEmpireTap() {
   }
   empireState.cash -= cost;
   empireState.tapLevel += 1;
-  empireState.tapPower = 1 + empireState.tapLevel;
+  // ترقية أقوى: +2 أساس، وتزيد كل 5 مستويات
+  empireState.tapPower += 2 + Math.floor((empireState.tapLevel - 1) / 5);
   if (typeof playSound === 'function') playSound('levelup');
   renderEmpireAll();
   saveEmpireState();
@@ -385,6 +467,10 @@ function empireConfirmPrestige() {
   empireState.totalEarned = 0;
   empireEventMul = 1;
   empireEventUntil = 0;
+  empireTapEventMul = 1;
+  empireTapEventUntil = 0;
+  empireCombo = 0;
+  empireFeverUntil = 0;
 
   if (typeof playSound === 'function') playSound('levelup');
   if (typeof showToast === 'function') {
@@ -406,6 +492,10 @@ function empireMaybeEvent() {
   if (ev.mul) {
     empireEventMul = ev.mul;
     empireEventUntil = Date.now() + (ev.secs || 40) * 1000;
+  }
+  if (ev.tapMul) {
+    empireTapEventMul = ev.tapMul;
+    empireTapEventUntil = Date.now() + (ev.secs || 40) * 1000;
   }
   if (ev.tax) {
     const lost = Math.floor(empireState.cash * ev.tax);
@@ -440,28 +530,58 @@ function empireCheckMilestones() {
   });
 }
 
+function registerEmpireCombo() {
+  const now = Date.now();
+  if (now - empireLastTapAt <= EMPIRE_COMBO_WINDOW_MS) {
+    empireCombo += 1;
+  } else {
+    empireCombo = 1;
+  }
+  empireLastTapAt = now;
+  if (empireCombo > (empireState.maxCombo || 0)) {
+    empireState.maxCombo = empireCombo;
+    empireMaxCombo = empireCombo;
+  }
+  if (empireCombo >= EMPIRE_FEVER_NEED && !empireFeverActive()) {
+    empireFeverUntil = now + EMPIRE_FEVER_MS;
+    if (typeof playSound === 'function') playSound('levelup');
+    if (typeof showToast === 'function') {
+      showToast(empireLang() === 'en' ? '🔥 FEVER MODE ×2 taps!' : '🔥 وضع الحماس — اللمسات ×2!');
+    }
+  }
+  updateEmpireComboUI();
+}
+
 function empireTap(event) {
   if (!empireState || !empireState.started) return;
-  const gain = empireTapGain();
+  registerEmpireCombo();
+
+  const crit = Math.random() < EMPIRE_CRIT_CHANCE;
+  const gain = empireTapGain({ crit });
   empireState.cash += gain;
   empireState.totalEarned += gain;
   empireState.lifetimeEarned += gain;
+  if (crit) empireState.crits = (empireState.crits || 0) + 1;
 
   const btn = document.getElementById('empireTapBtn');
   if (btn) {
-    btn.classList.remove('pulse');
+    btn.classList.remove('pulse', 'crit');
     void btn.offsetWidth;
     btn.classList.add('pulse');
+    if (crit) btn.classList.add('crit');
   }
 
-  spawnEmpireFloat(event, '+' + empireFmt(gain));
-  if (typeof playSound === 'function') playSound('coin');
-  try { navigator.vibrate?.(8); } catch (_) {}
+  const label = crit
+    ? (empireLang() === 'en' ? `CRIT +${empireFmt(gain)}` : `حرج +${empireFmt(gain)}`)
+    : '+' + empireFmt(gain);
+  spawnEmpireFloat(event, label, crit ? 'crit' : (empireFeverActive() ? 'fever' : ''));
+
+  if (typeof playSound === 'function') playSound(crit ? 'levelup' : 'coin');
+  try { navigator.vibrate?.(crit ? 18 : 8); } catch (_) {}
 
   updateEmpireHud();
   updateEmpireTapUpgrade();
   updateEmpirePrestige();
-  // refresh buy affordability without full rebuild every tap — light check
   const list = document.getElementById('empireBizList');
   if (list && Math.random() < 0.25) renderEmpireBiz();
   else syncEmpireBizAfford();
@@ -482,7 +602,7 @@ function syncEmpireBizAfford() {
   });
 }
 
-function spawnEmpireFloat(event, text) {
+function spawnEmpireFloat(event, text, kind) {
   const layer = document.getElementById('empireFloatLayer');
   const btn = document.getElementById('empireTapBtn');
   if (!layer || !btn) return;
@@ -500,13 +620,74 @@ function spawnEmpireFloat(event, text) {
   }
 
   const el = document.createElement('span');
-  el.className = 'empire-float';
+  el.className = 'empire-float' + (kind ? ' empire-float-' + kind : '');
   el.textContent = text;
   el.style.left = x + 'px';
   el.style.top = y + 'px';
   el.id = 'ef' + (++empireFloatId);
   layer.appendChild(el);
-  setTimeout(() => el.remove(), 900);
+  setTimeout(() => el.remove(), 950);
+}
+
+function clearEmpireOrbs() {
+  document.querySelectorAll('.empire-orb').forEach(el => el.remove());
+  if (empireOrbTimer) {
+    clearTimeout(empireOrbTimer);
+    empireOrbTimer = null;
+  }
+}
+
+function scheduleEmpireOrb() {
+  if (empireOrbTimer) clearTimeout(empireOrbTimer);
+  if (!empireState?.started) return;
+  const delay = EMPIRE_ORB_MIN_MS + Math.random() * (EMPIRE_ORB_MAX_MS - EMPIRE_ORB_MIN_MS);
+  empireOrbTimer = setTimeout(() => {
+    spawnEmpireOrb();
+    scheduleEmpireOrb();
+  }, delay);
+}
+
+function spawnEmpireOrb() {
+  const layer = document.getElementById('empireFloatLayer');
+  if (!layer || !empireState?.started) return;
+  if (layer.querySelectorAll('.empire-orb').length >= 2) return;
+
+  const orb = document.createElement('button');
+  orb.type = 'button';
+  orb.className = 'empire-orb';
+  orb.setAttribute('aria-label', empireLang() === 'en' ? 'Golden treasure' : 'كنز ذهبي');
+  orb.textContent = Math.random() < 0.35 ? '💎' : '✨';
+  const left = 8 + Math.random() * 72;
+  const top = 10 + Math.random() * 60;
+  orb.style.left = left + '%';
+  orb.style.top = top + '%';
+
+  const collect = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const bonus = Math.max(
+      empireTapGain() * (4 + Math.floor(Math.random() * 5)),
+      Math.floor(empireState.cash * 0.04) + 25
+    );
+    empireState.cash += bonus;
+    empireState.totalEarned += bonus;
+    empireState.lifetimeEarned += bonus;
+    spawnEmpireFloat(e.changedTouches?.[0] || e, (empireLang() === 'en' ? 'TREASURE +' : 'كنز +') + empireFmt(bonus), 'treasure');
+    if (typeof playSound === 'function') playSound('levelup');
+    try { navigator.vibrate?.(22); } catch (_) {}
+    orb.remove();
+    updateEmpireHud();
+    syncEmpireBizAfford();
+  };
+
+  orb.addEventListener('pointerdown', collect);
+  layer.appendChild(orb);
+  setTimeout(() => {
+    if (orb.isConnected) {
+      orb.classList.add('fade');
+      setTimeout(() => orb.remove(), 400);
+    }
+  }, 5200);
 }
 
 function bindEmpireTap() {
@@ -516,14 +697,13 @@ function bindEmpireTap() {
   let lastTap = 0;
   const handler = (e) => {
     const now = Date.now();
-    if (now - lastTap < 40) return;
+    if (now - lastTap < 35) return;
     lastTap = now;
     if (e.cancelable) e.preventDefault();
     const point = e.changedTouches?.[0] || e.touches?.[0] || e;
     empireTap(point);
   };
   btn.addEventListener('pointerdown', handler);
-  // لا نربط click لتجنب الضغط المزدوج مع pointerdown
 }
 
 // expose for HTML onclick + openGame init
@@ -537,5 +717,4 @@ window.empireConfirmPrestige = empireConfirmPrestige;
 window.empireCancelPrestige = empireCancelPrestige;
 
 document.addEventListener('DOMContentLoaded', bindEmpireTap);
-// also bind when script loads late
 bindEmpireTap();

@@ -488,6 +488,57 @@ header, .site-header {
   transform: scale(1);
   opacity: 1;
 }
+
+/* نوافذ الألعاب بصفحة كاملة لعرض أفضل */
+.overlay.play-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  background: var(--bg-color);
+}
+.overlay.play-overlay .game-modal {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: 16px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(18px);
+}
+.overlay.play-overlay.active .game-modal {
+  transform: translateY(0);
+}
+.overlay.play-overlay .large-modal {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.overlay.play-overlay .modal-header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+.overlay.play-overlay #snakeCanvas {
+  max-width: min(92vw, 520px);
+}
+.overlay.play-overlay .money-canvas-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.overlay.play-overlay #moneyCanvas {
+  width: min(92vw, 420px);
+  height: auto;
+  max-height: 60vh;
+}
+
 .modal-header {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 20px;
@@ -970,7 +1021,7 @@ body.light-mode::after {
   transform-style: preserve-3d;
   transition: transform 0.22s ease, filter 0.22s ease;
   margin: 0;
-  margin-inline-end: 2px;
+  margin-inline-end: 4px;
   filter: drop-shadow(0 12px 14px rgba(0,0,0,0.55));
 }
 .uno-card:last-child { margin-inline-end: 0; }
@@ -1445,6 +1496,7 @@ body.light-mode::after {
 #leaderboardContent { min-height: 200px; max-height: 400px; overflow-y: auto; }
 
 .large-modal { width: 95vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; padding: 24px; }
+.overlay.play-overlay .large-modal { width: 100%; max-width: none; height: 100%; height: 100dvh; }
 .dark-modal { background: #1a1a1a; color: #fff; }
 #unoOverlay .dark-modal {
   background:
@@ -1582,12 +1634,13 @@ body.light-mode::after {
   position: relative;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 #unoOpponents { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; flex-shrink: 0; }
 .uno-table-center {
   flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 28px;
-  min-height: 120px; position: relative; z-index: 2; padding: 12px;
+  min-height: 100px; position: relative; z-index: 2; padding: 12px;
 }
 .draw-pile { cursor: pointer; display: flex; align-items: center; justify-content: center; }
 #unoCenter, .uno-discard-slot {
@@ -1604,29 +1657,29 @@ body.light-mode::after {
   direction: ltr;
   overflow-x: auto;
   overflow-y: visible;
-  padding: 52px 18px 24px;
+  padding: 56px 20px 28px;
   justify-content: center;
   scroll-behavior: smooth;
-  min-height: 190px;
-  max-height: 230px;
+  min-height: 200px;
   align-items: flex-end;
   width: 100%;
   flex: 0 0 auto;
   perspective: 900px;
   box-sizing: border-box;
+  z-index: 5;
 }
 #unoMyHand::-webkit-scrollbar { height: 6px; }
 #unoMyHand::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 4px; }
 @media (max-width: 600px) {
-  .uno-card { width: 64px; min-width: 64px; height: 98px; margin-inline-end: -6px; }
+  .uno-card { width: 64px; min-width: 64px; height: 98px; margin-inline-end: 0; }
   .uno-card-value { font-size: 20px; }
   .uno-deck-3d { width: 60px; height: 92px; }
   #unoMyHand, .uno-hand-3d {
     justify-content: flex-start;
-    padding: 44px 12px 20px;
-    min-height: 170px;
+    padding: 48px 14px 24px;
+    min-height: 180px;
   }
-  .uno-felt { max-height: 34vh; min-height: 110px; }
+  .uno-felt { max-height: 30vh; min-height: 100px; }
 }
 
 .color-opt-btn.answered-wrong {
@@ -2544,7 +2597,7 @@ body.light-mode::after {
   .install-banner { padding: 12px 16px; font-size: 13px; }
 }
 
-/* ─── ملوك اللمس — Tap Kings ─── */
+/* ─── عرش الذهب — Gold Throne ─── */
 .empire-modal {
   max-width: 440px;
   background:
@@ -2552,6 +2605,9 @@ body.light-mode::after {
     radial-gradient(ellipse 80% 50% at 100% 100%, rgba(255, 140, 66, 0.1), transparent 50%),
     var(--card-bg);
   border: 1px solid rgba(255, 200, 87, 0.25);
+}
+.overlay.play-overlay .empire-modal {
+  max-width: none;
 }
 .agar-modal {
   border: 1px solid rgba(94, 234, 160, 0.25);
@@ -2570,12 +2626,30 @@ body.light-mode::after {
     var(--card-bg);
 }
 .empire-gold { color: #ffc43c !important; }
-.empire-lobby { text-align: center; padding-bottom: 8px; }
+.empire-lobby { text-align: center; padding-bottom: 8px; max-width: 480px; margin: 0 auto; }
 .empire-intro {
   color: var(--text-muted);
   line-height: 1.7;
-  margin: 12px 0 18px;
+  margin: 12px 0 14px;
   font-size: 15px;
+}
+.empire-features {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 0;
+  text-align: start;
+}
+.empire-features li {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: rgba(255, 196, 60, 0.08);
+  border: 1px solid rgba(255, 196, 60, 0.18);
+  border-radius: 12px;
+  padding: 8px 10px;
 }
 .empire-lobby-actions {
   display: flex;
@@ -2679,20 +2753,99 @@ body.light-mode::after {
   color: #ffc43c;
 }
 
+.empire-play {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.empire-play-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.empire-play-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.empire-play-shop {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.empire-combo-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 196, 60, 0.07);
+  border: 1px solid rgba(255, 196, 60, 0.16);
+}
+.empire-combo-text {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffc43c;
+  white-space: nowrap;
+  min-width: 110px;
+}
+.empire-combo-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.empire-combo-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffc43c, #ff8c42);
+  transition: width 0.15s ease;
+}
+.empire-fever-badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1a1208;
+  background: linear-gradient(135deg, #ffc43c, #ff6b3d);
+  padding: 3px 10px;
+  border-radius: 999px;
+  animation: empireFeverPulse 0.7s ease-in-out infinite alternate;
+}
+@keyframes empireFeverPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.empire-play.fever .empire-tap-zone {
+  box-shadow: inset 0 0 40px rgba(255, 140, 66, 0.18);
+}
+.empire-play.fever .empire-combo-fill {
+  background: linear-gradient(90deg, #ff6b3d, #ffc43c, #ffe08a);
+}
+
 .empire-tap-zone {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: 220px;
+  flex: 1;
   margin: 4px 0 14px;
-  overflow: visible;
+  overflow: hidden;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(255, 196, 60, 0.12), transparent 55%),
+    rgba(0, 0, 0, 0.12);
 }
 .empire-tap-btn {
   --empire-accent: #ffc43c;
   position: relative;
-  width: 168px;
-  height: 168px;
+  width: 180px;
+  height: 180px;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -2718,10 +2871,22 @@ body.light-mode::after {
 .empire-tap-core {
   position: relative;
   z-index: 1;
-  font-size: 64px;
-  line-height: 168px;
+  font-size: 68px;
+  line-height: 180px;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
   pointer-events: none;
+}
+.empire-tap-btn.combo-hot .empire-tap-ring {
+  box-shadow:
+    0 0 0 10px color-mix(in srgb, var(--empire-accent) 30%, transparent),
+    0 0 28px color-mix(in srgb, var(--empire-accent) 45%, transparent),
+    0 14px 32px rgba(0, 0, 0, 0.4),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.2);
+}
+.empire-tap-btn.crit .empire-tap-ring {
+  background:
+    radial-gradient(circle at 40% 32%, rgba(255, 255, 255, 0.5), transparent 40%),
+    radial-gradient(circle at 50% 50%, #ffe08a, #ff6b3d);
 }
 .empire-tap-hint {
   position: absolute;
@@ -2765,9 +2930,50 @@ body.light-mode::after {
   animation: empireFloatUp 0.9s ease forwards;
   transform: translate(-50%, -50%);
 }
+.empire-float-crit {
+  font-size: 22px;
+  color: #ff6b3d;
+  text-shadow: 0 0 12px rgba(255, 107, 61, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.empire-float-fever { color: #ffe08a; }
+.empire-float-treasure {
+  font-size: 20px;
+  color: #7ee0ff;
+  text-shadow: 0 0 12px rgba(126, 224, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
 @keyframes empireFloatUp {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(0.85); }
   100% { opacity: 0; transform: translate(-50%, -120%) scale(1.15); }
+}
+
+.empire-orb {
+  position: absolute;
+  z-index: 6;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  font-size: 26px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 40%),
+    radial-gradient(circle at 50% 50%, #ffe08a, #d4a017);
+  box-shadow: 0 0 0 4px rgba(255, 196, 60, 0.25), 0 8px 18px rgba(0,0,0,0.35);
+  animation: empireOrbBob 1.2s ease-in-out infinite;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.empire-orb.fade {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+}
+@keyframes empireOrbBob {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, calc(-50% - 6px)) scale(1.06); }
 }
 
 .empire-actions-row {
@@ -2818,10 +3024,23 @@ body.light-mode::after {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 240px;
+  max-height: none;
+  flex: 1;
+  min-height: 180px;
   overflow-y: auto;
   padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 820px) {
+  .empire-play-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    align-items: stretch;
+  }
+  .empire-tap-zone { min-height: 320px; }
+  .empire-tap-btn { width: 200px; height: 200px; }
+  .empire-tap-core { font-size: 76px; line-height: 200px; }
+  .empire-biz-list { max-height: none; }
 }
 .empire-biz {
   display: grid;
@@ -2869,13 +3088,15 @@ body.light-mode::after {
 }
 
 @media (max-width: 480px) {
-  .empire-modal { max-height: 92vh; padding: 18px 14px; }
   .empire-hud { gap: 5px; }
   .empire-stat strong { font-size: 12px; }
   .empire-tap-btn { width: 150px; height: 150px; }
   .empire-tap-core { font-size: 56px; line-height: 150px; }
-  .empire-biz-list { max-height: 200px; }
-}---
+  .empire-tap-zone { min-height: 180px; }
+  .empire-features { grid-template-columns: 1fr; }
+  .empire-combo-text { min-width: 90px; font-size: 11px; }
+  .empire-biz-list { min-height: 140px; max-height: 28vh; }
+}
 
 /* ─── Audience filters ─── */
 .audience-section { margin-bottom: 22px; }

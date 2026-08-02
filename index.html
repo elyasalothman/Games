@@ -23,13 +23,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="لُمعة">
   <meta name="theme-color" content="#1a1438">
-  <meta name="app-version" content="3.7.0">
+  <meta name="app-version" content="3.7.1">
   <link rel="manifest" href="manifest.json">
 <title>لُمعة | ألعاب ذكاء وترفيه مجانية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 
@@ -178,7 +178,7 @@
   </div>
 </div>
 <!-- SNAKE MODAL -->
-<div class="overlay" id="snakeOverlay">
+<div id="snakeOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🐍 الثعبان</h2>
@@ -207,7 +207,7 @@
 </div>
 
 
-<div class="overlay" id="guesserOverlay">
+<div id="guesserOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🤔 خمن الرقم</h2>
@@ -227,7 +227,7 @@
   </div>
 </div>
 
-<div class="overlay" id="sequenceOverlay">
+<div id="sequenceOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🧩 تتبع النمط</h2>
@@ -247,7 +247,7 @@
   </div>
 </div>
 <!-- MEMORY MODAL -->
-<div class="overlay" id="memoryOverlay">
+<div id="memoryOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🧠 تطابق الذاكرة</h2>
@@ -264,7 +264,7 @@
 </div>
 
 <!-- MATH MODAL -->
-<div class="overlay" id="mathOverlay">
+<div id="mathOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🔢 تحدي الأرقام</h2>
@@ -283,7 +283,7 @@
 </div>
 
 <!-- WORD SCRAMBLE MODAL -->
-<div class="overlay" id="wordOverlay">
+<div id="wordOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">📝 فك الكلمة</h2>
@@ -305,7 +305,7 @@
 </div>
 
 <!-- REACTION MODAL -->
-<div class="overlay" id="reactionOverlay">
+<div id="reactionOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">⚡ رد الفعل</h2>
@@ -324,7 +324,7 @@
 </div>
 
 <!-- COLOR MATCH MODAL -->
-<div class="overlay" id="colorOverlay">
+<div id="colorOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🎨 مطابقة الألوان</h2>
@@ -433,7 +433,7 @@
 </div>
 
 <!-- AGAR.IO CLONE MODAL -->
-<div class="overlay" id="agarOverlay">
+<div id="agarOverlay" class="overlay play-overlay">
   <div class="game-modal large-modal agar-modal signature-modal">
     <div class="modal-header">
       <h2 class="modal-title" id="agarModalTitle">🦠 معركة الخلايا</h2>
@@ -533,7 +533,7 @@
 </div>
 
 <!-- BALOOT MODAL (Placeholder) -->
-<div class="overlay" id="balootOverlay">
+<div id="balootOverlay" class="overlay play-overlay">
   <div class="game-modal large-modal dark-modal">
     <div class="modal-header">
       <h2 class="modal-title">♠️ بلوت</h2>
@@ -592,7 +592,7 @@
 </div>
 
 <!-- UNO MODAL -->
-<div class="overlay" id="unoOverlay">
+<div id="unoOverlay" class="overlay play-overlay">
   <div class="game-modal large-modal dark-modal">
     <div class="modal-header">
       <h2 class="modal-title">🃏 أونو (UNO)</h2>
@@ -655,7 +655,7 @@
 </div>
 
 <!-- DOMINO MODAL -->
-<div class="overlay" id="dominoOverlay">
+<div id="dominoOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🀄 دومينو</h2>
@@ -676,7 +676,7 @@
 </div>
 
 <!-- INVEST MODAL -->
-<div class="overlay" id="investOverlay">
+<div id="investOverlay" class="overlay play-overlay">
   <div class="game-modal large-modal invest-modal signature-modal">
     <div class="modal-header">
       <h2 class="modal-title" id="investModalTitle">📈 محاكاة الاستثمار</h2>
@@ -788,11 +788,11 @@
   </div>
 </div>
 
-<!-- EMPIRE MODAL — ملوك اللمس -->
-<div class="overlay" id="empireOverlay">
+<!-- EMPIRE MODAL — عرش الذهب -->
+<div id="empireOverlay" class="overlay play-overlay">
   <div class="game-modal empire-modal signature-modal">
     <div class="modal-header">
-      <h2 class="modal-title" id="empireModalTitle">👑 ملوك اللمس</h2>
+      <h2 class="modal-title" id="empireModalTitle">👑 عرش الذهب</h2>
       <button type="button" class="close-btn" onclick="closeGame('empire')">✕</button>
     </div>
 
@@ -803,8 +803,14 @@
         <span class="empire-orbit empire-orbit-c">🚀</span>
         <div class="empire-hero-coin">👑</div>
       </div>
-      <div class="signature-modal-badge empire-badge">بناء وثروة</div>
-      <p class="empire-intro" id="empireIntro">اضغط، ابنِ أعمالك، واصعد من كشك الليمون إلى عرش الملوك.</p>
+      <div class="signature-modal-badge empire-badge" id="empireBadge">عرش وثروة</div>
+      <p class="empire-intro" id="empireIntro">اضغط بذكاء، ابنِ إمبراطوريتك، واصعد من كشك الليمون إلى عرش الذهب.</p>
+      <ul class="empire-features" id="empireFeatures">
+        <li>⚡ كومبو لمسات متتالية</li>
+        <li>💥 ضربات حرجة ذهبية</li>
+        <li>🔥 وضع الحماس ×2</li>
+        <li>✨ كنوز عائمة للالتقاط</li>
+      </ul>
       <div class="score-display">
         <div class="score-box">
           <div class="score-label" id="empireBestLabel">أفضل إجمالي</div>
@@ -812,7 +818,7 @@
         </div>
       </div>
       <div class="empire-lobby-actions">
-        <button type="button" class="btn primary empire-start-btn" id="empireStartBtn" onclick="startEmpireGame()">▶ ابدأ الحكم</button>
+        <button type="button" class="btn primary empire-start-btn" id="empireStartBtn" onclick="startEmpireGame()">▶ اصعد العرش</button>
         <button type="button" class="btn btn-blue d-none" id="empireContinueBtn" onclick="continueEmpireGame()">📂 متابعة</button>
       </div>
     </div>
@@ -820,63 +826,75 @@
     <div id="empirePlay" class="empire-play d-none">
       <div class="empire-hud">
         <div class="empire-stat">
-          <span>الرصيد</span>
+          <span id="empireCashLabel">الرصيد</span>
           <strong id="empireCash" class="empire-gold">$0</strong>
         </div>
         <div class="empire-stat">
-          <span>دخل/ثانية</span>
+          <span id="empireCpsLabel">دخل/ثانية</span>
           <strong id="empireCps">$0/ث</strong>
         </div>
         <div class="empire-stat">
-          <span>الضغطة</span>
+          <span id="empireTapLabel">الضغطة</span>
           <strong id="empireTapPower">+1</strong>
         </div>
         <div class="empire-stat">
-          <span>المضاعف</span>
+          <span id="empireMultLabel">المضاعف</span>
           <strong id="empirePrestige">×1</strong>
         </div>
       </div>
 
-      <div class="empire-stage">
-        <span class="empire-stage-icon" id="empireStageIcon">🍋</span>
-        <span class="empire-stage-label" id="empireStageLabel">كشك ليمون</span>
-      </div>
+      <div class="empire-play-grid">
+        <div class="empire-play-main">
+          <div class="empire-stage">
+            <span class="empire-stage-icon" id="empireStageIcon">🍋</span>
+            <span class="empire-stage-label" id="empireStageLabel">كشك ليمون</span>
+          </div>
 
-      <div class="empire-tap-zone" id="empireFloatLayer">
-        <button type="button" class="empire-tap-btn" id="empireTapBtn" aria-label="اضغط لكسب المال">
-          <span class="empire-tap-ring"></span>
-          <span class="empire-tap-core">💰</span>
-          <span class="empire-tap-hint">اضغط!</span>
-        </button>
-      </div>
+          <div class="empire-combo-bar" id="empireComboBar">
+            <span class="empire-combo-text" id="empireComboText">كومبو ×1</span>
+            <div class="empire-combo-track"><div class="empire-combo-fill" id="empireComboFill"></div></div>
+            <span class="empire-fever-badge d-none" id="empireFeverBadge">🔥 حماس!</span>
+          </div>
 
-      <div class="empire-actions-row">
-        <button type="button" class="btn btn-orange empire-mini-btn" id="empireTapUpgradeBtn" onclick="upgradeEmpireTap()">
-          💪 ضغطة أقوى <span id="empireTapUpgradeLevel">0</span>
-          <small>$<span id="empireTapUpgradeCost">25</span></small>
-        </button>
-        <button type="button" class="btn btn-purple empire-mini-btn" id="empirePrestigeBtn" onclick="doEmpirePrestige()" disabled>
-          👑 ولادة جديدة
-        </button>
-      </div>
-      <div id="empirePrestigeConfirm" class="empire-prestige-confirm d-none">
-        <p>إعادة ولادة؟ يُصفَّر الرصيد والأعمال ويزيد المضاعف الدائم.</p>
-        <div class="flex-center-gap">
-          <button type="button" class="btn btn-purple" onclick="empireConfirmPrestige()">تأكيد</button>
-          <button type="button" class="btn" onclick="empireCancelPrestige()">إلغاء</button>
+          <div class="empire-tap-zone" id="empireFloatLayer">
+            <button type="button" class="empire-tap-btn" id="empireTapBtn" aria-label="اضغط لكسب المال">
+              <span class="empire-tap-ring"></span>
+              <span class="empire-tap-core">💰</span>
+              <span class="empire-tap-hint" id="empireTapHint">اضغط!</span>
+            </button>
+          </div>
+
+          <div class="empire-actions-row">
+            <button type="button" class="btn btn-orange empire-mini-btn" id="empireTapUpgradeBtn" onclick="upgradeEmpireTap()">
+              💪 ضغطة أقوى <span id="empireTapUpgradeLevel">0</span>
+              <small>$<span id="empireTapUpgradeCost">25</span></small>
+            </button>
+            <button type="button" class="btn btn-purple empire-mini-btn" id="empirePrestigeBtn" onclick="doEmpirePrestige()" disabled>
+              👑 ولادة جديدة
+            </button>
+          </div>
+          <div id="empirePrestigeConfirm" class="empire-prestige-confirm d-none">
+            <p id="empirePrestigeConfirmText">إعادة ولادة؟ يُصفَّر الرصيد والأعمال ويزيد المضاعف الدائم.</p>
+            <div class="flex-center-gap">
+              <button type="button" class="btn btn-purple" onclick="empireConfirmPrestige()" id="empirePrestigeYes">تأكيد</button>
+              <button type="button" class="btn" onclick="empireCancelPrestige()" id="empirePrestigeNo">إلغاء</button>
+            </div>
+          </div>
+          <div id="empireEventBanner" class="empire-event-banner d-none"></div>
+          <p class="empire-prestige-hint" id="empirePrestigeHint">تحتاج $1.00M إجمالي</p>
+        </div>
+
+        <div class="empire-play-shop">
+          <h4 class="empire-shop-title" id="empireShopTitle">أعمالك</h4>
+          <div id="empireBizList" class="empire-biz-list"></div>
         </div>
       </div>
-      <div id="empireEventBanner" class="empire-event-banner d-none"></div>
-      <p class="empire-prestige-hint" id="empirePrestigeHint">تحتاج $1.00M إجمالي</p>
-
-      <h4 class="empire-shop-title">أعمالك</h4>
-      <div id="empireBizList" class="empire-biz-list"></div>
     </div>
   </div>
 </div>
 
 <!-- MONEY MODAL -->
-<div class="overlay" id="moneyOverlay">
+<div id="moneyOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">💰 صائد الأموال</h2>
@@ -905,7 +923,7 @@
 </div>
 
 <!-- ANIME MODAL -->
-<div class="overlay" id="animeOverlay">
+<div id="animeOverlay" class="overlay play-overlay">
   <div class="game-modal anime-modal">
     <div class="modal-header">
       <h2 class="modal-title">🎌 تحدي الأنمي</h2>
@@ -935,7 +953,7 @@
 </div>
 
 <!-- BUBBLE MODAL — أطفال -->
-<div class="overlay" id="bubbleOverlay">
+<div id="bubbleOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🫧 فقاعات الألوان</h2>
@@ -954,7 +972,7 @@
 </div>
 
 <!-- GARDEN MODAL — بنات / عائلة -->
-<div class="overlay" id="gardenOverlay">
+<div id="gardenOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🌸 حديقة الورود</h2>
@@ -971,7 +989,7 @@
 </div>
 
 <!-- XO MODAL — عائلة -->
-<div class="overlay" id="xoOverlay">
+<div id="xoOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">⭕ إكس أو</h2>
@@ -993,7 +1011,7 @@
 </div>
 
 <!-- QUIZ MODAL — مراهقون / كبار -->
-<div class="overlay" id="quizOverlay">
+<div id="quizOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">📚 ثقافة عامة</h2>
@@ -1016,7 +1034,7 @@
 </div>
 
 <!-- 2048 MODAL — لغز الدمج -->
-<div class="overlay" id="g2048Overlay">
+<div id="g2048Overlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🔲 2048</h2>
@@ -1034,7 +1052,7 @@
 </div>
 
 <!-- MOLE MODAL — اضرب الخُلد -->
-<div class="overlay" id="moleOverlay">
+<div id="moleOverlay" class="overlay play-overlay">
   <div class="game-modal">
     <div class="modal-header">
       <h2 class="modal-title">🔨 اضرب الخُلد</h2>
@@ -1079,7 +1097,7 @@
       .catch(function () {});
   })();
 </script>
-<script src="script.js?v=18"></script>
+<script src="script.js?v=19"></script>
 <script>
   // إجراء حماية قوي: إزالة شاشة التحميل فوراً في حال لم يعمل السكربت بسبب التصفح المحلي
   setTimeout(function() {

@@ -156,7 +156,7 @@ const ALL_GAMES = [
   {id:'uno',     category: 'card', audiences:['kids','teens','family','girls'], name:{ar:'أونو', en:'Uno'}, icon:' UNO ', desc:{ar:'تخلص من أوراقك أولاً! لعبة جماعية ممتعة.', en:'Get rid of your cards first! A fun group game.'}},
   {id:'domino',  category: 'card', audiences:['family','seniors','adults'], name:{ar:'دومينو', en:'Dominoes'}, icon:'🀄', desc:{ar:'صل الأرقام المتشابهة وسيطر على الطاولة.', en:'Connect matching numbers and dominate the table.'}, isNew: true, comingSoon: true},
   {id:'money',   category: 'puzzle', audiences:['kids','teens'], name:{ar:'صائد الأموال', en:'Money Catcher'}, icon:'💰', desc:{ar:'التقط الأموال المتساقطة وتجنب القنابل!', en:'Catch falling money and avoid bombs!'}},
-  {id:'empire',  category: 'puzzle', audiences:['teens','adults','boys'], name:{ar:'ملوك اللمس', en:'Tap Kings'}, icon:'👑', desc:{ar:'اضغط وابنِ مملكتك من كشك الليمون إلى عرش الملوك!', en:'Tap to build from a lemonade stand to a royal throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'بناء وثروة', en:'Build & Wealth'}},
+  {id:'empire',  category: 'puzzle', audiences:['teens','adults','boys'], name:{ar:'عرش الذهب', en:'Gold Throne'}, icon:'👑', desc:{ar:'اضغط بذكاء، اجمع الكومبو، وابنِ إمبراطوريتك حتى عرش الذهب!', en:'Tap smart, stack combos, and build your empire to the Gold Throne!'}, isNew: true, isSignature: true, signatureTag:{ar:'عرش وثروة', en:'Throne & Wealth'}},
   {id:'invest',  category: 'puzzle', audiences:['adults','teens'], name:{ar:'محاكاة الاستثمار', en:'Invest Sim'}, icon:'📈', desc:{ar:'أسواق حقيقية الضغط، دخل سلبي، وحفظ سحابي لتقدمك.', en:'Market pressure, passive income, and cloud-saved progress.'}, isNew: true, isSignature: true, signatureTag:{ar:'أسواق واستراتيجية', en:'Markets & Strategy'}},
   {id:'bubble',  category: 'puzzle', audiences:['kids','girls'], name:{ar:'فقاعات الألوان', en:'Color Bubbles'}, icon:'🫧', desc:{ar:'العبة خفيفة للأطفال — انقر الفقاعات قبل أن تطير!', en:'A light kids game — pop bubbles before they float away!'}, isNew: true},
   {id:'garden',  category: 'puzzle', audiences:['girls','family','seniors'], name:{ar:'حديقة الورود', en:'Rose Garden'}, icon:'🌸', desc:{ar:'طابق الورود بهدوء — مناسبة للبنات والعائلة.', en:'Match roses calmly — great for girls and families.'}, isNew: true},
@@ -444,7 +444,7 @@ const ACHIEVEMENTS = [
   { id: 'domino_win', icon: '🀄', name: { ar: 'سيد الدومينو', en: 'Domino Master' }, desc: { ar: 'افز في جولة دومينو', en: 'Win a domino round' }, check: () => getStore('domino_player_wins', 0) >= 1 },
   { id: 'anime_fan', icon: '🎌', name: { ar: 'أوتاكو', en: 'Otaku' }, desc: { ar: 'أجب على 3 أسئلة أنمي صح', en: 'Answer 3 anime questions correctly' }, check: () => getStore('best_anime', 0) >= 60 },
   { id: 'money_rich', icon: '💰', name: { ar: 'ثري', en: 'Tycoon' }, desc: { ar: 'اجمع 500$ في صائد الأموال', en: 'Collect $500 in Money Catcher' }, check: () => getStore('best_money', 0) >= 500 },
-  { id: 'empire_builder', icon: '👑', name: { ar: 'ملك اللمس', en: 'Tap King' }, desc: { ar: 'اجمع 10,000$ في ملوك اللمس', en: 'Earn $10,000 in Tap Kings' }, check: () => getStore('best_empire', 0) >= 10000 },
+  { id: 'empire_builder', icon: '👑', name: { ar: 'صاحب العرش', en: 'Throne Owner' }, desc: { ar: 'اجمع 10,000$ في عرش الذهب', en: 'Earn $10,000 in Gold Throne' }, check: () => getStore('best_empire', 0) >= 10000 },
   { id: 'investor', icon: '📈', name: { ar: 'مستثمر', en: 'Investor' }, desc: { ar: 'اوصل صافي ثروتك إلى 25,000 في محاكاة الاستثمار', en: 'Reach 25,000 net worth in Invest Sim' }, check: () => getStore('best_invest', 0) >= 25000 },
   { id: 'tile_512', icon: '🔲', name: { ar: 'دمج ذكي', en: 'Merge Master' }, desc: { ar: 'اجمع 2000 نقطة في 2048', en: 'Score 2000 points in 2048' }, check: () => getStore('best_g2048', 0) >= 2000 },
   { id: 'mole_hunter', icon: '🔨', name: { ar: 'صائد الخُلد', en: 'Mole Hunter' }, desc: { ar: 'اجمع 200 نقطة في اضرب الخُلد', en: 'Score 200 points in Whack-a-Mole' }, check: () => getStore('best_mole', 0) >= 200 }
@@ -517,11 +517,19 @@ function applyLang() {
     const empireIntro = document.getElementById('empireIntro');
     if (empireIntro) {
       empireIntro.textContent = currentLang === 'ar'
-        ? 'اضغط، ابنِ أعمالك، واصعد من كشك الليمون إلى عرش الملوك.'
-        : 'Tap, build businesses, and rise from a lemonade stand to the royal throne.';
+        ? 'اضغط بذكاء، ابنِ إمبراطوريتك، واصعد من كشك الليمون إلى عرش الذهب.'
+        : 'Tap smart, build your empire, and rise from a lemonade stand to the Gold Throne.';
     }
+    const empireFeatures = document.getElementById('empireFeatures');
+    if (empireFeatures) {
+      empireFeatures.innerHTML = currentLang === 'ar'
+        ? '<li>⚡ كومبو لمسات متتالية</li><li>💥 ضربات حرجة ذهبية</li><li>🔥 وضع الحماس ×2</li><li>✨ كنوز عائمة للالتقاط</li>'
+        : '<li>⚡ Rapid-tap combos</li><li>💥 Golden critical hits</li><li>🔥 Fever mode ×2</li><li>✨ Floating treasures</li>';
+    }
+    const empireBadge = document.getElementById('empireBadge');
+    if (empireBadge) empireBadge.textContent = currentLang === 'ar' ? 'عرش وثروة' : 'Throne & Wealth';
     const empireStartBtn = document.getElementById('empireStartBtn');
-    if (empireStartBtn) empireStartBtn.textContent = currentLang === 'ar' ? '▶ ابدأ الحكم' : '▶ Begin Reign';
+    if (empireStartBtn) empireStartBtn.textContent = currentLang === 'ar' ? '▶ اصعد العرش' : '▶ Claim the Throne';
     document.getElementById('footerTagline').textContent = dict.footerTagline;
     document.getElementById('footerCopy').textContent = dict.footerCopy;
     document.getElementById('welcomeTitle').textContent = dict.welcomeTitle;
@@ -1503,7 +1511,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.7.0';
+const APP_VERSION = '3.7.1';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
