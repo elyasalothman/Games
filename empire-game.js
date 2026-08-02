@@ -49,6 +49,8 @@ let empireLastTapAt = 0;
 let empireFeverUntil = 0;
 let empireOrbTimer = null;
 let empireMaxCombo = 0;
+let empireSaveDebounce = null;
+let empirePersistBound = false;
 
 function empireLang() {
   return document.documentElement.lang === 'en' ? 'en' : 'ar';
@@ -94,10 +96,45 @@ function defaultEmpireState() {
   };
 }
 
+function empireHasProgress(state) {
+  if (!state) return false;
+  const owned = state.owned && typeof state.owned === 'object'
+    ? Object.values(state.owned).reduce((s, n) => s + (Number(n) || 0), 0)
+    : 0;
+  return (Number(state.cash) || 0) > 0
+    || (Number(state.totalEarned) || 0) > 0
+    || (Number(state.lifetimeEarned) || 0) > 0
+    || (Number(state.prestige) || 0) > 0
+    || (Number(state.tapLevel) || 0) > 0
+    || owned > 0;
+}
+
+/** استعادة طارئة إذا ضاع الحفظ لكن أفضل نتيجة محفوظة */
+function recoverEmpireFromBest(base) {
+  const best = Number(getStore('best_empire', 0)) || 0;
+  if (best <= 0) return base;
+  const recovered = {
+    ...base,
+    cash: best,
+    totalEarned: best,
+    lifetimeEarned: best,
+    started: true,
+    lastSeen: Date.now()
+  };
+  if (typeof showToast === 'function') {
+    showToast(empireLang() === 'en'
+      ? `👑 Restored your Gold Throne progress ($${empireFmt(best)})`
+      : `👑 تم استعادة تقدّمك في عرش الذهب ($${empireFmt(best)})`);
+  }
+  return recovered;
+}
+
 function loadEmpireState() {
   const saved = getStore(EMPIRE_STORAGE_KEY, null);
   const base = defaultEmpireState();
-  if (!saved) return base;
+  if (!saved || typeof saved !== 'object') {
+    return recoverEmpireFromBest(base);
+  }
   const merged = {
     ...base,
     ...saved,
@@ -106,13 +143,17 @@ function loadEmpireState() {
   if (!merged.lifetimeEarned) {
     merged.lifetimeEarned = merged.totalEarned || 0;
   }
+  // إن كان الحفظ فارغاً فعلياً لكن أفضل نتيجة موجودة — استعد
+  if (!empireHasProgress(merged)) {
+    return recoverEmpireFromBest(base);
+  }
   return merged;
 }
 
 function saveEmpireState() {
   if (!empireState) return;
   empireState.lastSeen = Date.now();
-  setStore(EMPIRE_STORAGE_KEY, {
+  const payload = {
     cash: empireState.cash,
     totalEarned: empireState.totalEarned,
     lifetimeEarned: empireState.lifetimeEarned,
@@ -125,6 +166,63 @@ function saveEmpireState() {
     started: empireState.started,
     maxCombo: empireState.maxCombo || 0,
     crits: empireState.crits || 0
+  };
+  setStore(EMPIRE_STORAGE_KEY, payload);
+  // حدّث أفضل نتيجة باستمرار حتى يمكن الاستعادة لاحقاً
+  const lifetime = Math.floor(empireState.lifetimeEarned || empireState.totalEarned || 0);
+  if (lifetime > 0) {
+    const prevBest = Number(getStore('best_empire', 0)) || 0;
+    if (lifetime > prevBest) setStore('best_empire', lifetime);
+  }
+}
+
+function scheduleEmpireSave(immediate) {
+  if (immediate) {
+    if (empireSaveDebounce) {
+      clearTimeout(empireSaveDebounce);
+      empireSaveDebounce = null;
+    }
+    saveEmpireState();
+    return;
+  }
+  if (empireSaveDebounce) return;
+  empireSaveDebounce = setTimeout(() => {
+    empireSaveDebounce = null;
+    saveEmpireState();
+  }, 400);
+}
+
+function reloadEmpireFromStorage() {
+  const next = loadEmpireState();
+  // لا تستبدل تقدماً في الذاكرة بأضعف من التخزين أو العكس — خذ الأفضل
+  if (empireState && empireHasProgress(empireState)) {
+    const memScore = (empireState.lifetimeEarned || 0) * 100 + (empireState.cash || 0);
+    const nextScore = (next.lifetimeEarned || 0) * 100 + (next.cash || 0);
+    if (memScore > nextScore) {
+      saveEmpireState();
+      return;
+    }
+  }
+  empireState = next;
+  empireMaxCombo = empireState.maxCombo || 0;
+  const playOpen = !document.getElementById('empirePlay')?.classList.contains('d-none');
+  if (playOpen || empireState.started) {
+    renderEmpireAll();
+  } else {
+    renderEmpireStart();
+  }
+}
+
+function bindEmpirePersist() {
+  if (empirePersistBound) return;
+  empirePersistBound = true;
+  const flush = () => {
+    if (empireState) scheduleEmpireSave(true);
+  };
+  window.addEventListener('pagehide', flush);
+  window.addEventListener('beforeunload', flush);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flush();
   });
 }
 
@@ -181,9 +279,11 @@ function empireStage() {
 }
 
 function initEmpire() {
+  bindEmpirePersist();
   empireState = loadEmpireState();
   empireMaxCombo = empireState.maxCombo || 0;
   applyOfflineEmpire();
+  saveEmpireState();
   renderEmpireStart();
   if (empireState.started) {
     showEmpirePlay();
@@ -242,10 +342,8 @@ function closeEmpire() {
   clearEmpireOrbs();
   if (empireState) {
     const lifetime = empireState.lifetimeEarned || empireState.totalEarned;
-    const best = Math.max(lifetime, getStore('best_empire', 0));
-    setStore('best_empire', best);
     if (typeof submitScore === 'function') submitScore('empire', Math.floor(lifetime), false);
-    saveEmpireState();
+    scheduleEmpireSave(true);
   }
 }
 
@@ -287,7 +385,7 @@ function startEmpireLoop() {
     empireMaybeEvent();
     empireCheckMilestones();
   }, 100);
-  empireSaveTimer = setInterval(saveEmpireState, 8000);
+  empireSaveTimer = setInterval(saveEmpireState, 2000);
   scheduleEmpireOrb();
 }
 
@@ -582,6 +680,7 @@ function empireTap(event) {
   updateEmpireHud();
   updateEmpireTapUpgrade();
   updateEmpirePrestige();
+  scheduleEmpireSave(false);
   const list = document.getElementById('empireBizList');
   if (list && Math.random() < 0.25) renderEmpireBiz();
   else syncEmpireBizAfford();
@@ -715,6 +814,12 @@ window.upgradeEmpireTap = upgradeEmpireTap;
 window.doEmpirePrestige = doEmpirePrestige;
 window.empireConfirmPrestige = empireConfirmPrestige;
 window.empireCancelPrestige = empireCancelPrestige;
+window.reloadEmpireFromStorage = reloadEmpireFromStorage;
+window.saveEmpireState = saveEmpireState;
 
-document.addEventListener('DOMContentLoaded', bindEmpireTap);
+document.addEventListener('DOMContentLoaded', () => {
+  bindEmpireTap();
+  bindEmpirePersist();
+});
 bindEmpireTap();
+bindEmpirePersist();

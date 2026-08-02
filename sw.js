@@ -1,5 +1,5 @@
 /* Luma'a service worker — network-first app shell + clean updates */
-const CACHE = 'lumaa-v3-7-1';
+const CACHE = 'lumaa-v3-7-2';
 const ASSETS = [
   '/',
   '/index.html',

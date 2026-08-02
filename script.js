@@ -1015,6 +1015,29 @@ function pickBetterInvestProgress(a, b) {
   return (a.day || 0) >= (b.day || 0) ? a : b;
 }
 
+function empireProgressScore(p) {
+  if (!p || typeof p !== 'object') return -1;
+  const lifetime = Number(p.lifetimeEarned) || 0;
+  const earned = Number(p.totalEarned) || 0;
+  const cash = Number(p.cash) || Number(p.money) || 0;
+  const prestige = Number(p.prestige) || 0;
+  const owned = p.owned && typeof p.owned === 'object'
+    ? Object.values(p.owned).reduce((s, n) => s + (Number(n) || 0), 0)
+    : 0;
+  const tapLevel = Number(p.tapLevel) || 0;
+  // lifetime أولاً (لا يُصفَّر بالولادة)، ثم المضاعف الدائم، ثم الرصيد والأعمال
+  return lifetime * 100 + earned + cash + prestige * 1e9 + owned * 50 + tapLevel * 10;
+}
+
+function pickBetterEmpireProgress(a, b) {
+  const scoreA = empireProgressScore(a);
+  const scoreB = empireProgressScore(b);
+  if (scoreA < 0 && scoreB < 0) return a || b || null;
+  if (scoreA < 0) return b;
+  if (scoreB < 0) return a;
+  return scoreA >= scoreB ? a : b;
+}
+
 function mergeSyncData(local, cloud) {
   const merged = { ...(cloud || {}) };
   const allKeys = new Set([...Object.keys(local || {}), ...Object.keys(cloud || {})]);
@@ -1048,9 +1071,7 @@ function mergeSyncData(local, cloud) {
     } else if (key === 'investGameProgress') {
       merged[key] = pickBetterInvestProgress(localVal, cloudVal);
     } else if (key === 'empireGameProgress') {
-      const netA = Number(localVal?.money) || Number(localVal?.totalEarned) || 0;
-      const netB = Number(cloudVal?.money) || Number(cloudVal?.totalEarned) || 0;
-      merged[key] = netA >= netB ? localVal : cloudVal;
+      merged[key] = pickBetterEmpireProgress(localVal, cloudVal);
     } else if (key === 'investCloudId' || key === 'investCloudToken') {
       merged[key] = localVal || cloudVal;
     } else if (key === 'globalPlayerName') {
@@ -1079,6 +1100,10 @@ function refreshAfterCloudSync() {
   applyLang();
   restorePlayerNames();
   init();
+  if (typeof window.reloadEmpireFromStorage === 'function') {
+    const empireOpen = document.getElementById('empireOverlay')?.classList.contains('active');
+    if (empireOpen) window.reloadEmpireFromStorage();
+  }
 }
 
 function scheduleCloudSync() {
@@ -1091,15 +1116,32 @@ async function pushCloudSync() {
   if (!currentUser) return;
   updateCloudSyncUI(true);
   try {
+    // ادمج مع السحابة قبل الكتابة حتى لا يُمسَح تقدّم ناقص محلياً
+    let cloudData = {};
+    try {
+      const pull = await fetch('/api/user-sync', { credentials: 'include' });
+      if (pull.ok) {
+        const json = await pull.json();
+        cloudData = json.data || {};
+      }
+    } catch (_) { /* استخدم المحلي فقط */ }
+
+    const payload = mergeSyncData(collectSyncData(), cloudData);
     const res = await fetch('/api/user-sync', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: collectSyncData() })
+      body: JSON.stringify({ data: payload })
     });
     if (res.ok) {
       const json = await res.json();
       lastCloudSyncAt = json.updated_at ? new Date(json.updated_at) : new Date();
+      // ثبّت النسخة المدمجة محلياً (مهم لعرش الذهب)
+      applySyncData(payload);
+      if (typeof window.reloadEmpireFromStorage === 'function') {
+        const empireOpen = document.getElementById('empireOverlay')?.classList.contains('active');
+        if (empireOpen) window.reloadEmpireFromStorage();
+      }
     }
   } catch (e) {
     console.error('Cloud sync failed', e);
@@ -1511,7 +1553,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.7.1';
+const APP_VERSION = '3.7.2';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
