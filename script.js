@@ -997,6 +997,13 @@ function collectSyncData() {
     if (!shouldSyncKey(key)) continue;
     try { data[key] = JSON.parse(localStorage.getItem(key)); } catch (e) { /* skip */ }
   }
+  // إن ضاعت النسخة الأساسية لعرش الذهب، ارفع الاحتياطية
+  try {
+    const bak = JSON.parse(localStorage.getItem('empireGameProgress_bak') || 'null');
+    if (bak && typeof bak === 'object') {
+      data.empireGameProgress = pickBetterEmpireProgress(data.empireGameProgress, bak);
+    }
+  } catch (_) { /* ignore */ }
   return data;
 }
 
@@ -1571,7 +1578,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.7.3';
+const APP_VERSION = '3.7.4';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
