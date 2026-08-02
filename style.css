@@ -2303,6 +2303,12 @@ body.light-mode::after {
 .profile-sync-icon { font-size: 28px; margin-bottom: var(--space-xs); }
 .profile-sync-desc { line-height: 1.5; margin-top: var(--space-sm); }
 .profile-cloud-label { font-size: 13px; font-weight: 700; margin-bottom: var(--space-sm); }
+.profile-sync-now-btn {
+  width: 100%;
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 800;
+}
 .profile-update-box {
   background: rgba(0, 210, 255, 0.06);
   border: 1px solid rgba(0, 210, 255, 0.18);

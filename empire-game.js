@@ -222,9 +222,8 @@ function writeEmpireStore(payload) {
     }
   }
 
-  if (typeof currentUser !== 'undefined' && currentUser && typeof scheduleCloudSync === 'function') {
-    scheduleCloudSync();
-  }
+  // scheduleCloudSync يتحقق داخلياً من تسجيل الدخول (currentUser غير مرئي من هذا الملف)
+  if (typeof scheduleCloudSync === 'function') scheduleCloudSync();
   return finalPayload;
 }
 
@@ -295,11 +294,22 @@ function bindEmpirePersist() {
   empirePersistBound = true;
   const flush = () => {
     if (empireState) scheduleEmpireSave(true);
+    if (typeof flushCloudSync === 'function') {
+      // keepalive حتى تكتمل المزامنة عند إغلاق التبويب
+      flushCloudSync(true);
+    } else if (typeof pushCloudSync === 'function') {
+      pushCloudSync({ keepalive: true, silent: true });
+    }
   };
   window.addEventListener('pagehide', flush);
   window.addEventListener('beforeunload', flush);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flush();
+    if (document.visibilityState === 'visible' && typeof pullEmpireFromCloud === 'function') {
+      pullEmpireFromCloud().then(() => {
+        if (empireState) reloadEmpireFromStorage();
+      }).catch(() => {});
+    }
   });
 }
 
@@ -355,8 +365,12 @@ function empireStage() {
   return EMPIRE_BIZ[0];
 }
 
-function initEmpire() {
+async function initEmpire() {
   bindEmpirePersist();
+  // اسحب أحدث تقدّم من السحابة قبل فتح اللعبة (مزامنة بين الأجهزة)
+  if (typeof pullEmpireFromCloud === 'function') {
+    try { await pullEmpireFromCloud(); } catch (_) { /* offline ok */ }
+  }
   empireState = loadEmpireState();
   empireMaxCombo = empireState.maxCombo || 0;
   applyOfflineEmpire();
@@ -421,6 +435,8 @@ function closeEmpire() {
     const lifetime = empireState.lifetimeEarned || empireState.totalEarned;
     if (typeof submitScore === 'function') submitScore('empire', Math.floor(lifetime), false);
     scheduleEmpireSave(true);
+    // ارفع التقدم فوراً للسحابة حتى يظهر على الأجهزة الأخرى
+    if (typeof flushCloudSync === 'function') flushCloudSync(true);
   }
 }
 

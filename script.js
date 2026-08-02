@@ -180,6 +180,8 @@ const AUDIENCE_FILTERS = [
 // ─── STORAGE & CORE ───
 let cloudSyncTimer = null;
 let lastCloudSyncAt = null;
+let lastPulledCloudData = {};
+let cloudSyncInFlight = false;
 const LOWER_BETTER_GAMES = ['memory', 'reaction', 'guesser', 'garden'];
 const SYNC_EXACT_KEYS = new Set([
   'globalPlayerName', 'globalPlayerAvatar', 'welcomeSeen', 'totalScore', 'todayGamesCount', 'lastVisit', 'streak',
@@ -292,14 +294,17 @@ const DICT = {
     authSuccess: "تم تسجيل الدخول بنجاح! 🎉",
     authFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
     cloudSyncTitle: "☁️ الحفظ السحابي لحسابك",
-    cloudSyncDesc: "تقدمك محفوظ على خادم لُمعة ويرتبط بحساب Google — يُستعاد تلقائياً على أي جهاز.",
+    cloudSyncDesc: "عرش الذهب ونقاطك وإنجازاتك تُحفظ على حساب Google وتُزامَن تلقائياً بين أجهزتك.",
     cloudSyncActive: "متزامن تلقائياً",
     cloudSyncPending: "جاري المزامنة...",
     cloudSyncSaved: "آخر حفظ:",
+    cloudSyncNow: "🔄 مزامنة الآن",
+    cloudSyncDone: "☁️ تم المزامنة مع أجهزتك",
+    cloudSyncNeedLogin: "سجّل الدخول بـ Google لمزامنة عرش الذهب بين أجهزتك",
     cloudSyncGuest: "☁️ رمز الحفظ السحابي (الاستثمار)",
-    cloudSyncGuestDesc: "رمز خاص بلعبة الاستثمار فقط. للمزامنة الكاملة لكل تقدمك، استخدم تسجيل الدخول بـ Google أعلاه.",
+    cloudSyncGuestDesc: "رمز خاص بلعبة الاستثمار فقط. للمزامنة الكاملة (بما فيها عرش الذهب)، استخدم تسجيل الدخول بـ Google أعلاه.",
     syncCtaTitle: "مزامنة تقدمك على كل الأجهزة",
-    syncCtaDesc: "سجّل الدخول بـ Google لحفظ نقاطك وإنجازاتك وأفضل نتائجك تلقائياً — بدون تصدير أو استيراد يدوي.",
+    syncCtaDesc: "سجّل الدخول بـ Google لمزامنة عرش الذهب ونقاطك وإنجازاتك تلقائياً على كل أجهزتك.",
     profileTitle: "👤 الملف الشخصي والأوسمة",
     achievementsTitle: "🏅 إنجازاتي",
     copyCode: "📋 نسخ",
@@ -385,14 +390,17 @@ const DICT = {
     authSuccess: "Signed in successfully! 🎉",
     authFailed: "Sign-in failed. Please try again.",
     cloudSyncTitle: "☁️ Your account cloud save",
-    cloudSyncDesc: "Your progress is saved on Luma'a and linked to your Google account — restored automatically on any device.",
+    cloudSyncDesc: "Gold Throne, scores, and achievements sync automatically across your devices via Google.",
     cloudSyncActive: "Auto-synced",
     cloudSyncPending: "Syncing...",
     cloudSyncSaved: "Last saved:",
+    cloudSyncNow: "🔄 Sync now",
+    cloudSyncDone: "☁️ Synced across your devices",
+    cloudSyncNeedLogin: "Sign in with Google to sync Gold Throne across your devices",
     cloudSyncGuest: "☁️ Cloud save code (Invest Sim)",
-    cloudSyncGuestDesc: "Invest Sim only. For full progress sync across all games, sign in with Google above.",
+    cloudSyncGuestDesc: "Invest Sim only. For full sync including Gold Throne, sign in with Google above.",
     syncCtaTitle: "Sync your progress across devices",
-    syncCtaDesc: "Sign in with Google to automatically save your scores, achievements, and best results — no manual export or import needed.",
+    syncCtaDesc: "Sign in with Google to sync Gold Throne, scores, and achievements across all your devices.",
     profileTitle: "👤 Profile & Achievements",
     achievementsTitle: "🏅 My Achievements",
     copyCode: "📋 Copy",
@@ -551,6 +559,8 @@ function applyLang() {
     if (cloudTitle) cloudTitle.textContent = dict.cloudSyncTitle;
     const cloudDesc = document.getElementById('profileCloudDesc');
     if (cloudDesc) cloudDesc.textContent = dict.cloudSyncDesc;
+    const syncNowBtn = document.getElementById('profileSyncNowBtn');
+    if (syncNowBtn) syncNowBtn.textContent = dict.cloudSyncNow || '🔄 مزامنة الآن';
     const guestCloudTitle = document.getElementById('profileGuestCloudTitle');
     if (guestCloudTitle) guestCloudTitle.textContent = dict.cloudSyncGuest;
     const guestCloudDesc = document.getElementById('profileGuestCloudDesc');
@@ -1134,44 +1144,91 @@ function refreshAfterCloudSync() {
 function scheduleCloudSync() {
   if (!currentUser) return;
   clearTimeout(cloudSyncTimer);
-  cloudSyncTimer = setTimeout(pushCloudSync, 2500);
+  cloudSyncTimer = setTimeout(() => pushCloudSync(), 1200);
 }
 
-async function pushCloudSync() {
-  if (!currentUser) return;
-  updateCloudSyncUI(true);
+async function pushCloudSync(options = {}) {
+  if (!currentUser || cloudSyncInFlight) return false;
+  const { keepalive = false, silent = false } = options;
+  cloudSyncInFlight = true;
+  if (!silent) updateCloudSyncUI(true);
   try {
-    // ادمج مع السحابة قبل الكتابة حتى لا يُمسَح تقدّم ناقص محلياً
-    let cloudData = {};
-    try {
-      const pull = await fetch('/api/user-sync', { credentials: 'include' });
-      if (pull.ok) {
-        const json = await pull.json();
-        cloudData = json.data || {};
-      }
-    } catch (_) { /* استخدم المحلي فقط */ }
+    let cloudData = lastPulledCloudData || {};
+    if (!keepalive) {
+      try {
+        const pull = await fetch('/api/user-sync', { credentials: 'include', cache: 'no-store' });
+        if (pull.ok) {
+          const json = await pull.json();
+          cloudData = json.data || {};
+          lastPulledCloudData = cloudData;
+        }
+      } catch (_) { /* استخدم آخر سحابة معروفة */ }
+    }
 
     const payload = mergeSyncData(collectSyncData(), cloudData);
     const res = await fetch('/api/user-sync', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: payload })
+      body: JSON.stringify({ data: payload }),
+      keepalive: !!keepalive
     });
     if (res.ok) {
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       lastCloudSyncAt = json.updated_at ? new Date(json.updated_at) : new Date();
-      // ثبّت النسخة المدمجة محلياً (مهم لعرش الذهب)
+      lastPulledCloudData = payload;
       applySyncData(payload);
       if (typeof window.reloadEmpireFromStorage === 'function') {
         const empireOpen = document.getElementById('empireOverlay')?.classList.contains('active');
         if (empireOpen) window.reloadEmpireFromStorage();
       }
+      cloudSyncInFlight = false;
+      if (!silent) updateCloudSyncUI(false);
+      return true;
     }
   } catch (e) {
     console.error('Cloud sync failed', e);
   }
-  updateCloudSyncUI(false);
+  cloudSyncInFlight = false;
+  if (!silent) updateCloudSyncUI(false);
+  return false;
+}
+
+/** مزامنة فورية (إغلاق اللعبة / زر يدوي / إخفاء الصفحة) */
+async function flushCloudSync(silent) {
+  if (!currentUser) return false;
+  clearTimeout(cloudSyncTimer);
+  return pushCloudSync({ silent: !!silent });
+}
+
+/** اسحب عرش الذهب من السحابة وادمج مع المحلي */
+async function pullEmpireFromCloud() {
+  if (!currentUser) return false;
+  try {
+    const res = await fetch('/api/user-sync', { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) return false;
+    const { data: cloudData } = await res.json();
+    lastPulledCloudData = cloudData || {};
+    const merged = mergeSyncData(collectSyncData(), lastPulledCloudData);
+    applySyncData(merged);
+    if (typeof window.reloadEmpireFromStorage === 'function') {
+      window.reloadEmpireFromStorage();
+    }
+    return true;
+  } catch (e) {
+    console.error('Empire cloud pull failed', e);
+    return false;
+  }
+}
+
+async function syncNowFromProfile() {
+  if (!currentUser) {
+    showToast(DICT[currentLang].cloudSyncNeedLogin || 'سجّل الدخول بـ Google للمزامنة');
+    return;
+  }
+  const ok = await flushCloudSync(false);
+  if (ok) showToast(DICT[currentLang].cloudSyncDone || '☁️ تم المزامنة');
+  else showToast(currentLang === 'ar' ? 'تعذرت المزامنة — تحقق من الاتصال' : 'Sync failed — check connection');
 }
 
 async function pullAndMergeCloudSync(localSnapshot) {
@@ -1179,10 +1236,11 @@ async function pullAndMergeCloudSync(localSnapshot) {
   updateCloudSyncUI(true);
   const hadLocalProgress = localSnapshot && Object.keys(localSnapshot).length > 0;
   try {
-    const res = await fetch('/api/user-sync', { credentials: 'include' });
+    const res = await fetch('/api/user-sync', { credentials: 'include', cache: 'no-store' });
     if (!res.ok) return;
     const { data: cloudData, updated_at } = await res.json();
-    const merged = mergeSyncData(localSnapshot || collectSyncData(), cloudData || {});
+    lastPulledCloudData = cloudData || {};
+    const merged = mergeSyncData(localSnapshot || collectSyncData(), lastPulledCloudData);
     applySyncData(merged);
     refreshAfterCloudSync();
     await fetch('/api/user-sync', {
@@ -1191,6 +1249,7 @@ async function pullAndMergeCloudSync(localSnapshot) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: merged })
     });
+    lastPulledCloudData = merged;
     lastCloudSyncAt = updated_at ? new Date(updated_at) : new Date();
     if (hadLocalProgress) {
       showToast(DICT[currentLang].cloudMerged || '☁️ تم دمج تقدمك السابق مع حسابك!');
@@ -1578,7 +1637,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.7.4';
+const APP_VERSION = '3.7.5';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
@@ -1814,6 +1873,9 @@ function closeActiveOverlay() {
       });
     }
 
+    const profileSyncNowBtn = document.getElementById('profileSyncNowBtn');
+    if (profileSyncNowBtn) profileSyncNowBtn.addEventListener('click', syncNowFromProfile);
+
     const signOutBtn = document.getElementById('profileSignOutBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', signOut);
 
@@ -1892,13 +1954,14 @@ function closeActiveOverlay() {
   handleAuthRedirect();
   initAuthAndWelcome();
 
-  // تصدير الدوال للـ HTML onclick
+  // تصدير الدوال للـ HTML onclick + ألعاب/مزامنة
   const api = {
     filterCategory, filterAudience, closeGame, openLeaderboard, closeLeaderboard, fetchLeaderboard,
     closeQuests, claimQuest, closeProfile, saveProfile, copyCloudCode, signOut,
     playRandomGame, showWelcome, closeWelcome, startFromWelcome, savePlayerName, restorePlayerNames,
     openGame, toggleFavorite, shareGame, addScore, recordGamePlayed,
-    submitScore, showToast, getStore, setStore, playSound, forceAppUpdate
+    submitScore, showToast, getStore, setStore, playSound, forceAppUpdate,
+    scheduleCloudSync, flushCloudSync, pushCloudSync, pullEmpireFromCloud, syncNowFromProfile
   };
   Object.assign(window, api);
 
