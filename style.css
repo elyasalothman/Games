@@ -2832,38 +2832,46 @@ body.light-mode::after {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 220px;
-  flex: 1;
-  margin: 4px 0 14px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: min(52vh, 420px);
+  max-height: min(62vh, 560px);
+  aspect-ratio: 1;
+  margin: 6px 0 14px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 28px;
   background:
-    radial-gradient(circle at 50% 55%, rgba(255, 196, 60, 0.12), transparent 55%),
-    rgba(0, 0, 0, 0.12);
+    radial-gradient(circle at 50% 45%, rgba(255, 196, 60, 0.16), transparent 58%),
+    linear-gradient(160deg, rgba(255, 196, 60, 0.08), rgba(0, 0, 0, 0.18));
+  border: 1px solid rgba(255, 196, 60, 0.22);
 }
 .empire-tap-btn {
   --empire-accent: #ffc43c;
-  position: relative;
-  width: 180px;
-  height: 180px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   border: none;
-  border-radius: 50%;
+  border-radius: 28px;
   cursor: pointer;
   background: transparent;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 .empire-tap-ring {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
+  inset: 10%;
+  border-radius: 28px;
   background:
     radial-gradient(circle at 40% 32%, rgba(255, 255, 255, 0.35), transparent 40%),
     radial-gradient(circle at 50% 50%, var(--empire-accent), color-mix(in srgb, var(--empire-accent) 55%, #8a4b00));
   box-shadow:
-    0 0 0 8px color-mix(in srgb, var(--empire-accent) 22%, transparent),
+    0 0 0 6px color-mix(in srgb, var(--empire-accent) 22%, transparent),
     0 14px 32px rgba(0, 0, 0, 0.4),
     inset 0 -10px 20px rgba(0, 0, 0, 0.2);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -2871,8 +2879,8 @@ body.light-mode::after {
 .empire-tap-core {
   position: relative;
   z-index: 1;
-  font-size: 68px;
-  line-height: 180px;
+  font-size: clamp(64px, 14vw, 110px);
+  line-height: 1;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
   pointer-events: none;
 }
@@ -2890,21 +2898,21 @@ body.light-mode::after {
 }
 .empire-tap-hint {
   position: absolute;
-  bottom: -2px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   color: #1a1208;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 16px;
   border-radius: 999px;
   pointer-events: none;
 }
 .empire-tap-btn:active .empire-tap-ring,
 .empire-tap-btn.pulse .empire-tap-ring {
-  transform: scale(0.92);
+  transform: scale(0.96);
   box-shadow:
     0 0 0 14px color-mix(in srgb, var(--empire-accent) 28%, transparent),
     0 8px 20px rgba(0, 0, 0, 0.35),
@@ -3033,13 +3041,14 @@ body.light-mode::after {
 }
 @media (min-width: 820px) {
   .empire-play-grid {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1.15fr 0.85fr;
     gap: 18px;
     align-items: stretch;
   }
-  .empire-tap-zone { min-height: 320px; }
-  .empire-tap-btn { width: 200px; height: 200px; }
-  .empire-tap-core { font-size: 76px; line-height: 200px; }
+  .empire-tap-zone {
+    min-height: min(58vh, 520px);
+    max-height: min(70vh, 640px);
+  }
   .empire-biz-list { max-height: none; }
 }
 .empire-biz {
@@ -3090,12 +3099,16 @@ body.light-mode::after {
 @media (max-width: 480px) {
   .empire-hud { gap: 5px; }
   .empire-stat strong { font-size: 12px; }
-  .empire-tap-btn { width: 150px; height: 150px; }
-  .empire-tap-core { font-size: 56px; line-height: 150px; }
-  .empire-tap-zone { min-height: 180px; }
+  .empire-tap-zone {
+    min-height: min(48vh, 360px);
+    max-height: min(56vh, 420px);
+    border-radius: 22px;
+  }
+  .empire-tap-btn,
+  .empire-tap-ring { border-radius: 22px; }
   .empire-features { grid-template-columns: 1fr; }
   .empire-combo-text { min-width: 90px; font-size: 11px; }
-  .empire-biz-list { min-height: 140px; max-height: 28vh; }
+  .empire-biz-list { min-height: 120px; max-height: 24vh; }
 }
 
 /* ─── Audience filters ─── */

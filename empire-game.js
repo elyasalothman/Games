@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 const EMPIRE_STORAGE_KEY = 'empireGameProgress';
+const EMPIRE_BACKUP_KEY = 'empireGameProgress_bak';
 const EMPIRE_OFFLINE_CAP_HOURS = 8;
 const EMPIRE_COMBO_WINDOW_MS = 900;
 const EMPIRE_COMBO_MAX = 10;
@@ -129,25 +130,102 @@ function recoverEmpireFromBest(base) {
   return recovered;
 }
 
-function loadEmpireState() {
-  const saved = getStore(EMPIRE_STORAGE_KEY, null);
+function empireNormalizeState(raw) {
   const base = defaultEmpireState();
-  if (!saved || typeof saved !== 'object') {
-    return recoverEmpireFromBest(base);
-  }
+  if (!raw || typeof raw !== 'object') return null;
   const merged = {
     ...base,
-    ...saved,
-    owned: { ...base.owned, ...(saved.owned || {}) }
+    ...raw,
+    owned: { ...base.owned, ...(raw.owned || {}) }
   };
   if (!merged.lifetimeEarned) {
     merged.lifetimeEarned = merged.totalEarned || 0;
   }
-  // إن كان الحفظ فارغاً فعلياً لكن أفضل نتيجة موجودة — استعد
-  if (!empireHasProgress(merged)) {
-    return recoverEmpireFromBest(base);
+  return empireHasProgress(merged) ? merged : null;
+}
+
+function empireStateScore(state) {
+  if (!state) return -1;
+  const lifetime = Number(state.lifetimeEarned) || 0;
+  const earned = Number(state.totalEarned) || 0;
+  const cash = Number(state.cash) || 0;
+  const prestige = Number(state.prestige) || 0;
+  const owned = state.owned && typeof state.owned === 'object'
+    ? Object.values(state.owned).reduce((s, n) => s + (Number(n) || 0), 0)
+    : 0;
+  return lifetime * 100 + earned + cash + prestige * 1e9 + owned * 50 + (Number(state.tapLevel) || 0) * 10;
+}
+
+function loadEmpireState() {
+  const primary = empireNormalizeState(getStore(EMPIRE_STORAGE_KEY, null));
+  const backup = empireNormalizeState(getStore(EMPIRE_BACKUP_KEY, null));
+  let best = null;
+  if (primary && backup) best = empireStateScore(primary) >= empireStateScore(backup) ? primary : backup;
+  else best = primary || backup;
+
+  if (!best) return recoverEmpireFromBest(defaultEmpireState());
+
+  // إن كانت النسخة الاحتياطية أفضل — أعد مزامنة الأساسية فوراً
+  if (backup && (!primary || empireStateScore(backup) > empireStateScore(primary))) {
+    try {
+      localStorage.setItem(EMPIRE_STORAGE_KEY, JSON.stringify(backup));
+    } catch (_) { /* ignore */ }
   }
-  return merged;
+  return best;
+}
+
+function writeEmpireStore(payload) {
+  const existing = empireNormalizeState(getStore(EMPIRE_STORAGE_KEY, null));
+  const bak = empireNormalizeState(getStore(EMPIRE_BACKUP_KEY, null));
+  const floor = (!existing && !bak) ? null
+    : (!existing ? bak : !bak ? existing
+      : (empireStateScore(existing) >= empireStateScore(bak) ? existing : bak));
+
+  let finalPayload = { ...payload, owned: { ...(payload.owned || {}) } };
+
+  // امنع استبدال تقدّم غني بحفظ فارغ (السبب السابق لضياع الرصيد)
+  if (floor && empireHasProgress(floor) && !empireHasProgress(finalPayload)) {
+    finalPayload = { ...floor, owned: { ...(floor.owned || {}) } };
+  } else if (floor) {
+    // لا تنقص أبداً إجمالي العمر / الولادة
+    finalPayload.lifetimeEarned = Math.max(
+      Number(finalPayload.lifetimeEarned) || 0,
+      Number(floor.lifetimeEarned) || 0
+    );
+    finalPayload.prestige = Math.max(Number(finalPayload.prestige) || 0, Number(floor.prestige) || 0);
+    finalPayload.prestigeMult = Math.max(
+      Number(finalPayload.prestigeMult) || 1,
+      Number(floor.prestigeMult) || 1,
+      1 + finalPayload.prestige * 0.5
+    );
+    finalPayload.maxCombo = Math.max(Number(finalPayload.maxCombo) || 0, Number(floor.maxCombo) || 0);
+    finalPayload.crits = Math.max(Number(finalPayload.crits) || 0, Number(floor.crits) || 0);
+  }
+
+  finalPayload.lastSeen = Date.now();
+
+  try {
+    localStorage.setItem(EMPIRE_STORAGE_KEY, JSON.stringify(finalPayload));
+    localStorage.setItem(EMPIRE_BACKUP_KEY, JSON.stringify(finalPayload));
+  } catch (e) {
+    console.error('Empire save failed', e);
+    try { setStore(EMPIRE_STORAGE_KEY, finalPayload); } catch (_) { /* ignore */ }
+  }
+
+  const lifetime = Math.floor(Number(finalPayload.lifetimeEarned) || Number(finalPayload.totalEarned) || 0);
+  if (lifetime > 0) {
+    const prevBest = Number(getStore('best_empire', 0)) || 0;
+    if (lifetime > prevBest) {
+      try { localStorage.setItem('best_empire', JSON.stringify(lifetime)); } catch (_) {
+        setStore('best_empire', lifetime);
+      }
+    }
+  }
+
+  if (typeof currentUser !== 'undefined' && currentUser && typeof scheduleCloudSync === 'function') {
+    scheduleCloudSync();
+  }
+  return finalPayload;
 }
 
 function saveEmpireState() {
@@ -159,7 +237,7 @@ function saveEmpireState() {
     lifetimeEarned: empireState.lifetimeEarned,
     tapPower: empireState.tapPower,
     tapLevel: empireState.tapLevel,
-    owned: empireState.owned,
+    owned: { ...(empireState.owned || {}) },
     prestige: empireState.prestige,
     prestigeMult: empireState.prestigeMult,
     lastSeen: empireState.lastSeen,
@@ -167,12 +245,11 @@ function saveEmpireState() {
     maxCombo: empireState.maxCombo || 0,
     crits: empireState.crits || 0
   };
-  setStore(EMPIRE_STORAGE_KEY, payload);
-  // حدّث أفضل نتيجة باستمرار حتى يمكن الاستعادة لاحقاً
-  const lifetime = Math.floor(empireState.lifetimeEarned || empireState.totalEarned || 0);
-  if (lifetime > 0) {
-    const prevBest = Number(getStore('best_empire', 0)) || 0;
-    if (lifetime > prevBest) setStore('best_empire', lifetime);
+  const saved = writeEmpireStore(payload);
+  if (saved) {
+    empireState.lifetimeEarned = saved.lifetimeEarned;
+    empireState.prestige = saved.prestige;
+    empireState.prestigeMult = saved.prestigeMult;
   }
 }
 
@@ -777,6 +854,7 @@ function spawnEmpireOrb() {
     orb.remove();
     updateEmpireHud();
     syncEmpireBizAfford();
+    scheduleEmpireSave(true);
   };
 
   orb.addEventListener('pointerdown', collect);

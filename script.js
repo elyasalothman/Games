@@ -191,6 +191,8 @@ const SYNC_EXACT_KEYS = new Set([
 
 function shouldSyncKey(key) {
   if (!key || key === 'installDismissed') return false;
+  // النسخة الاحتياطية المحلية فقط — لا تُرفع كمفتاح منفصل
+  if (key === 'empireGameProgress_bak') return false;
   if (SYNC_EXACT_KEYS.has(key)) return true;
   return key.startsWith('best_') || key.startsWith('ach_');
 }
@@ -1089,6 +1091,22 @@ function applySyncData(data) {
   if (!data || typeof data !== 'object') return;
   Object.entries(data).forEach(([key, value]) => {
     if (!shouldSyncKey(key)) return;
+    // حماية عرش الذهب: لا تُسمح للسحابة أبداً بتخفيض التقدم المحلي
+    if (key === 'empireGameProgress') {
+      try {
+        const existing = JSON.parse(localStorage.getItem(key) || 'null');
+        const bak = JSON.parse(localStorage.getItem('empireGameProgress_bak') || 'null');
+        const localBest = pickBetterEmpireProgress(existing, bak);
+        value = pickBetterEmpireProgress(localBest, value);
+        localStorage.setItem(key, JSON.stringify(value));
+        localStorage.setItem('empireGameProgress_bak', JSON.stringify(value));
+        return;
+      } catch (e) { /* fall through */ }
+    }
+    if (key === 'best_empire') {
+      const localBest = Number(getStore('best_empire', 0)) || 0;
+      value = Math.max(localBest, Number(value) || 0);
+    }
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* skip */ }
   });
 }
@@ -1553,7 +1571,7 @@ function closeAd() {
 }
 
 // ─── PWA (Service Worker + Install + Auto Update) ───
-const APP_VERSION = '3.7.2';
+const APP_VERSION = '3.7.3';
 const UPDATE_CHECK_MS = 60 * 1000;
 let deferredInstallPrompt = null;
 let waitingWorker = null;
